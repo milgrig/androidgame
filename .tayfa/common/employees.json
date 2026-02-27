@@ -1,0 +1,94 @@
+{
+  "employees": {
+    "boss": {
+      "role": "Manager",
+      "model": "opus",
+      "fallback_model": "sonnet",
+      "max_budget_usd": 0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Write Bash Glob Grep Task",
+      "created_at": "auto"
+    },
+    "hr": {
+      "role": "HR Manager",
+      "model": "sonnet",
+      "fallback_model": "haiku",
+      "max_budget_usd": 0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "auto"
+    },
+    "architect": {
+      "role": "Architect",
+      "model": "opus",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "developer_game": {
+      "role": "Game Developer",
+      "model": "opus",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "developer_ui": {
+      "role": "Ui Developer",
+      "model": "opus",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "math_consultant": {
+      "role": "Math Consultant",
+      "model": "sonnet",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "game_designer": {
+      "role": "Game Designer",
+      "model": "sonnet",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "qa_tester": {
+      "role": "Qa Tester",
+      "model": "sonnet",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "critic": {
+      "role": "Critic",
+      "model": "sonnet",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-20"
+    },
+    "developer_game2": {
+      "role": "Gameplay & Level Mechanics Developer",
+      "model": "opus",
+      "fallback_model": "",
+      "max_budget_usd": 0.0,
+      "permission_mode": "bypassPermissions",
+      "allowed_tools": "Read Edit Bash",
+      "created_at": "2026-02-21"
+    }
+  }
+}

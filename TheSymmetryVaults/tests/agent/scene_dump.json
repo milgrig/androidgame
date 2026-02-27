@@ -1,0 +1,294 @@
+{
+  "tree": {
+    "children": [
+      {
+        "class": "Node",
+        "name": "AgentBridge",
+        "path": "/root/AgentBridge",
+        "script_class": "agent_bridge"
+      },
+      {
+        "children": [
+          {
+            "class": "ColorRect",
+            "name": "Background",
+            "path": "/root/MainMenu/Background",
+            "position": [
+              0.0,
+              0.0
+            ],
+            "size": [
+              1280.0,
+              1280.0
+            ],
+            "visible": true
+          },
+          {
+            "class": "Node2D",
+            "name": "CrystalCanvas",
+            "path": "/root/MainMenu/CrystalCanvas",
+            "position": [
+              0.0,
+              0.0
+            ],
+            "rotation": 0.0,
+            "scale": [
+              1.0,
+              1.0
+            ],
+            "visible": true
+          },
+          {
+            "class": "Label",
+            "name": "TitleLabel",
+            "path": "/root/MainMenu/TitleLabel",
+            "text": "Хранители Симметрий",
+            "visible": true
+          },
+          {
+            "class": "Label",
+            "name": "SubtitleLabel",
+            "path": "/root/MainMenu/SubtitleLabel",
+            "text": "Тайны кристаллов ждут",
+            "visible": true
+          },
+          {
+            "children": [
+              {
+                "actions": [
+                  "press"
+                ],
+                "class": "Button",
+                "disabled": false,
+                "name": "StartButton",
+                "path": "/root/MainMenu/ButtonContainer/StartButton",
+                "text": "Начать игру",
+                "visible": true
+              },
+              {
+                "actions": [
+                  "press"
+                ],
+                "class": "Button",
+                "disabled": false,
+                "name": "SettingsButton",
+                "path": "/root/MainMenu/ButtonContainer/SettingsButton",
+                "text": "Настройки",
+                "visible": true
+              },
+              {
+                "actions": [
+                  "press"
+                ],
+                "class": "Button",
+                "disabled": false,
+                "name": "ExitButton",
+                "path": "/root/MainMenu/ButtonContainer/ExitButton",
+                "text": "Выход",
+                "visible": true
+              }
+            ],
+            "class": "VBoxContainer",
+            "name": "ButtonContainer",
+            "path": "/root/MainMenu/ButtonContainer",
+            "position": [
+              500.0,
+              680.0
+            ],
+            "size": [
+              280.0,
+              220.0
+            ],
+            "visible": true
+          },
+          {
+            "class": "Label",
+            "name": "VersionLabel",
+            "path": "/root/MainMenu/VersionLabel",
+            "text": "v0.1",
+            "visible": true
+          }
+        ],
+        "class": "Control",
+        "name": "MainMenu",
+        "path": "/root/MainMenu",
+        "position": [
+          0.0,
+          0.0
+        ],
+        "script_class": "MainMenu",
+        "size": [
+          1280.0,
+          1280.0
+        ],
+        "visible": true
+      }
+    ],
+    "class": "Window",
+    "name": "root",
+    "path": "/root"
+  },
+  "buttons": [
+    {
+      "actions": [
+        "press"
+      ],
+      "class": "Button",
+      "disabled": false,
+      "name": "StartButton",
+      "path": "/root/MainMenu/ButtonContainer/StartButton",
+      "text": "Начать игру",
+      "visible": true
+    },
+    {
+      "actions": [
+        "press"
+      ],
+      "class": "Button",
+      "disabled": false,
+      "name": "SettingsButton",
+      "path": "/root/MainMenu/ButtonContainer/SettingsButton",
+      "text": "Настройки",
+      "visible": true
+    },
+    {
+      "actions": [
+        "press"
+      ],
+      "class": "Button",
+      "disabled": false,
+      "name": "ExitButton",
+      "path": "/root/MainMenu/ButtonContainer/ExitButton",
+      "text": "Выход",
+      "visible": true
+    }
+  ],
+  "labels": [
+    {
+      "class": "Label",
+      "name": "TitleLabel",
+      "path": "/root/MainMenu/TitleLabel",
+      "text": "Хранители Симметрий",
+      "visible": true
+    },
+    {
+      "class": "Label",
+      "name": "SubtitleLabel",
+      "path": "/root/MainMenu/SubtitleLabel",
+      "text": "Тайны кристаллов ждут",
+      "visible": true
+    },
+    {
+      "class": "Label",
+      "name": "VersionLabel",
+      "path": "/root/MainMenu/VersionLabel",
+      "text": "v0.1",
+      "visible": true
+    }
+  ],
+  "actions": [
+    {
+      "action": "press_button",
+      "button_text": "Начать игру",
+      "description": "Press button: Начать игру",
+      "params": {
+        "path": "/root/MainMenu/ButtonContainer/StartButton"
+      }
+    },
+    {
+      "action": "press_button",
+      "button_text": "Настройки",
+      "description": "Press button: Настройки",
+      "params": {
+        "path": "/root/MainMenu/ButtonContainer/SettingsButton"
+      }
+    },
+    {
+      "action": "press_button",
+      "button_text": "Выход",
+      "description": "Press button: Выход",
+      "params": {
+        "path": "/root/MainMenu/ButtonContainer/ExitButton"
+      }
+    },
+    {
+      "action": "load_level",
+      "description": "Load a level by ID",
+      "params": {
+        "level_id": "string"
+      }
+    }
+  ],
+  "levels": [
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_01.json",
+      "group_name": "Z3",
+      "id": "level_01",
+      "title": "Треугольный зал"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_02.json",
+      "group_name": "Z3",
+      "id": "level_02",
+      "title": "Направленный поток"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_03.json",
+      "group_name": "Z2",
+      "id": "level_03",
+      "title": "Цвет имеет значение"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_04.json",
+      "group_name": "Z4",
+      "id": "level_04",
+      "title": "Квадратный зал"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_05.json",
+      "group_name": "D4",
+      "id": "level_05",
+      "title": "Зеркальный квадрат"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_06.json",
+      "group_name": "V4",
+      "id": "level_06",
+      "title": "Разноцветный квадрат"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_07.json",
+      "group_name": "Z2",
+      "id": "level_07",
+      "title": "Кривая тропа"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_08.json",
+      "group_name": "Z2",
+      "id": "level_08",
+      "title": "Звёзды-близнецы"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_09.json",
+      "group_name": "S3",
+      "id": "level_09",
+      "title": "Скрытый треугольник"
+    },
+    {
+      "act": "act1",
+      "file": "res://data/levels/act1/level_10.json",
+      "group_name": "Z5",
+      "id": "level_10",
+      "title": "Цепь силы"
+    }
+  ]
+}

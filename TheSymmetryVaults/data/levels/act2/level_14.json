@@ -1,0 +1,263 @@
+{
+  "meta": {
+    "id": "act2_level14",
+    "act": 2,
+    "level": 14,
+    "title": "Три внутренних замка",
+    "subtitle": "Одна группа — три разные подгруппы",
+    "group_name": "D4",
+    "group_order": 8,
+    "pedagogical_goal": "Группа может иметь НЕСКОЛЬКО подгрупп разного порядка. D4 содержит Z4 (вращения), V4 (группу Клейна) и Z2 (центр). Все три — нормальные, и вложены друг в друга."
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "blue", "position": [520, 240], "label": "A"},
+      {"id": 1, "color": "blue", "position": [760, 240], "label": "B"},
+      {"id": 2, "color": "blue", "position": [760, 480], "label": "C"},
+      {"id": 3, "color": "blue", "position": [520, 480], "label": "D"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 2, "to": 3, "type": "standard", "weight": 1},
+      {"from": 3, "to": 0, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2,3], "name": "Тождество",            "description": "Всё остаётся на месте"},
+      {"id": "r1", "mapping": [1,2,3,0], "name": "Поворот на 90°",        "description": "Четверть оборота по часовой"},
+      {"id": "r2", "mapping": [2,3,0,1], "name": "Поворот на 180°",       "description": "Пол-оборота"},
+      {"id": "r3", "mapping": [3,0,1,2], "name": "Поворот на 270°",       "description": "Три четверти оборота"},
+      {"id": "sh", "mapping": [1,0,3,2], "name": "Отражение по горизонтали",     "description": "Поменять левый и правый столбцы"},
+      {"id": "sv", "mapping": [3,2,1,0], "name": "Отражение по вертикали",       "description": "Поменять верхнюю и нижнюю строки"},
+      {"id": "sd", "mapping": [0,3,2,1], "name": "Отражение по диагонали \\",    "description": "Отразить по диагонали A-C"},
+      {"id": "sa", "mapping": [2,1,0,3], "name": "Отражение по побочной диагонали",  "description": "Отразить по диагонали B-D"}
+    ],
+    "generators": ["r1", "sh"],
+    "cayley_table": {
+      "e":  {"e":"e",  "r1":"r1", "r2":"r2", "r3":"r3", "sh":"sh", "sv":"sv", "sd":"sd", "sa":"sa"},
+      "r1": {"e":"r1", "r1":"r2", "r2":"r3", "r3":"e",  "sh":"sa", "sv":"sd", "sd":"sh", "sa":"sv"},
+      "r2": {"e":"r2", "r1":"r3", "r2":"e",  "r3":"r1", "sh":"sv", "sv":"sh", "sd":"sa", "sa":"sd"},
+      "r3": {"e":"r3", "r1":"e",  "r2":"r1", "r3":"r2", "sh":"sd", "sv":"sa", "sd":"sv", "sa":"sh"},
+      "sh": {"e":"sh", "r1":"sd", "r2":"sv", "r3":"sa", "sh":"e",  "sv":"r2", "sd":"r1", "sa":"r3"},
+      "sv": {"e":"sv", "r1":"sa", "r2":"sh", "r3":"sd", "sh":"r2", "sv":"e",  "sd":"r3", "sa":"r1"},
+      "sd": {"e":"sd", "r1":"sa", "r2":"sa", "r3":"sh", "sh":"r3", "sv":"r1", "sd":"e",  "sa":"r2"},
+      "sa": {"e":"sa", "r1":"sh", "r2":"sd", "r3":"sv", "sh":"r1", "sv":"r3", "sd":"r2", "sa":"e"}
+    }
+  },
+
+  "subgroups": [
+    {
+      "name": "Trivial",
+      "order": 1,
+      "elements": ["e"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Тривиальная подгруппа",
+      "lattice_level": 0
+    },
+    {
+      "name": "Z2_horizontal",
+      "order": 2,
+      "elements": ["e", "sh"],
+      "is_normal": false,
+      "is_inner_door": false,
+      "description": "Подгруппа горизонтального отражения",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "sh∘sh=e — замкнуто",
+        "identity": "e ∈ Z2_h",
+        "inverses": "sh⁻¹=sh — инволюция",
+        "normality": "НЕ нормальная: r1∘sh∘r1⁻¹ = r1∘sh∘r3 = sa ∉ {e,sh}"
+      }
+    },
+    {
+      "name": "Z2_vertical",
+      "order": 2,
+      "elements": ["e", "sv"],
+      "is_normal": false,
+      "is_inner_door": false,
+      "description": "Подгруппа вертикального отражения",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "sv∘sv=e — замкнуто",
+        "identity": "e ∈ Z2_v",
+        "inverses": "sv⁻¹=sv — инволюция",
+        "normality": "НЕ нормальная: r1∘sv∘r1⁻¹ = sd ∉ {e,sv}"
+      }
+    },
+    {
+      "name": "Z2_diagonal",
+      "order": 2,
+      "elements": ["e", "sd"],
+      "is_normal": false,
+      "is_inner_door": false,
+      "description": "Подгруппа диагонального отражения",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "sd∘sd=e — замкнуто",
+        "identity": "e ∈ Z2_d",
+        "inverses": "sd⁻¹=sd — инволюция",
+        "normality": "НЕ нормальная: r1∘sd∘r1⁻¹ = sh ∉ {e,sd}"
+      }
+    },
+    {
+      "name": "Z2_antidiagonal",
+      "order": 2,
+      "elements": ["e", "sa"],
+      "is_normal": false,
+      "is_inner_door": false,
+      "description": "Подгруппа антидиагонального отражения",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "sa∘sa=e — замкнуто",
+        "identity": "e ∈ Z2_a",
+        "inverses": "sa⁻¹=sa — инволюция",
+        "normality": "НЕ нормальная: r1∘sa∘r1⁻¹ = sv ∉ {e,sa}"
+      }
+    },
+    {
+      "name": "Z2_180",
+      "order": 2,
+      "elements": ["e", "r2"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "Внутренний замок: поворот на 180° — центр группы D4",
+      "lattice_level": 1,
+      "pedagogical_hint": "Самая маленькая нетривиальная подгруппа! r2 коммутирует со всеми элементами — это центр группы. Она вложена и в Z4, и в V4.",
+      "verification": {
+        "closure": "r2∘r2=e — замкнуто",
+        "identity": "e ∈ Z2_180",
+        "inverses": "r2⁻¹=r2 — инволюция",
+        "normality": "НОРМАЛЬНАЯ: r2 в центре D4, коммутирует со всеми"
+      }
+    },
+    {
+      "name": "Z4_rotations",
+      "order": 4,
+      "elements": ["e", "r1", "r2", "r3"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "Внутренний замок: все четыре вращения",
+      "lattice_level": 2,
+      "pedagogical_hint": "Подгруппа вращений — самая важная! Комбинация любых двух вращений даёт вращение. Содержит Z2_180 внутри себя.",
+      "verification": {
+        "closure": "r1∘r1=r2, r1∘r2=r3, r1∘r3=e, r2∘r2=e, r2∘r3=r1, r3∘r3=r1 — все в подгруппе",
+        "identity": "e ∈ Z4",
+        "inverses": "r1⁻¹=r3, r2⁻¹=r2, r3⁻¹=r1 — все в подгруппе",
+        "normality": "НОРМАЛЬНАЯ: индекс 2, любая подгруппа индекса 2 нормальна"
+      }
+    },
+    {
+      "name": "V4_klein",
+      "order": 4,
+      "elements": ["e", "r2", "sh", "sv"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "Внутренний замок: группа Клейна (180° + два ортогональных отражения)",
+      "lattice_level": 2,
+      "pedagogical_hint": "Четвёрочная группа — все элементы имеют порядок 2! Тот же порядок что у Z4, но совсем другая структура. Тоже содержит Z2_180.",
+      "verification": {
+        "closure": "r2∘sh=sv, r2∘sv=sh, sh∘sv=r2 — все комбинации в подгруппе",
+        "identity": "e ∈ V4",
+        "inverses": "Все элементы инволюции: r2⁻¹=r2, sh⁻¹=sh, sv⁻¹=sv",
+        "normality": "НОРМАЛЬНАЯ: индекс 2"
+      }
+    },
+    {
+      "name": "Full_D4",
+      "order": 8,
+      "elements": ["e", "r1", "r2", "r3", "sh", "sv", "sd", "sa"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Полная группа",
+      "lattice_level": 3
+    }
+  ],
+
+  "subgroup_lattice": {
+    "description": "Решётка подгрупп D4: Z2_180 вложена в Z4 и V4, обе вложены в D4",
+    "edges": [
+      {"from": "Trivial", "to": "Z2_horizontal"},
+      {"from": "Trivial", "to": "Z2_vertical"},
+      {"from": "Trivial", "to": "Z2_diagonal"},
+      {"from": "Trivial", "to": "Z2_antidiagonal"},
+      {"from": "Trivial", "to": "Z2_180"},
+      {"from": "Z2_180", "to": "Z4_rotations"},
+      {"from": "Z2_180", "to": "V4_klein"},
+      {"from": "Z2_horizontal", "to": "V4_klein"},
+      {"from": "Z2_vertical", "to": "V4_klein"},
+      {"from": "Z4_rotations", "to": "Full_D4"},
+      {"from": "V4_klein", "to": "Full_D4"}
+    ],
+    "note": "D4 имеет 10 подгрупп, но для этого уровня показываем 3 ключевые: Z2_180 ⊂ Z4, Z2_180 ⊂ V4, Z4 ⊂ D4, V4 ⊂ D4",
+    "normal_subgroups": ["Trivial", "Z2_180", "Z4_rotations", "V4_klein", "Full_D4"],
+    "non_normal_subgroups": ["Z2_horizontal", "Z2_vertical", "Z2_diagonal", "Z2_antidiagonal"]
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap", "combine"],
+    "show_cayley_button": true,
+    "show_generators_hint": false,
+    "inner_doors": [
+      {
+        "id": "center_door",
+        "required_subgroup": "Z2_180",
+        "visual_hint": "Маленькая дверь с символом 180°",
+        "unlock_message": "Центральная симметрия открыла потайную дверь! r2 — центр группы D4.",
+        "reward": "Понимание: самая маленькая подгруппа скрыта внутри больших",
+        "pedagogical_note": "Первая дверь — самая простая. Только {e, r2}. Готовит к пониманию вложенности."
+      },
+      {
+        "id": "rotation_door",
+        "required_subgroup": "Z4_rotations",
+        "visual_hint": "Дверь с циклическим узором из 4 стрелок",
+        "unlock_message": "Четыре вращения открыли дверь вращений! Все повороты замкнуты.",
+        "reward": "Понимание: вращения образуют подгруппу внутри D4",
+        "pedagogical_note": "Z4 содержит Z2_180 — вложенность подгрупп!"
+      },
+      {
+        "id": "klein_door",
+        "required_subgroup": "V4_klein",
+        "visual_hint": "Дверь с крестообразным узором",
+        "unlock_message": "Группа Клейна открыла крестовую дверь! Четыре элемента порядка 2.",
+        "reward": "Понимание: подгруппы одного порядка могут иметь разную структуру",
+        "pedagogical_note": "V4 тоже содержит Z2_180 — но V4 ≇ Z4!"
+      }
+    ],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread",
+    "inner_door_style": "three_locks"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "В этом зале — ТРИ внутренних двери! Каждая открывается своим замкнутым набором ключей."},
+    {"trigger": "after_all_found", "text": "Все 8 ключей найдены. Ищите замкнутые подмножества: начните с самого простого — {e, r2}. Затем попробуйте {e, r1, r2, r3} или {e, r2, sh, sv}."},
+    {"trigger": "after_first_subgroup_found", "text": "Первая подгруппа найдена! Ищите ещё две. Подсказка: одна содержит все вращения, другая — все элементы порядка 2."},
+    {"trigger": "after_second_subgroup_found", "text": "Две из трёх! Заметьте: обе большие подгруппы содержат {e, r2} внутри себя. Это вложенность подгрупп!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Квадрат имеет 8 симметрий и ТРИ внутренних двери. Каждая дверь — это замкнутый набор ключей (подгруппа).",
+      "target_crystals": []
+    },
+    {
+      "text": "Начните с малого: {e, r2} — всего два ключа, и они замкнуты (r2∘r2=e). Это самая маленькая подгруппа!",
+      "target_crystals": [0, 2]
+    },
+    {
+      "text": "Теперь больше: {e, r1, r2, r3} — все вращения. Или {e, r2, sh, sv} — группа Клейна. Обе содержат {e, r2}!",
+      "target_crystals": [0, 1, 2, 3]
+    }
+  ]
+}

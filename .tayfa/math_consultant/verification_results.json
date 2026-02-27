@@ -1,0 +1,123 @@
+[
+  {
+    "level": 4,
+    "title": "Квадратный зал",
+    "claimed_group": "Z4",
+    "claimed_order": 4,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 4,
+    "generators_claimed": [
+      "r1"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 5,
+    "title": "Зеркальный квадрат",
+    "claimed_group": "D4",
+    "claimed_order": 8,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 8,
+    "generators_claimed": [
+      "r1",
+      "sh"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 6,
+    "title": "Разноцветный квадрат",
+    "claimed_group": "V4",
+    "claimed_order": 4,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 4,
+    "generators_claimed": [
+      "r2",
+      "sd"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 7,
+    "title": "Кривая тропа",
+    "claimed_group": "Z2",
+    "claimed_order": 2,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 2,
+    "generators_claimed": [
+      "flip"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 8,
+    "title": "Звёзды-близнецы",
+    "claimed_group": "Z2",
+    "claimed_order": 2,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 2,
+    "generators_claimed": [
+      "mirror"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 9,
+    "title": "Скрытый треугольник",
+    "claimed_group": "S3",
+    "claimed_order": 6,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 6,
+    "generators_claimed": [
+      "r1",
+      "s01"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 10,
+    "title": "Цепь силы",
+    "claimed_group": "Z5",
+    "claimed_order": 5,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 5,
+    "generators_claimed": [
+      "r1"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 11,
+    "title": "Две шестерёнки",
+    "claimed_group": "Z6",
+    "claimed_order": 6,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 6,
+    "generators_claimed": [
+      "r1"
+    ],
+    "status": "PASS"
+  },
+  {
+    "level": 12,
+    "title": "Зал двух ключей",
+    "claimed_group": "D4",
+    "claimed_order": 8,
+    "issues": [],
+    "warnings": [],
+    "computed_order": 8,
+    "generators_claimed": [
+      "r1",
+      "sh"
+    ],
+    "status": "PASS"
+  }
+]

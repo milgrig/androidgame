@@ -1,0 +1,158 @@
+{
+  "meta": {
+    "id": "act1_redesign_level02",
+    "act": 1,
+    "level": 2,
+    "title": "Пятиугольник",
+    "subtitle": "Пять поворотов из одного действия",
+    "group_name": "Z5",
+    "group_order": 5,
+    "generator_count": 1,
+    "is_exotic": false,
+    "visual_difficulty": "low",
+    "mathematical_difficulty": "low"
+  },
+
+  "initial_state": {
+    "scrambled": true,
+    "initial_permutation": [3, 4, 0, 1, 2],
+    "hint_for_identity": "Найди расстановку где все стрелки совпадают"
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "red", "position": [520, 160], "label": "A"},
+      {"id": 1, "color": "red", "position": [720, 280], "label": "B"},
+      {"id": 2, "color": "red", "position": [660, 520], "label": "C"},
+      {"id": 3, "color": "red", "position": [380, 520], "label": "D"},
+      {"id": 4, "color": "red", "position": [320, 280], "label": "E"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "directed": true, "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "directed": true, "weight": 1},
+      {"from": 2, "to": 3, "type": "standard", "directed": true, "weight": 1},
+      {"from": 3, "to": 4, "type": "standard", "directed": true, "weight": 1},
+      {"from": 4, "to": 0, "type": "standard", "directed": true, "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {
+        "id": "e",
+        "mapping": [0, 1, 2, 3, 4],
+        "name": "Тождество",
+        "description": "Всё на месте",
+        "is_identity": true,
+        "order": 1
+      },
+      {
+        "id": "r1",
+        "mapping": [1, 2, 3, 4, 0],
+        "name": "Поворот на 72°",
+        "description": "Сдвиг по циклу на 1",
+        "is_generator": true,
+        "order": 5,
+        "generates": ["r1", "r2", "r3", "r4", "e"]
+      },
+      {
+        "id": "r2",
+        "mapping": [2, 3, 4, 0, 1],
+        "name": "Поворот на 144°",
+        "description": "Сдвиг на 2",
+        "order": 5,
+        "generated_by": "r1^2"
+      },
+      {
+        "id": "r3",
+        "mapping": [3, 4, 0, 1, 2],
+        "name": "Поворот на 216°",
+        "description": "Сдвиг на 3",
+        "order": 5,
+        "generated_by": "r1^3"
+      },
+      {
+        "id": "r4",
+        "mapping": [4, 0, 1, 2, 3],
+        "name": "Поворот на 288°",
+        "description": "Сдвиг на 4",
+        "order": 5,
+        "generated_by": "r1^4"
+      }
+    ],
+
+    "generators": ["r1"],
+
+    "manual_discovery": {
+      "expected_manual_finds": 2,
+      "expected_identities": ["e", "r1"],
+      "rest_via_buttons": 3,
+      "composition_examples": [
+        {"buttons": ["r1"], "result": "r1"},
+        {"buttons": ["r1", "r1"], "result": "r2"},
+        {"buttons": ["r1", "r1", "r1"], "result": "r3"},
+        {"buttons": ["r1", "r1", "r1", "r1"], "result": "r4"},
+        {"buttons": ["r1", "r1", "r1", "r1", "r1"], "result": "e"}
+      ]
+    },
+
+    "cayley_table": {
+      "e": {"e": "e", "r1": "r1", "r2": "r2", "r3": "r3", "r4": "r4"},
+      "r1": {"e": "r1", "r1": "r2", "r2": "r3", "r3": "r4", "r4": "e"},
+      "r2": {"e": "r2", "r1": "r3", "r2": "r4", "r3": "e", "r4": "r1"},
+      "r3": {"e": "r3", "r1": "r4", "r2": "e", "r3": "r1", "r4": "r2"},
+      "r4": {"e": "r4", "r1": "e", "r2": "r1", "r3": "r2", "r4": "r3"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["drag", "action_button"],
+    "start_scrambled": true,
+    "show_action_buttons": true,
+    "action_buttons_appear_on_discovery": true,
+    "allow_button_composition": true,
+    "highlight_new_symmetries": true,
+    "max_manual_finds": 2
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "arrow_thread",
+    "asymmetric_layout": false,
+    "color_diversity": "low"
+  },
+
+  "pedagogical": {
+    "difficulty": 1,
+    "focus": "Learning to use action button repeatedly",
+    "new_concept": "One generator can produce many elements",
+    "challenge": "Find that clicking button 5 times returns to start",
+    "key_learning": "Order of element = how many clicks to return to identity",
+    "visual_symmetry": "high",
+    "mathematical_symmetry": "low"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Стрелки показывают направление цикла!"},
+    {"trigger": "after_first_valid", "text": "Тождество найдено! Теперь найди поворот."},
+    {"trigger": "after_second_valid", "text": "Кнопка появилась! Нажимай её несколько раз подряд!"},
+    {"trigger": "after_5_button_clicks", "text": "Пять нажатий — и ты вернулся в начало!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Пятиугольник со стрелками — направление цикла.",
+      "target_crystals": []
+    },
+    {
+      "text": "Найди тождество, потом один поворот.",
+      "target_crystals": []
+    },
+    {
+      "text": "Нажимай кнопку r1 много раз: r1, r1², r1³, r1⁴, r1⁵=e. Всего 5 поворотов!",
+      "target_crystals": [0, 1, 2, 3, 4]
+    }
+  ]
+}

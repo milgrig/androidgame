@@ -1,0 +1,255 @@
+{
+  "meta": {
+    "id": "act1_redesign_level09",
+    "act": 1,
+    "level": 9,
+    "title": "Скрытый тетраэдр",
+    "subtitle": "Симметрия спрятана в хаосе — найди её!",
+    "group_name": "A4",
+    "group_order": 12,
+    "generator_count": 2,
+    "is_exotic": true,
+    "visual_difficulty": "extreme",
+    "mathematical_difficulty": "high"
+  },
+
+  "initial_state": {
+    "scrambled": true,
+    "initial_permutation": [3, 1, 0, 2],
+    "hint_for_identity": "Визуально НЕ понятно какая расстановка правильная — экспериментируй!"
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "crimson", "position": [280, 320], "label": "α"},
+      {"id": 1, "color": "navy", "position": [720, 180], "label": "β"},
+      {"id": 2, "color": "olive", "position": [680, 540], "label": "γ"},
+      {"id": 3, "color": "orange", "position": [340, 500], "label": "δ"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "thick", "weight": 1, "color": "#FF6B6B"},
+      {"from": 0, "to": 2, "type": "dashed", "weight": 1, "color": "#4ECDC4"},
+      {"from": 0, "to": 3, "type": "dotted", "weight": 1, "color": "#FFE66D"},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1, "color": "#95E1D3"},
+      {"from": 1, "to": 3, "type": "thick", "weight": 1, "color": "#FF6B6B"},
+      {"from": 2, "to": 3, "type": "dashed", "weight": 1, "color": "#4ECDC4"}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {
+        "id": "e",
+        "mapping": [0, 1, 2, 3],
+        "name": "Тождество",
+        "description": "Всё на месте",
+        "is_identity": true,
+        "order": 1,
+        "parity": "even",
+        "preserves": "все типы рёбер"
+      },
+      {
+        "id": "g1",
+        "mapping": [1, 2, 0, 3],
+        "name": "Скрытый цикл α→β→γ",
+        "description": "Циклическая перестановка трёх узлов",
+        "is_generator": true,
+        "order": 3,
+        "cycle_notation": "(0,1,2)",
+        "parity": "even",
+        "preserves": "thick→standard→dashed (цикл), dotted остаётся"
+      },
+      {
+        "id": "g2",
+        "mapping": [2, 1, 0, 3],
+        "name": "Обратный цикл α→γ→β",
+        "description": "Обратная циклическая перестановка",
+        "order": 3,
+        "cycle_notation": "(0,2,1)",
+        "parity": "even",
+        "generated_by": "g1^2"
+      },
+      {
+        "id": "h1",
+        "mapping": [3, 2, 1, 0],
+        "name": "Скрытый цикл α→δ→β",
+        "description": "Другой 3-цикл",
+        "order": 3,
+        "cycle_notation": "(0,3,1)",
+        "parity": "even"
+      },
+      {
+        "id": "h2",
+        "mapping": [3, 1, 0, 2],
+        "name": "Скрытый цикл α→δ→γ",
+        "description": "Третий 3-цикл",
+        "order": 3,
+        "cycle_notation": "(0,3,2)",
+        "parity": "even"
+      },
+      {
+        "id": "h3",
+        "mapping": [1, 3, 2, 0],
+        "name": "Скрытый цикл α→β→δ",
+        "description": "Четвёртый 3-цикл",
+        "order": 3,
+        "cycle_notation": "(0,1,3)",
+        "parity": "even"
+      },
+      {
+        "id": "h4",
+        "mapping": [2, 0, 3, 1],
+        "name": "Скрытый цикл α→γ→δ",
+        "description": "Пятый 3-цикл",
+        "order": 3,
+        "cycle_notation": "(0,2,3)",
+        "parity": "even"
+      },
+      {
+        "id": "h5",
+        "mapping": [0, 3, 1, 2],
+        "name": "Скрытый цикл β→δ→γ",
+        "description": "Шестой 3-цикл",
+        "order": 3,
+        "cycle_notation": "(1,3,2)",
+        "parity": "even"
+      },
+      {
+        "id": "h6",
+        "mapping": [0, 2, 3, 1],
+        "name": "Скрытый цикл β→γ→δ",
+        "description": "Седьмой 3-цикл",
+        "order": 3,
+        "cycle_notation": "(1,2,3)",
+        "parity": "even"
+      },
+      {
+        "id": "swap1",
+        "mapping": [1, 0, 3, 2],
+        "name": "Скрытый обмен (α,β)(γ,δ)",
+        "description": "Двойная транспозиция",
+        "is_generator": true,
+        "order": 2,
+        "cycle_notation": "(0,1)(2,3)",
+        "parity": "even",
+        "preserves": "thick→thick, dashed→dashed (пары обмениваются)"
+      },
+      {
+        "id": "swap2",
+        "mapping": [2, 3, 0, 1],
+        "name": "Скрытый обмен (α,γ)(β,δ)",
+        "description": "Другая двойная транспозиция",
+        "order": 2,
+        "cycle_notation": "(0,2)(1,3)",
+        "parity": "even"
+      },
+      {
+        "id": "swap3",
+        "mapping": [3, 2, 1, 0],
+        "name": "Скрытый обмен (α,δ)(β,γ)",
+        "description": "Третья двойная транспозиция",
+        "order": 2,
+        "cycle_notation": "(0,3)(1,2)",
+        "parity": "even"
+      }
+    ],
+
+    "generators": ["g1", "swap1"],
+
+    "manual_discovery": {
+      "expected_manual_finds": 3,
+      "expected_identities": ["e", "g1", "swap1"],
+      "rest_via_buttons": 9,
+      "discovery_difficulty": "extreme",
+      "visual_hints": "NONE - player must experiment!",
+      "composition_examples": [
+        {"buttons": ["g1"], "result": "g1"},
+        {"buttons": ["g1", "g1"], "result": "g2"},
+        {"buttons": ["swap1"], "result": "swap1"},
+        {"buttons": ["g1", "swap1"], "result": "h3"},
+        {"buttons": ["swap1", "g1"], "result": "h1"}
+      ]
+    },
+
+    "cayley_table": {
+      "e": {"e": "e", "g1": "g1", "g2": "g2", "swap1": "swap1", "swap2": "swap2", "swap3": "swap3"},
+      "g1": {"e": "g1", "g1": "g2", "g2": "e", "swap1": "h3", "swap2": "h5", "swap3": "h1"},
+      "g2": {"e": "g2", "g1": "e", "g2": "g1", "swap1": "h1", "swap2": "h3", "swap3": "h5"},
+      "swap1": {"e": "swap1", "g1": "h1", "g2": "h3", "swap1": "e", "swap2": "h6", "swap3": "h4"},
+      "swap2": {"e": "swap2", "g1": "h5", "g2": "h3", "swap1": "h4", "swap2": "e", "swap3": "h2"},
+      "swap3": {"e": "swap3", "g1": "h3", "g2": "h5", "swap1": "h6", "swap2": "h4", "swap3": "e"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["drag", "action_button"],
+    "start_scrambled": true,
+    "show_action_buttons": true,
+    "action_buttons_appear_on_discovery": true,
+    "allow_button_composition": true,
+    "highlight_new_symmetries": true,
+    "max_manual_finds": 3,
+    "difficulty_modifiers": {
+      "no_visual_symmetry_hints": true,
+      "edge_types_critical": true,
+      "positions_deliberately_chaotic": true
+    }
+  },
+
+  "visuals": {
+    "background_theme": "dark_vault",
+    "ambient_particles": "chaotic_sparkles",
+    "crystal_style": "irregular_gem",
+    "edge_style": "multi_type_chaos",
+    "asymmetric_layout": true,
+    "color_diversity": "extreme",
+    "special_effects": {
+      "edge_glow": true,
+      "type_indicators": true,
+      "chaos_aesthetic": true
+    },
+    "design_notes": "Deliberately chaotic! 4 different colors, 4 edge types, asymmetric positions. Player CANNOT rely on visual symmetry."
+  },
+
+  "pedagogical": {
+    "difficulty": 5,
+    "focus": "Symmetry is STRUCTURAL, not visual!",
+    "new_concept": "Visual chaos can hide mathematical order",
+    "challenge": "Find symmetry without visual cues - pure experimentation required",
+    "key_learning": "Automorphisms preserve EDGE TYPES, not visual appearance",
+    "frustration_tolerance": "high",
+    "visual_symmetry": "none",
+    "mathematical_symmetry": "high",
+    "player_experience": "Frustration → Experimentation → Aha moment!",
+    "design_philosophy": "Hardest level in Act 1 - forces deep understanding"
+  },
+
+  "hints": [
+    {"trigger": "after_120_seconds_no_identity", "text": "Визуально хаос, но структура есть! Типы рёбер — ключ!"},
+    {"trigger": "after_first_valid", "text": "Тождество найдено! Это было сложно. Теперь ещё сложнее — найди ДВА действия."},
+    {"trigger": "after_180_seconds_one_generator", "text": "Попробуй обменять узлы попарно: (α,β) и (γ,δ) одновременно!"},
+    {"trigger": "after_second_valid", "text": "Второе действие найдено! Комбинируй кнопки — симметрия скрыта в композициях!"},
+    {"trigger": "after_both_generators", "text": "Оба генератора есть! Нажимай кнопки в разном порядке — все 12 симметрий появятся!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Граф выглядит как полный хаос. Но это K₄ — все соединены со всеми!",
+      "target_crystals": []
+    },
+    {
+      "text": "Типы рёбер КРИТИЧНЫ: thick, dashed, dotted, standard. Симметрия сохраняет их!",
+      "target_crystals": []
+    },
+    {
+      "text": "Это та же группа A₄ что Level 5, но визуально скрыта. Экспериментируй — найдёшь 3-цикл и двойной обмен!",
+      "target_crystals": [0, 1, 2, 3]
+    }
+  ],
+
+  "achievement": {
+    "unlock_on_completion": "Master of Hidden Symmetry",
+    "description": "Found order in chaos - completed hardest level of Act 1!",
+    "badge": "hidden_tetrahedron_master"
+  }
+}

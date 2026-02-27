@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://crystal_node_scene"]
+
+[ext_resource type="Script" path="res://src/visual/crystal_node.gd" id="1_script"]
+
+[node name="CrystalNode" type="Node2D"]
+script = ExtResource("1_script")

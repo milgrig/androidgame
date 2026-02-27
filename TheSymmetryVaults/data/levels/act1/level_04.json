@@ -1,0 +1,77 @@
+{
+  "meta": {
+    "id": "act1_level04",
+    "act": 1,
+    "level": 4,
+    "title": "\u041a\u0432\u0430\u0434\u0440\u0430\u0442\u043d\u044b\u0439 \u0437\u0430\u043b",
+    "subtitle": "\u0427\u0435\u0442\u044b\u0440\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u0430, \u0447\u0435\u0442\u044b\u0440\u0435 \u043f\u043e\u0432\u043e\u0440\u043e\u0442\u0430",
+    "group_name": "Z4",
+    "group_order": 4
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "blue", "position": [520, 240], "label": "A"},
+      {"id": 1, "color": "blue", "position": [760, 240], "label": "B"},
+      {"id": 2, "color": "blue", "position": [760, 480], "label": "C"},
+      {"id": 3, "color": "blue", "position": [520, 480], "label": "D"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1, "directed": true},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1, "directed": true},
+      {"from": 2, "to": 3, "type": "standard", "weight": 1, "directed": true},
+      {"from": 3, "to": 0, "type": "standard", "weight": 1, "directed": true}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2,3], "name": "\u0422\u043e\u0436\u0434\u0435\u0441\u0442\u0432\u043e",       "description": "\u0412\u0441\u0451 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435"},
+      {"id": "r1", "mapping": [1,2,3,0], "name": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u043d\u0430 90\u00b0",   "description": "\u0427\u0435\u0442\u0432\u0435\u0440\u0442\u044c \u043e\u0431\u043e\u0440\u043e\u0442\u0430 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439"},
+      {"id": "r2", "mapping": [2,3,0,1], "name": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u043d\u0430 180\u00b0",  "description": "\u041f\u043e\u043b-\u043e\u0431\u043e\u0440\u043e\u0442\u0430"},
+      {"id": "r3", "mapping": [3,0,1,2], "name": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u043d\u0430 270\u00b0",  "description": "\u0422\u0440\u0438 \u0447\u0435\u0442\u0432\u0435\u0440\u0442\u0438 \u043e\u0431\u043e\u0440\u043e\u0442\u0430 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439"}
+    ],
+    "generators": ["r1"],
+    "cayley_table": {
+      "e":  {"e": "e",  "r1": "r1", "r2": "r2", "r3": "r3"},
+      "r1": {"e": "r1", "r1": "r2", "r2": "r3", "r3": "e"},
+      "r2": {"e": "r2", "r1": "r3", "r2": "e",  "r3": "r1"},
+      "r3": {"e": "r3", "r1": "e",  "r2": "r1", "r3": "r2"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": false,
+    "show_generators_hint": false,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "directed_thread"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "\u042d\u0442\u043e \u043a\u0432\u0430\u0434\u0440\u0430\u0442 \u0441\u043e \u0441\u0442\u0440\u0435\u043b\u043a\u0430\u043c\u0438 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u0434\u0432\u0438\u043d\u0443\u0442\u044c \u0432\u0441\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b \u043d\u0430 \u043e\u0434\u0438\u043d \u0448\u0430\u0433."},
+    {"trigger": "after_first_valid", "text": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442! \u0421\u0442\u0440\u0435\u043b\u043a\u0438 \u043f\u043e-\u043f\u0440\u0435\u0436\u043d\u0435\u043c\u0443 \u0432 \u0442\u0443 \u0436\u0435 \u0441\u0442\u043e\u0440\u043e\u043d\u0443. \u0421\u043a\u043e\u043b\u044c\u043a\u043e \u0432\u0441\u0435\u0433\u043e \u043f\u043e\u0432\u043e\u0440\u043e\u0442\u043e\u0432?"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "\u041a\u0432\u0430\u0434\u0440\u0430\u0442 \u0441\u043e \u0441\u0442\u0440\u0435\u043b\u043a\u0430\u043c\u0438 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439... \u0447\u0442\u043e \u0435\u0441\u043b\u0438 \u0441\u0434\u0432\u0438\u043d\u0443\u0442\u044c \u0432\u0441\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b?",
+      "target_crystals": []
+    },
+    {
+      "text": "\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u0434\u0432\u0438\u043d\u0443\u0442\u044c \u0432\u0441\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b \u043d\u0430 \u043e\u0434\u0438\u043d \u0448\u0430\u0433 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439 \u0441\u0442\u0440\u0435\u043b\u043a\u0435. \u041f\u043e\u0442\u043e\u043c \u0435\u0449\u0451 \u0440\u0430\u0437.",
+      "target_crystals": []
+    },
+    {
+      "text": "\u041e\u0431\u043c\u0435\u043d A\u2194B, \u043f\u043e\u0442\u043e\u043c B\u2194C, \u043f\u043e\u0442\u043e\u043c C\u2194D \u0434\u0430\u0441\u0442 \u043e\u0434\u0438\u043d \u043f\u043e\u0432\u043e\u0440\u043e\u0442. \u041f\u043e\u0432\u0442\u043e\u0440\u0438\u0442\u0435 \u0434\u043b\u044f \u043e\u0441\u0442\u0430\u043b\u044c\u043d\u044b\u0445.",
+      "target_crystals": [0, 1, 2, 3]
+    }
+  ]
+}

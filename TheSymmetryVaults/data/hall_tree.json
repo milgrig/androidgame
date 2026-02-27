@@ -1,0 +1,133 @@
+{
+  "version": 2,
+
+  "wings": [
+    {
+      "id": "wing_1",
+      "name": "The First Vault",
+      "subtitle": "Groups",
+      "act": 1,
+      "order": 1,
+      "gate": {
+        "type": "threshold",
+        "required_halls": 8,
+        "total_halls": 12,
+        "required_from_wing": null,
+        "required_specific": [],
+        "message": "Open 8 halls in the First Vault to proceed"
+      },
+      "halls": [
+        "act1_level01", "act1_level02", "act1_level03",
+        "act1_level04", "act1_level05", "act1_level06",
+        "act1_level07", "act1_level08", "act1_level09",
+        "act1_level10", "act1_level11", "act1_level12"
+      ],
+      "start_halls": ["act1_level01"]
+    },
+    {
+      "id": "wing_2",
+      "name": "Inner Locks",
+      "subtitle": "Subgroups",
+      "act": 2,
+      "order": 2,
+      "gate": {
+        "type": "threshold",
+        "required_halls": 8,
+        "total_halls": 12,
+        "required_from_wing": "wing_1",
+        "required_specific": [],
+        "message": "Open 8 halls in the First Vault to enter the Inner Locks"
+      },
+      "halls": [
+        "act2_level13", "act2_level14", "act2_level15", "act2_level16"
+      ],
+      "start_halls": ["act2_level13"],
+      "_placeholder_future_halls": [
+        "act2_level17", "act2_level18", "act2_level19", "act2_level20",
+        "act2_level21", "act2_level22", "act2_level23", "act2_level24"
+      ]
+    }
+  ],
+
+  "edges": [
+    {"from": "act1_level01", "to": "act1_level02", "type": "path"},
+    {"from": "act1_level01", "to": "act1_level03", "type": "path"},
+
+    {"from": "act1_level02", "to": "act1_level04", "type": "path"},
+    {"from": "act1_level03", "to": "act1_level06", "type": "path"},
+    {"from": "act1_level03", "to": "act1_level07", "type": "path"},
+
+    {"from": "act1_level02", "to": "act1_level05", "type": "path"},
+    {"from": "act1_level04", "to": "act1_level05", "type": "path"},
+
+    {"from": "act1_level06", "to": "act1_level08", "type": "path"},
+    {"from": "act1_level07", "to": "act1_level08", "type": "path"},
+
+    {"from": "act1_level05", "to": "act1_level09", "type": "path"},
+    {"from": "act1_level08", "to": "act1_level09", "type": "path"},
+
+    {"from": "act1_level04", "to": "act1_level10", "type": "path"},
+    {"from": "act1_level09", "to": "act1_level11", "type": "path"},
+    {"from": "act1_level10", "to": "act1_level11", "type": "path"},
+
+    {"from": "act1_level05", "to": "act1_level12", "type": "path"},
+    {"from": "act1_level09", "to": "act1_level12", "type": "path"},
+
+    {"from": "act2_level13", "to": "act2_level14", "type": "path"},
+    {"from": "act2_level13", "to": "act2_level15", "type": "path"},
+    {"from": "act2_level14", "to": "act2_level16", "type": "path"},
+    {"from": "act2_level15", "to": "act2_level16", "type": "path"}
+  ],
+
+  "resonances": [
+    {
+      "halls": ["act1_level01", "act1_level11"],
+      "type": "subgroup",
+      "description": "Z3 is a subgroup of Z6",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level05", "act1_level12"],
+      "type": "isomorphic",
+      "description": "Both halls share the dihedral group D4",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level03", "act1_level07"],
+      "type": "isomorphic",
+      "description": "Both halls share the cyclic group Z2",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level04", "act1_level06"],
+      "type": "isomorphic",
+      "description": "Z4 and V4 — same order, different structure",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level01", "act1_level09"],
+      "type": "subgroup",
+      "description": "Z3 is a subgroup of S3 (rotations within all symmetries)",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level06", "act1_level05"],
+      "type": "subgroup",
+      "description": "V4 (Klein four-group) is a subgroup of D4",
+      "discovered_when": "both_completed"
+    },
+
+    {
+      "halls": ["act1_level09", "act2_level13"],
+      "type": "same_group_deeper",
+      "description": "S3: the same group, now explored through its subgroups",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level05", "act2_level14"],
+      "type": "same_group_deeper",
+      "description": "D4: the same symmetries, now revealing inner structure",
+      "discovered_when": "both_completed"
+    }
+  ]
+}

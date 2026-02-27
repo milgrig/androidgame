@@ -1,0 +1,278 @@
+{
+  "meta": {
+    "id": "act2_level16",
+    "act": 2,
+    "level": 16,
+    "title": "Скрытая подгруппа",
+    "subtitle": "Визуально не видно — нужно искать через комбинации",
+    "group_name": "S4_subset",
+    "group_order": 8,
+    "pedagogical_goal": "Не все подгруппы видны на глаз! Игрок должен найти подгруппу экспериментально, комбинируя ключи."
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "cyan", "position": [400, 200], "label": "N"},
+      {"id": 1, "color": "magenta", "position": [640, 200], "label": "E"},
+      {"id": 2, "color": "yellow", "position": [640, 400], "label": "S"},
+      {"id": 3, "color": "green", "position": [400, 400], "label": "W"},
+      {"id": 4, "color": "white", "position": [520, 300], "label": "C"}
+    ],
+    "edges": [
+      {"from": 0, "to": 4, "type": "standard", "weight": 1},
+      {"from": 1, "to": 4, "type": "standard", "weight": 1},
+      {"from": 2, "to": 4, "type": "standard", "weight": 1},
+      {"from": 3, "to": 4, "type": "standard", "weight": 1},
+      {"from": 0, "to": 1, "type": "dashed", "weight": 1},
+      {"from": 1, "to": 2, "type": "dashed", "weight": 1},
+      {"from": 2, "to": 3, "type": "dashed", "weight": 1},
+      {"from": 3, "to": 0, "type": "dashed", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",   "mapping": [0,1,2,3,4], "name": "Тождество",              "description": "Всё остаётся на месте"},
+      {"id": "r90", "mapping": [1,2,3,0,4], "name": "Поворот внешних на 90°",  "description": "Внешний квадрат вращается, центр неподвижен"},
+      {"id": "r180","mapping": [2,3,0,1,4], "name": "Поворот внешних на 180°", "description": "Половина оборота внешнего квадрата"},
+      {"id": "r270","mapping": [3,0,1,2,4], "name": "Поворот внешних на 270°", "description": "Три четверти оборота внешнего квадрата"},
+      {"id": "fNS", "mapping": [2,1,0,3,4], "name": "Отражение N↔S",           "description": "Поменять север и юг, центр неподвижен"},
+      {"id": "fEW", "mapping": [0,3,2,1,4], "name": "Отражение E↔W",           "description": "Поменять восток и запад"},
+      {"id": "fNE_SW","mapping": [1,0,3,2,4], "name": "Отражение NE-SW",       "description": "Диагональное отражение через NE-SW"},
+      {"id": "fNW_SE","mapping": [3,2,1,0,4], "name": "Отражение NW-SE",       "description": "Диагональное отражение через NW-SE"}
+    ],
+    "generators": ["r90", "fNS"],
+    "cayley_table": {
+      "e":      {"e":"e",     "r90":"r90",   "r180":"r180",  "r270":"r270",  "fNS":"fNS",     "fEW":"fEW",     "fNE_SW":"fNE_SW", "fNW_SE":"fNW_SE"},
+      "r90":    {"e":"r90",   "r90":"r180",  "r180":"r270",  "r270":"e",     "fNS":"fNE_SW",  "fEW":"fNW_SE",  "fNE_SW":"fEW",    "fNW_SE":"fNS"},
+      "r180":   {"e":"r180",  "r90":"r270",  "r180":"e",     "r270":"r90",   "fNS":"fEW",     "fEW":"fNS",     "fNE_SW":"fNW_SE", "fNW_SE":"fNE_SW"},
+      "r270":   {"e":"r270",  "r90":"e",     "r180":"r90",   "r270":"r180",  "fNS":"fNW_SE",  "fEW":"fNE_SW",  "fNE_SW":"fNS",    "fNW_SE":"fEW"},
+      "fNS":    {"e":"fNS",   "r90":"fNW_SE","r180":"fEW",   "r270":"fNE_SW","fNS":"e",       "fEW":"r180",    "fNE_SW":"r270",   "fNW_SE":"r90"},
+      "fEW":    {"e":"fEW",   "r90":"fNE_SW","r180":"fNS",   "r270":"fNW_SE","fNS":"r180",    "fEW":"e",       "fNE_SW":"r90",    "fNW_SE":"r270"},
+      "fNE_SW": {"e":"fNE_SW","r90":"fEW",   "r180":"fNW_SE","r270":"fNS",   "fNS":"r90",     "fEW":"r270",    "fNE_SW":"e",      "fNW_SE":"r180"},
+      "fNW_SE": {"e":"fNW_SE","r90":"fNS",   "r180":"fNE_SW","r270":"fEW",   "fNS":"r270",    "fEW":"r90",     "fNE_SW":"r180",   "fNW_SE":"e"}
+    }
+  },
+
+  "subgroups": [
+    {
+      "name": "Trivial",
+      "order": 1,
+      "elements": ["e"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Тривиальная подгруппа",
+      "lattice_level": 0
+    },
+    {
+      "name": "Z2_180",
+      "order": 2,
+      "elements": ["e", "r180"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "СКРЫТАЯ подгруппа: только поворот на 180°",
+      "lattice_level": 1,
+      "pedagogical_hint": "Эту подгруппу НЕ ВИДНО визуально! Нужно заметить: r180 коммутирует со всеми элементами.",
+      "visual_marker": "Дверь без визуальной подсказки — только экспериментирование",
+      "verification": {
+        "closure": "r180∘r180=e",
+        "identity": "e ∈ Z2",
+        "inverses": "r180⁻¹=r180",
+        "normality": "НОРМАЛЬНАЯ: центр группы D4"
+      },
+      "discovery_hint": "Комбинируйте r180 с любым элементом — порядок не важен! Это центр."
+    },
+    {
+      "name": "Z2_fNS",
+      "order": 2,
+      "elements": ["e", "fNS"],
+      "is_normal": false,
+      "is_inner_door": true,
+      "description": "Подгруппа отражения север-юг",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "fNS∘fNS=e",
+        "identity": "e ∈ Z2",
+        "inverses": "fNS⁻¹=fNS",
+        "normality": "НЕ нормальная: r90∘fNS∘r90⁻¹ = fEW ≠ fNS"
+      }
+    },
+    {
+      "name": "Z2_fEW",
+      "order": 2,
+      "elements": ["e", "fEW"],
+      "is_normal": false,
+      "is_inner_door": true,
+      "description": "Подгруппа отражения восток-запад",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "fEW∘fEW=e",
+        "identity": "e ∈ Z2",
+        "inverses": "fEW⁻¹=fEW",
+        "normality": "НЕ нормальная"
+      }
+    },
+    {
+      "name": "Z2_fNESW",
+      "order": 2,
+      "elements": ["e", "fNE_SW"],
+      "is_normal": false,
+      "is_inner_door": true,
+      "description": "Подгруппа диагонального отражения NE-SW",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "fNE_SW∘fNE_SW=e",
+        "identity": "e ∈ Z2",
+        "inverses": "fNE_SW⁻¹=fNE_SW",
+        "normality": "НЕ нормальная"
+      }
+    },
+    {
+      "name": "Z2_fNWSE",
+      "order": 2,
+      "elements": ["e", "fNW_SE"],
+      "is_normal": false,
+      "is_inner_door": true,
+      "description": "Подгруппа диагонального отражения NW-SE",
+      "lattice_level": 1,
+      "verification": {
+        "closure": "fNW_SE∘fNW_SE=e",
+        "identity": "e ∈ Z2",
+        "inverses": "fNW_SE⁻¹=fNW_SE",
+        "normality": "НЕ нормальная"
+      }
+    },
+    {
+      "name": "Z4_rotations",
+      "order": 4,
+      "elements": ["e", "r90", "r180", "r270"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "ГЛАВНАЯ СКРЫТАЯ ПОДГРУППА: все вращения внешнего квадрата",
+      "lattice_level": 2,
+      "pedagogical_hint": "Центральный кристалл неподвижен при всех вращениях — но визуально это не очевидно!",
+      "visual_marker": "Дверь с узором вращающегося квадрата",
+      "verification": {
+        "closure": "r90∘r90=r180, r90∘r180=r270, r90∘r270=e, r180∘r180=e, r180∘r270=r90, r270∘r270=r180",
+        "identity": "e ∈ Z4",
+        "inverses": "r90⁻¹=r270, r180⁻¹=r180, r270⁻¹=r90",
+        "normality": "НОРМАЛЬНАЯ: индекс 2"
+      },
+      "discovery_process": "Игрок должен заметить: {r90, r180, r270} комбинируются только друг в друга. Не смешиваются с отражениями!"
+    },
+    {
+      "name": "V4_subset",
+      "order": 4,
+      "elements": ["e", "r180", "fNS", "fEW"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "Скрытая четвёрочная группа: 180° + два ортогональных отражения",
+      "lattice_level": 2,
+      "pedagogical_hint": "Все 4 элемента имеют порядок 2 — каждый сам себе обратный!",
+      "verification": {
+        "closure": "r180∘fNS=fEW, r180∘fEW=fNS, fNS∘fEW=r180",
+        "identity": "e ∈ V4",
+        "inverses": "Все инволюции",
+        "normality": "НОРМАЛЬНАЯ: индекс 2"
+      },
+      "discovery_process": "НЕ очевидно! Нужно экспериментировать с комбинациями."
+    },
+    {
+      "name": "Full_D4",
+      "order": 8,
+      "elements": ["e", "r90", "r180", "r270", "fNS", "fEW", "fNE_SW", "fNW_SE"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Полная группа D4",
+      "lattice_level": 3
+    }
+  ],
+
+  "subgroup_lattice": {
+    "description": "Решётка подгрупп D4 (изоморфна D4 из level_14, но граф визуально не показывает структуру)",
+    "edges": [
+      {"from": "Trivial", "to": "Z2_180"},
+      {"from": "Trivial", "to": "Z2_fNS"},
+      {"from": "Trivial", "to": "Z2_fEW"},
+      {"from": "Trivial", "to": "Z2_fNESW"},
+      {"from": "Trivial", "to": "Z2_fNWSE"},
+      {"from": "Z2_180", "to": "Z4_rotations"},
+      {"from": "Z2_180", "to": "V4_subset"},
+      {"from": "Z2_fNS", "to": "V4_subset"},
+      {"from": "Z2_fEW", "to": "V4_subset"},
+      {"from": "Z4_rotations", "to": "Full_D4"},
+      {"from": "V4_subset", "to": "Full_D4"}
+    ],
+    "note": "Та же решётка что у level_14, но визуально скрыта! Центральный неподвижный узел маскирует симметрию.",
+    "pedagogical_challenge": "Игрок должен открыть подгруппы НЕ визуально, а через таблицу Кэли и эксперименты"
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap", "combine"],
+    "show_cayley_button": true,
+    "show_generators_hint": false,
+    "strongly_encourage_cayley": true,
+    "inner_doors": [
+      {
+        "id": "rotation_door",
+        "required_subgroup": "Z4_rotations",
+        "visual_hint": "Дверь БЕЗ узора — только надпись: 'Найдите вращения'",
+        "unlock_message": "Четыре вращения найдены! Центральный узел был неподвижен всё время.",
+        "reward": "Понимание: подгруппа может быть скрыта визуально",
+        "pedagogical_note": "ГЛАВНАЯ ЦЕЛЬ УРОВНЯ: не полагаться только на визуал, использовать таблицу Кэли"
+      },
+      {
+        "id": "klein_door",
+        "required_subgroup": "V4_subset",
+        "visual_hint": "Дверь с надписью: 'Все порядка 2'",
+        "unlock_message": "Четвёрочная группа обнаружена экспериментально!",
+        "reward": "Мастерство: найти подгруппу через комбинирование"
+      },
+      {
+        "id": "center_door",
+        "required_subgroup": "Z2_180",
+        "visual_hint": "Маленькая дверь: 'Центр группы'",
+        "unlock_message": "r180 — единственный нетривиальный элемент центра!",
+        "reward": "Концепция центра группы"
+      }
+    ],
+    "palette": null,
+    "tutorial_override": {
+      "force_cayley_usage": true,
+      "hint_after_visual_search": "Визуально не видно? Используйте таблицу Кэли — она покажет структуру!"
+    }
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread",
+    "dashed_edge_style": "faint_thread",
+    "central_node_emphasis": "glowing_core",
+    "inner_door_style": "minimalist_no_pattern",
+    "pedagogical_style": "визуально confusing — специально!"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Граф выглядит странно. Центральный кристалл особенный — он ВСЕГДА остаётся на месте!"},
+    {"trigger": "after_all_found", "text": "Все 8 ключей найдены. Но подгруппы не видны на глаз! Откройте таблицу Кэли и ищите закономерности."},
+    {"trigger": "after_trying_visual_search", "text": "Не пытайтесь увидеть подгруппу визуально. Комбинируйте ключи: если g₁∘g₂ всегда остаётся в подмножестве — это подгруппа!"},
+    {"trigger": "after_opening_cayley", "text": "Хорошо! В таблице видно: {e, r90, r180, r270} комбинируются только друг в друга. Это подгруппа вращений Z₄!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Центральный белый кристалл неподвижен. Внешние четыре можно вращать и отражать.",
+      "target_crystals": [4]
+    },
+    {
+      "text": "Не ищите подгруппу глазами — её не видно! Откройте таблицу Кэли и экспериментируйте.",
+      "target_crystals": []
+    },
+    {
+      "text": "Попробуйте {e, r90, r180, r270} — все вращения. Или откройте CAYLEY и найдите замкнутые блоки!",
+      "target_crystals": [0, 1, 2, 3]
+    }
+  ]
+}

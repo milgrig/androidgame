@@ -1,0 +1,35 @@
+Starting Godot...
+
+=== SCENE TREE ===
+root (Window)
+  AgentBridge (agent_bridge)
+  MainMenu (MainMenu)
+    Background (ColorRect)
+    CrystalCanvas (Node2D)
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 23, in safe_print
+    print(text)
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 30-38: character maps to <undefined>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 107, in <module>
+    explore_initial_state()
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 69, in explore_initial_state
+    print_node(tree, max_depth=6)
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 54, in print_node
+    print_node(child, indent + 1, max_depth)
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 54, in print_node
+    print_node(child, indent + 1, max_depth)
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 51, in print_node
+    safe_print(line)
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\test_T037_explore.py", line 25, in safe_print
+    print(text.encode('utf-8', errors='replace').decode('utf-8', errors='replace'))
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 30-38: character maps to <undefined>

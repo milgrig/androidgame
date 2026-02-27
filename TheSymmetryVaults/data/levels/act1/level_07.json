@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "id": "act1_level07",
+    "act": 1,
+    "level": 7,
+    "title": "\u041a\u0440\u0438\u0432\u0430\u044f \u0442\u0440\u043e\u043f\u0430",
+    "subtitle": "\u0412\u044b\u0433\u043b\u044f\u0434\u0438\u0442 \u043a\u0440\u0438\u0432\u043e, \u043d\u043e \u0441\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0441\u0435\u043a\u0440\u0435\u0442",
+    "group_name": "Z2",
+    "group_order": 2
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "green",  "position": [240, 420], "label": "A"},
+      {"id": 1, "color": "orange", "position": [400, 280], "label": "B"},
+      {"id": 2, "color": "cyan",   "position": [560, 380], "label": "C"},
+      {"id": 3, "color": "orange", "position": [720, 260], "label": "D"},
+      {"id": 4, "color": "green",  "position": [880, 400], "label": "E"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 2, "to": 3, "type": "standard", "weight": 1},
+      {"from": 3, "to": 4, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",    "mapping": [0,1,2,3,4], "name": "\u0422\u043e\u0436\u0434\u0435\u0441\u0442\u0432\u043e",   "description": "\u0412\u0441\u0451 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435"},
+      {"id": "flip", "mapping": [4,3,2,1,0], "name": "\u0420\u0430\u0437\u0432\u043e\u0440\u043e\u0442 \u043f\u0443\u0442\u0438",  "description": "\u041f\u0435\u0440\u0435\u0432\u0435\u0440\u043d\u0443\u0442\u044c \u0432\u0435\u0441\u044c \u043f\u0443\u0442\u044c \u043e\u0442 \u043d\u0430\u0447\u0430\u043b\u0430 \u0434\u043e \u043a\u043e\u043d\u0446\u0430"}
+    ],
+    "generators": ["flip"],
+    "cayley_table": {
+      "e":    {"e": "e",    "flip": "flip"},
+      "flip": {"e": "flip", "flip": "e"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": false,
+    "show_generators_hint": false,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "\u041f\u0443\u0442\u044c \u0432\u044b\u0433\u043b\u044f\u0434\u0438\u0442 \u043a\u0440\u0438\u0432\u044b\u043c. \u041d\u043e \u043f\u0440\u0438\u0441\u043c\u043e\u0442\u0440\u0438\u0442\u0435\u0441\u044c \u043a \u0446\u0432\u0435\u0442\u0430\u043c: \u0432\u0438\u0434\u0438\u0442\u0435 \u0437\u0430\u043a\u043e\u043d\u043e\u043c\u0435\u0440\u043d\u043e\u0441\u0442\u044c?"},
+    {"trigger": "after_first_valid", "text": "\u041f\u0443\u0442\u044c \u2014 \u043f\u0430\u043b\u0438\u043d\u0434\u0440\u043e\u043c! \u0421\u043b\u0435\u0432\u0430 \u043d\u0430\u043f\u0440\u0430\u0432\u043e \u0438 \u0441\u043f\u0440\u0430\u0432\u0430 \u043d\u0430\u043b\u0435\u0432\u043e \u2014 \u043e\u0434\u0438\u043d\u0430\u043a\u043e\u0432\u0430\u044f \u0446\u0432\u0435\u0442\u043e\u0432\u0430\u044f \u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "\u041f\u0443\u0442\u044c \u043a\u0440\u0438\u0432\u043e\u0439, \u043d\u043e \u043f\u0440\u0438\u0441\u043c\u043e\u0442\u0440\u0438\u0442\u0435\u0441\u044c \u043a \u0446\u0432\u0435\u0442\u043e\u0432\u043e\u0439 \u0441\u0438\u043c\u043c\u0435\u0442\u0440\u0438\u0438...",
+      "target_crystals": []
+    },
+    {
+      "text": "\u0421\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430 \u043f\u0443\u0442\u0438 \u2014 \u043f\u0430\u043b\u0438\u043d\u0434\u0440\u043e\u043c. \u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043e\u0442\u0440\u0430\u0437\u0438\u0442\u044c \u043a\u0440\u0430\u0439\u043d\u0438\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b.",
+      "target_crystals": []
+    },
+    {
+      "text": "\u041e\u0431\u043c\u0435\u043d\u044f\u0439\u0442\u0435 \u043f\u0435\u0440\u0432\u044b\u0439 \u0438 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0439 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b. \u0426\u0432\u0435\u0442\u043e\u0432\u043e\u0439 \u0443\u0437\u043e\u0440 \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u0441\u044f!",
+      "target_crystals": [0, 4]
+    }
+  ]
+}

@@ -27,3 +27,14 @@ Thumbs.db
 
 # Tayfa internal
 .tayfa/*/notes.md
+
+# Godot
+.godot/
+*.import
+
+# Agent bridge temp files
+agent_cmd.jsonl
+agent_resp.jsonl
+
+# Windows artifacts
+nul

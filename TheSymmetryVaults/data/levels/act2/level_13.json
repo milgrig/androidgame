@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "id": "act2_level13",
+    "act": 2,
+    "level": 13,
+    "title": "Первый внутренний замок",
+    "subtitle": "Внутри зала есть дверь — откройте её частью ключей",
+    "group_name": "S3",
+    "group_order": 6,
+    "pedagogical_goal": "Введение концепции подгруппы через очевидный пример: вращения внутри S3"
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "gold", "position": [420, 280], "label": "A"},
+      {"id": 1, "color": "silver", "position": [640, 200], "label": "B"},
+      {"id": 2, "color": "bronze", "position": [560, 440], "label": "C"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 0, "to": 2, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",   "mapping": [0,1,2], "name": "Тождество",         "description": "Всё остаётся на месте"},
+      {"id": "r1",  "mapping": [1,2,0], "name": "Поворот на 120°",  "description": "Циклический сдвиг A→B→C→A"},
+      {"id": "r2",  "mapping": [2,0,1], "name": "Поворот на 240°",  "description": "Двойной сдвиг A→C→B→A"},
+      {"id": "s01", "mapping": [1,0,2], "name": "Обмен A и B",      "description": "Отражение через ребро C"},
+      {"id": "s02", "mapping": [2,1,0], "name": "Обмен A и C",      "description": "Отражение через ребро B"},
+      {"id": "s12", "mapping": [0,2,1], "name": "Обмен B и C",      "description": "Отражение через ребро A"}
+    ],
+    "generators": ["r1", "s01"],
+    "cayley_table": {
+      "e":   {"e":"e",   "r1":"r1",  "r2":"r2",  "s01":"s01", "s02":"s02", "s12":"s12"},
+      "r1":  {"e":"r1",  "r1":"r2",  "r2":"e",   "s01":"s02", "s02":"s12", "s12":"s01"},
+      "r2":  {"e":"r2",  "r1":"e",   "r2":"r1",  "s01":"s12", "s02":"s01", "s12":"s02"},
+      "s01": {"e":"s01", "r1":"s12", "r2":"s02", "s01":"e",   "s02":"r2",  "s12":"r1"},
+      "s02": {"e":"s02", "r1":"s01", "r2":"s12", "s01":"r1",  "s02":"e",   "s12":"r2"},
+      "s12": {"e":"s12", "r1":"s02", "r2":"s01", "s01":"r2",  "s02":"r1",  "s12":"e"}
+    }
+  },
+
+  "subgroups": [
+    {
+      "name": "Trivial",
+      "order": 1,
+      "elements": ["e"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Тривиальная подгруппа",
+      "lattice_level": 0
+    },
+    {
+      "name": "Z3_rotations",
+      "order": 3,
+      "elements": ["e", "r1", "r2"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "Внутренний замок: все вращения треугольника",
+      "lattice_level": 1,
+      "pedagogical_hint": "Это единственная нетривиальная собственная подгруппа S3. Комбинация любых двух вращений даёт вращение.",
+      "verification": {
+        "closure": "r1∘r1=r2, r1∘r2=e, r2∘r2=r1 — все в подгруппе",
+        "identity": "e ∈ Z3",
+        "inverses": "r1⁻¹=r2, r2⁻¹=r1 — все в подгруппе",
+        "normality": "∀g∈S3: g∘Z3∘g⁻¹=Z3 (проверено для всех 6 элементов)"
+      }
+    },
+    {
+      "name": "Full_S3",
+      "order": 6,
+      "elements": ["e", "r1", "r2", "s01", "s02", "s12"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Полная группа",
+      "lattice_level": 2
+    }
+  ],
+
+  "subgroup_lattice": {
+    "description": "Решётка подгрупп S3: тривиальная < Z3 < S3",
+    "edges": [
+      {"from": "Trivial", "to": "Z3_rotations"},
+      {"from": "Z3_rotations", "to": "Full_S3"}
+    ],
+    "note": "S3 имеет простую решётку: одна цепочка нетривиальных подгрупп"
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap", "combine"],
+    "show_cayley_button": true,
+    "show_generators_hint": false,
+    "inner_doors": [
+      {
+        "id": "rotation_door",
+        "required_subgroup": "Z3_rotations",
+        "visual_hint": "Дверь с циклическим узором — вращения?",
+        "unlock_message": "Три ключа вращений открыли внутреннюю дверь!",
+        "reward": "Понимание: часть ключей образует замкнутый набор"
+      }
+    ],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread",
+    "inner_door_style": "rotation_pattern"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "В зале появилась ВНУТРЕННЯЯ дверь. Она открывается не всеми ключами, а только группой ключей, которые работают вместе."},
+    {"trigger": "after_all_found", "text": "Все 6 ключей найдены. Некоторые ключи работают вместе — попробуйте найти такие группы! Подсказка: три вращения (e, r1, r2) образуют команду."},
+    {"trigger": "after_trying_wrong_subset", "text": "Эти ключи не образуют замкнутый набор. Если два ключа дают третий — все трое могут открыть внутреннюю дверь. Попробуйте только вращения!"},
+    {"trigger": "on_first_door_hover", "text": "Эта дверь требует набор ключей, где любая комбинация двух ключей даёт третий ключ из того же набора. Попробуйте комбинировать!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Внутри зала появилась дверь. Не все ключи нужны — только те, что работают вместе как команда. Ищите ключи, которые 'похожи' — например, все вращения.",
+      "target_crystals": []
+    },
+    {
+      "text": "Три вращения (e, r1, r2) замкнуты: комбинация любых двух даёт третье из этого же набора! Проверьте: r1∘r1=r2, r1∘r2=e, r2∘r2=r1. Все в наборе!",
+      "target_crystals": [0, 1, 2]
+    },
+    {
+      "text": "РЕШЕНИЕ: Выберите три ключа вращений: Тождество (e), Поворот 120° (r1), Поворот 240° (r2). Нажмите ОТКРЫТЬ ДВЕРЬ. Эти три ключа образуют замкнутый набор — подгруппу Z₃!",
+      "target_crystals": [0, 1, 2]
+    }
+  ]
+}

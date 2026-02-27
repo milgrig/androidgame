@@ -1,0 +1,309 @@
+[
+  {
+    "level": 13,
+    "group_name": "S3",
+    "group_order": 6,
+    "checks": {
+      "automorphisms": false,
+      "cayley_table": true,
+      "subgroups": true,
+      "normality": true,
+      "lattice": true
+    },
+    "cayley_errors": 0,
+    "subgroup_results": [
+      {
+        "name": "Trivial",
+        "order": 1,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z3_rotations",
+        "order": 3,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Full_S3",
+        "order": 6,
+        "valid": true,
+        "errors": []
+      }
+    ],
+    "normality_results": [
+      {
+        "name": "Z3_rotations",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      }
+    ],
+    "overall": "FAIL"
+  },
+  {
+    "level": 14,
+    "group_name": "D4",
+    "group_order": 8,
+    "checks": {
+      "automorphisms": false,
+      "cayley_table": false,
+      "subgroups": true,
+      "normality": false,
+      "lattice": true
+    },
+    "cayley_errors": 1,
+    "subgroup_results": [
+      {
+        "name": "Trivial",
+        "order": 1,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_horizontal",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_vertical",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_diagonal",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_antidiagonal",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_180",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z4_rotations",
+        "order": 4,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "V4_klein",
+        "order": 4,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Full_D4",
+        "order": 8,
+        "valid": true,
+        "errors": []
+      }
+    ],
+    "normality_results": [
+      {
+        "name": "Z2_horizontal",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_vertical",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_diagonal",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_antidiagonal",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_180",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      },
+      {
+        "name": "Z4_rotations",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      },
+      {
+        "name": "V4_klein",
+        "valid": false,
+        "message": "Claimed normal but r3∘sh∘r1 = sa ∉ H"
+      }
+    ],
+    "overall": "FAIL"
+  },
+  {
+    "level": 15,
+    "group_name": "Z2 × Z3",
+    "group_order": 6,
+    "checks": {
+      "automorphisms": false,
+      "cayley_table": false,
+      "subgroups": true,
+      "normality": false,
+      "lattice": true
+    },
+    "cayley_errors": 12,
+    "subgroup_results": [
+      {
+        "name": "Trivial",
+        "order": 1,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z3_rotations",
+        "order": 3,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_swap",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Full_group",
+        "order": 6,
+        "valid": true,
+        "errors": []
+      }
+    ],
+    "normality_results": [
+      {
+        "name": "Z3_rotations",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      },
+      {
+        "name": "Z2_swap",
+        "valid": false,
+        "message": "Claimed normal but rA∘swap∘rAA = swapR2 ∉ H"
+      }
+    ],
+    "overall": "FAIL"
+  },
+  {
+    "level": 16,
+    "group_name": "S4_subset",
+    "group_order": 8,
+    "checks": {
+      "automorphisms": false,
+      "cayley_table": false,
+      "subgroups": true,
+      "normality": true,
+      "lattice": true
+    },
+    "cayley_errors": 20,
+    "subgroup_results": [
+      {
+        "name": "Trivial",
+        "order": 1,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_180",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_fNS",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_fEW",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_fNESW",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z2_fNWSE",
+        "order": 2,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Z4_rotations",
+        "order": 4,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "V4_subset",
+        "order": 4,
+        "valid": true,
+        "errors": []
+      },
+      {
+        "name": "Full_D4",
+        "order": 8,
+        "valid": true,
+        "errors": []
+      }
+    ],
+    "normality_results": [
+      {
+        "name": "Z2_180",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      },
+      {
+        "name": "Z2_fNS",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_fEW",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_fNESW",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z2_fNWSE",
+        "valid": true,
+        "message": "Correctly identified as non-normal"
+      },
+      {
+        "name": "Z4_rotations",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      },
+      {
+        "name": "V4_subset",
+        "valid": true,
+        "message": "Correctly identified as normal"
+      }
+    ],
+    "overall": "FAIL"
+  }
+]

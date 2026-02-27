@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "id": "act1_redesign_level01",
+    "act": 1,
+    "level": 1,
+    "title": "Первый поворот",
+    "subtitle": "Найди правильную расстановку — это будет тождество",
+    "group_name": "Z3",
+    "group_order": 3,
+    "generator_count": 1,
+    "is_exotic": false,
+    "visual_difficulty": "low",
+    "mathematical_difficulty": "low"
+  },
+
+  "initial_state": {
+    "scrambled": true,
+    "initial_permutation": [1, 2, 0],
+    "hint_for_identity": "Перетаскивай кристаллы, пока все связи не совпадут"
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "gold", "position": [420, 280], "label": "A"},
+      {"id": 1, "color": "gold", "position": [640, 200], "label": "B"},
+      {"id": 2, "color": "gold", "position": [560, 440], "label": "C"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 0, "to": 2, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {
+        "id": "e",
+        "mapping": [0, 1, 2],
+        "name": "Тождество",
+        "description": "Всё остаётся на месте",
+        "is_identity": true,
+        "order": 1
+      },
+      {
+        "id": "r1",
+        "mapping": [1, 2, 0],
+        "name": "Поворот на 120°",
+        "description": "A→B→C→A",
+        "is_generator": true,
+        "order": 3,
+        "generates": ["r1", "r2", "e"]
+      },
+      {
+        "id": "r2",
+        "mapping": [2, 0, 1],
+        "name": "Поворот на 240°",
+        "description": "A→C→B→A",
+        "order": 3,
+        "generated_by": "r1^2"
+      }
+    ],
+
+    "generators": ["r1"],
+
+    "manual_discovery": {
+      "expected_manual_finds": 2,
+      "expected_identities": ["e", "r1"],
+      "rest_via_buttons": 1,
+      "composition_examples": [
+        {"buttons": ["r1"], "result": "r1"},
+        {"buttons": ["r1", "r1"], "result": "r2"},
+        {"buttons": ["r1", "r1", "r1"], "result": "e"}
+      ]
+    },
+
+    "cayley_table": {
+      "e": {"e": "e", "r1": "r1", "r2": "r2"},
+      "r1": {"e": "r1", "r1": "r2", "r2": "e"},
+      "r2": {"e": "r2", "r1": "e", "r2": "r1"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["drag", "action_button"],
+    "start_scrambled": true,
+    "show_action_buttons": true,
+    "action_buttons_appear_on_discovery": true,
+    "allow_button_composition": true,
+    "highlight_new_symmetries": true,
+    "max_manual_finds": 2
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread",
+    "asymmetric_layout": false,
+    "color_diversity": "low"
+  },
+
+  "pedagogical": {
+    "difficulty": 1,
+    "focus": "Introduction to scrambled start and action buttons",
+    "new_concept": "Identity is first valid configuration you find",
+    "challenge": "Find identity, then find one rotation",
+    "key_learning": "Clicking action button multiple times = composition",
+    "visual_symmetry": "high",
+    "mathematical_symmetry": "low"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Попробуй перетащить кристаллы так, чтобы все связи совпали!"},
+    {"trigger": "after_first_valid", "text": "Отлично! Это ТОЖДЕСТВО — правильная расстановка. Теперь найди другую!"},
+    {"trigger": "after_second_valid", "text": "Новая симметрия! Появилась кнопка — нажми её!"},
+    {"trigger": "after_first_button_click", "text": "Нажми кнопку ещё раз — что получится?"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Кристаллы перепутаны — расставь их правильно!",
+      "target_crystals": []
+    },
+    {
+      "text": "Первая правильная расстановка — это ТОЖДЕСТВО. Она станет точкой отсчёта.",
+      "target_crystals": []
+    },
+    {
+      "text": "Попробуй повернуть треугольник — это тоже правильная расстановка! Нажми кнопку действия несколько раз.",
+      "target_crystals": [0, 1, 2]
+    }
+  ]
+}

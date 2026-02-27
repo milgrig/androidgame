@@ -1,0 +1,129 @@
+{
+  "children": [
+    {
+      "class": "Node",
+      "name": "AgentBridge",
+      "path": "/root/AgentBridge",
+      "script_class": "agent_bridge"
+    },
+    {
+      "children": [
+        {
+          "class": "ColorRect",
+          "name": "Background",
+          "path": "/root/MainMenu/Background",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "size": [
+            1280.0,
+            1280.0
+          ],
+          "visible": true
+        },
+        {
+          "class": "Node2D",
+          "name": "CrystalCanvas",
+          "path": "/root/MainMenu/CrystalCanvas",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "class": "Label",
+          "name": "TitleLabel",
+          "path": "/root/MainMenu/TitleLabel",
+          "text": "Хранители Симметрий",
+          "visible": true
+        },
+        {
+          "class": "Label",
+          "name": "SubtitleLabel",
+          "path": "/root/MainMenu/SubtitleLabel",
+          "text": "Тайны кристаллов ждут",
+          "visible": true
+        },
+        {
+          "children": [
+            {
+              "actions": [
+                "press"
+              ],
+              "class": "Button",
+              "disabled": false,
+              "name": "StartButton",
+              "path": "/root/MainMenu/ButtonContainer/StartButton",
+              "text": "Начать игру",
+              "visible": true
+            },
+            {
+              "actions": [
+                "press"
+              ],
+              "class": "Button",
+              "disabled": false,
+              "name": "SettingsButton",
+              "path": "/root/MainMenu/ButtonContainer/SettingsButton",
+              "text": "Настройки",
+              "visible": true
+            },
+            {
+              "actions": [
+                "press"
+              ],
+              "class": "Button",
+              "disabled": false,
+              "name": "ExitButton",
+              "path": "/root/MainMenu/ButtonContainer/ExitButton",
+              "text": "Выход",
+              "visible": true
+            }
+          ],
+          "class": "VBoxContainer",
+          "name": "ButtonContainer",
+          "path": "/root/MainMenu/ButtonContainer",
+          "position": [
+            500.0,
+            680.0
+          ],
+          "size": [
+            280.0,
+            220.0
+          ],
+          "visible": true
+        },
+        {
+          "class": "Label",
+          "name": "VersionLabel",
+          "path": "/root/MainMenu/VersionLabel",
+          "text": "v0.1",
+          "visible": true
+        }
+      ],
+      "class": "Control",
+      "name": "MainMenu",
+      "path": "/root/MainMenu",
+      "position": [
+        0.0,
+        0.0
+      ],
+      "script_class": "MainMenu",
+      "size": [
+        1280.0,
+        1280.0
+      ],
+      "visible": true
+    }
+  ],
+  "class": "Window",
+  "name": "root",
+  "path": "/root"
+}

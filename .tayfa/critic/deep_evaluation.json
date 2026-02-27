@@ -1,0 +1,212 @@
+{
+  "analyses": [
+    {
+      "level_id": "level_01",
+      "structure": {
+        "crystal_count": 3,
+        "edge_count": 3,
+        "total_symmetries": 3,
+        "group": "Z3",
+        "title": "Треугольный зал",
+        "subtitle": "Три кристалла, три секрета",
+        "has_labels": true,
+        "has_colors": true,
+        "draggable_count": 3
+      },
+      "ui": {
+        "label_count": 25,
+        "button_count": 5,
+        "russian_labels": 14,
+        "button_texts": [
+          "СБРОС",
+          "ПРОВЕРИТЬ УЗОР",
+          "?",
+          "СКОМБИНИРОВАТЬ",
+          "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
+        ]
+      },
+      "gameplay": {
+        "identity_is_symmetry": true,
+        "symmetries_found": 0,
+        "symmetries_total": 0
+      },
+      "issues": [],
+      "strengths": [
+        "Identity correctly recognized"
+      ],
+      "loaded": true
+    },
+    {
+      "level_id": "level_02",
+      "structure": {
+        "crystal_count": 3,
+        "edge_count": 3,
+        "total_symmetries": 3,
+        "group": "Z3",
+        "title": "Направленный поток",
+        "subtitle": "Следуйте за стрелками",
+        "has_labels": true,
+        "has_colors": true,
+        "draggable_count": 3
+      },
+      "ui": {
+        "label_count": 25,
+        "button_count": 5,
+        "russian_labels": 16,
+        "button_texts": [
+          "СБРОС",
+          "ПРОВЕРИТЬ УЗОР",
+          "?",
+          "СКОМБИНИРОВАТЬ",
+          "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
+        ]
+      },
+      "gameplay": {
+        "identity_is_symmetry": true,
+        "symmetries_found": 0,
+        "symmetries_total": 0
+      },
+      "issues": [],
+      "strengths": [
+        "Identity correctly recognized"
+      ],
+      "loaded": true
+    },
+    {
+      "level_id": "level_03",
+      "structure": {
+        "crystal_count": 3,
+        "edge_count": 3,
+        "total_symmetries": 2,
+        "group": "Z2",
+        "title": "Цвет имеет значение",
+        "subtitle": "Некоторые кристаллы отличаются",
+        "has_labels": true,
+        "has_colors": true,
+        "draggable_count": 3
+      },
+      "ui": {
+        "label_count": 25,
+        "button_count": 5,
+        "russian_labels": 16,
+        "button_texts": [
+          "СБРОС",
+          "ПРОВЕРИТЬ УЗОР",
+          "?",
+          "СКОМБИНИРОВАТЬ",
+          "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
+        ]
+      },
+      "gameplay": {
+        "identity_is_symmetry": true,
+        "symmetries_found": 0,
+        "symmetries_total": 0
+      },
+      "issues": [],
+      "strengths": [
+        "Identity correctly recognized"
+      ],
+      "loaded": true
+    },
+    {
+      "level_id": "level_04",
+      "structure": {
+        "crystal_count": 4,
+        "edge_count": 4,
+        "total_symmetries": 4,
+        "group": "Z4",
+        "title": "Квадратный зал",
+        "subtitle": "Четыре кристалла, четыре поворота",
+        "has_labels": true,
+        "has_colors": true,
+        "draggable_count": 4
+      },
+      "ui": {
+        "label_count": 25,
+        "button_count": 5,
+        "russian_labels": 16,
+        "button_texts": [
+          "СБРОС",
+          "ПРОВЕРИТЬ УЗОР",
+          "?",
+          "СКОМБИНИРОВАТЬ",
+          "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
+        ]
+      },
+      "gameplay": {
+        "identity_is_symmetry": true,
+        "symmetries_found": 0,
+        "symmetries_total": 0
+      },
+      "issues": [],
+      "strengths": [
+        "Identity correctly recognized"
+      ],
+      "loaded": true
+    },
+    {
+      "level_id": "level_05",
+      "structure": {
+        "crystal_count": 4,
+        "edge_count": 4,
+        "total_symmetries": 8,
+        "group": "D4",
+        "title": "Зеркальный квадрат",
+        "subtitle": "Стрелки убраны, появились отражения",
+        "has_labels": true,
+        "has_colors": true,
+        "draggable_count": 4
+      },
+      "ui": {
+        "label_count": 25,
+        "button_count": 5,
+        "russian_labels": 16,
+        "button_texts": [
+          "СБРОС",
+          "ПРОВЕРИТЬ УЗОР",
+          "?",
+          "СКОМБИНИРОВАТЬ",
+          "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
+        ]
+      },
+      "gameplay": {
+        "identity_is_symmetry": true,
+        "symmetries_found": 0,
+        "symmetries_total": 0
+      },
+      "issues": [],
+      "strengths": [
+        "Identity correctly recognized"
+      ],
+      "loaded": true
+    }
+  ],
+  "comparison": {
+    "witness_teaching": "UNCLEAR",
+    "baba_clarity": "EXCELLENT",
+    "monument_polish": "GOOD"
+  },
+  "scores": {
+    "1_data_structure": {
+      "score": 10,
+      "reason": "5 levels analyzed. Issues with graph connectivity: 0"
+    },
+    "2_game_feel": {
+      "score": 9,
+      "reason": "Tested symmetry recognition. Feedback issues: 0"
+    },
+    "3_progression": {
+      "score": 5,
+      "reason": "5 levels across 4 mathematical groups"
+    },
+    "4_ui_texts": {
+      "score": 9,
+      "reason": "Russian text: True, Buttons: True, UI issues: 0"
+    },
+    "5_overall": {
+      "score": 8,
+      "reason": "Average: 8.2. Critical issues: 0. Ready for demo: True"
+    }
+  },
+  "timestamp": 1772107581.342922
+}

@@ -1,0 +1,30 @@
+
+============================================================
+  AUTOMATED GAMEPLAY TEST SUITE
+============================================================
+Testing The Symmetry Vaults via Agent Bridge
+This AI will play through the game automatically!
+
+[INIT] Starting Godot in headless mode...
+[INIT] Waiting for UI initialization...
+
+============================================================
+  TEST 1: MAIN MENU
+============================================================
+
+[1.1] Checking scene tree...
+[1.2] Finding buttons...
+      Found 3 buttons
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\play_game_test.py", line 227, in <module>
+    success = run_full_test_suite()
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\play_game_test.py", line 198, in run_full_test_suite
+    results['Main Menu'] = test_main_menu(client)
+                           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\TheSymmetryVaults\tests\agent\play_game_test.py", line 37, in test_main_menu
+    print(f"      {i}. {name}: {text_bytes[:30]}")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode characters in position 22-27: character maps to <undefined>

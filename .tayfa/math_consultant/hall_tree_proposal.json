@@ -1,0 +1,350 @@
+{
+  "meta": {
+    "act": 1,
+    "title": "Act 1: Groups",
+    "description": "Explore symmetries through graph automorphisms",
+    "designed_by": "math_consultant",
+    "date": "2026-02-26"
+  },
+
+  "start_hall": "act1_level01",
+
+  "halls": [
+    {"id": "act1_level01", "group": "Z3", "order": 3, "required": true},
+    {"id": "act1_level02", "group": "Z3", "order": 3, "required": true},
+    {"id": "act1_level03", "group": "Z2", "order": 2, "required": true},
+    {"id": "act1_level04", "group": "Z4", "order": 4, "required": false},
+    {"id": "act1_level05", "group": "D4", "order": 8, "required": false},
+    {"id": "act1_level06", "group": "V4", "order": 4, "required": false},
+    {"id": "act1_level07", "group": "Z2", "order": 2, "required": false},
+    {"id": "act1_level08", "group": "Z2", "order": 2, "required": false},
+    {"id": "act1_level09", "group": "S3", "order": 6, "required": true},
+    {"id": "act1_level10", "group": "Z5", "order": 5, "required": true},
+    {"id": "act1_level11", "group": "Z6", "order": 6, "required": true},
+    {"id": "act1_level12", "group": "D4", "order": 8, "required": true}
+  ],
+
+  "edges": [
+    {
+      "from": "act1_level01",
+      "to": "act1_level02",
+      "type": "sequential",
+      "description": "Continue learning cyclic groups"
+    },
+    {
+      "from": "act1_level02",
+      "to": "act1_level03",
+      "type": "sequential",
+      "description": "Introduce Z2"
+    },
+    {
+      "from": "act1_level03",
+      "to": "act1_level04",
+      "type": "branch",
+      "branch_label": "Cyclic Path",
+      "description": "Explore larger cyclic groups"
+    },
+    {
+      "from": "act1_level03",
+      "to": "act1_level07",
+      "type": "branch",
+      "branch_label": "Irregular Path",
+      "description": "Discover hidden symmetries"
+    },
+    {
+      "from": "act1_level04",
+      "to": "act1_level05",
+      "type": "sequential",
+      "description": "Add reflections to rotations"
+    },
+    {
+      "from": "act1_level05",
+      "to": "act1_level06",
+      "type": "sequential",
+      "description": "Constrain symmetry with colors"
+    },
+    {
+      "from": "act1_level07",
+      "to": "act1_level08",
+      "type": "optional",
+      "description": "Another example of Z2"
+    },
+    {
+      "from": "act1_level06",
+      "to": "act1_level09",
+      "type": "merge",
+      "description": "Paths converge at S3"
+    },
+    {
+      "from": "act1_level08",
+      "to": "act1_level09",
+      "type": "merge",
+      "description": "Paths converge at S3"
+    },
+    {
+      "from": "act1_level04",
+      "to": "act1_level09",
+      "type": "shortcut",
+      "description": "Skip ahead if you understand cyclic groups well"
+    },
+    {
+      "from": "act1_level09",
+      "to": "act1_level10",
+      "type": "sequential",
+      "description": "Explore prime order generators"
+    },
+    {
+      "from": "act1_level10",
+      "to": "act1_level11",
+      "type": "sequential",
+      "description": "Compare composite order groups"
+    },
+    {
+      "from": "act1_level11",
+      "to": "act1_level12",
+      "type": "sequential",
+      "description": "Master two-generator groups"
+    }
+  ],
+
+  "unlock_requirements": {
+    "act1_level01": {
+      "always_unlocked": true
+    },
+    "act1_level02": {
+      "completed": ["act1_level01"]
+    },
+    "act1_level03": {
+      "completed": ["act1_level02"]
+    },
+    "act1_level04": {
+      "completed": ["act1_level03"]
+    },
+    "act1_level05": {
+      "completed": ["act1_level04"]
+    },
+    "act1_level06": {
+      "completed": ["act1_level05"]
+    },
+    "act1_level07": {
+      "completed": ["act1_level03"]
+    },
+    "act1_level08": {
+      "completed": ["act1_level07"]
+    },
+    "act1_level09": {
+      "description": "Reach S3 by completing either the cyclic path or irregular path",
+      "any_of": [
+        {"completed": ["act1_level06", "act1_level08"]},
+        {"completed": ["act1_level04"], "min_total_from_act1": 6}
+      ]
+    },
+    "act1_level10": {
+      "completed": ["act1_level09"]
+    },
+    "act1_level11": {
+      "completed": ["act1_level10"]
+    },
+    "act1_level12": {
+      "completed": ["act1_level11"]
+    }
+  },
+
+  "resonances": [
+    {
+      "halls": ["act1_level03", "act1_level07"],
+      "type": "isomorphism",
+      "label": "Изоморфизм Z₂",
+      "description": "Два разных графа имеют одинаковую группу симметрий",
+      "color": "#4CAF50"
+    },
+    {
+      "halls": ["act1_level03", "act1_level08"],
+      "type": "isomorphism",
+      "label": "Изоморфизм Z₂",
+      "description": "Ещё один граф с группой Z₂",
+      "color": "#4CAF50"
+    },
+    {
+      "halls": ["act1_level07", "act1_level08"],
+      "type": "isomorphism",
+      "label": "Изоморфизм Z₂",
+      "description": "Палиндром и близнецы — одна математика",
+      "color": "#4CAF50"
+    },
+    {
+      "halls": ["act1_level01", "act1_level02"],
+      "type": "isomorphism",
+      "label": "Изоморфизм Z₃",
+      "description": "Обе группы — Z₃",
+      "color": "#4CAF50"
+    },
+    {
+      "halls": ["act1_level05", "act1_level12"],
+      "type": "isomorphism",
+      "label": "Изоморфизм D₄",
+      "description": "Один зал в двух визуализациях",
+      "color": "#4CAF50"
+    },
+    {
+      "halls": ["act1_level04", "act1_level05"],
+      "type": "subgroup",
+      "label": "Z₄ < D₄",
+      "description": "Вращения квадрата — подгруппа всех его симметрий",
+      "color": "#2196F3"
+    },
+    {
+      "halls": ["act1_level06", "act1_level05"],
+      "type": "normal_subgroup",
+      "label": "V₄ ⊲ D₄",
+      "description": "Группа Клейна — нормальная подгруппа диэдральной группы",
+      "color": "#9C27B0"
+    },
+    {
+      "halls": ["act1_level03", "act1_level04"],
+      "type": "subgroup",
+      "label": "Z₂ < Z₄",
+      "description": "Подгруппа {e, r180°} внутри Z₄",
+      "color": "#2196F3"
+    },
+    {
+      "halls": ["act1_level03", "act1_level05"],
+      "type": "subgroup",
+      "label": "Z₂ < D₄",
+      "description": "Пять различных подгрупп порядка 2",
+      "color": "#2196F3"
+    },
+    {
+      "halls": ["act1_level01", "act1_level09"],
+      "type": "normal_subgroup",
+      "label": "Z₃ ⊲ S₃",
+      "description": "Вращения треугольника — нормальная подгруппа",
+      "color": "#9C27B0"
+    },
+    {
+      "halls": ["act1_level03", "act1_level09"],
+      "type": "subgroup",
+      "label": "Z₂ < S₃",
+      "description": "Три подгруппы транспозиций",
+      "color": "#2196F3"
+    },
+    {
+      "halls": ["act1_level01", "act1_level11"],
+      "type": "subgroup",
+      "label": "Z₃ < Z₆",
+      "description": "Каждый третий элемент Z₆ образует Z₃",
+      "color": "#2196F3"
+    },
+    {
+      "halls": ["act1_level03", "act1_level11"],
+      "type": "subgroup",
+      "label": "Z₂ < Z₆",
+      "description": "Каждый второй элемент Z₆ образует Z₂",
+      "color": "#2196F3"
+    },
+    {
+      "halls": ["act1_level05", "act1_level06", "act1_level03"],
+      "type": "quotient",
+      "label": "D₄/V₄ ≅ Z₂",
+      "description": "Факторизация: диэдральная группа / группа Клейна",
+      "color": "#FF9800"
+    },
+    {
+      "halls": ["act1_level09", "act1_level01", "act1_level03"],
+      "type": "quotient",
+      "label": "S₃/Z₃ ≅ Z₂",
+      "description": "Факторизация S₃ по подгруппе вращений",
+      "color": "#FF9800"
+    },
+    {
+      "halls": ["act1_level11", "act1_level03", "act1_level01"],
+      "type": "direct_product",
+      "label": "Z₆ ≅ Z₂ × Z₃",
+      "description": "Композитная группа как прямое произведение",
+      "color": "#E91E63"
+    },
+    {
+      "halls": ["act1_level06", "act1_level03"],
+      "type": "direct_product",
+      "label": "V₄ ≅ Z₂ × Z₂",
+      "description": "Группа Клейна — произведение двух Z₂",
+      "color": "#E91E63"
+    },
+    {
+      "halls": ["act1_level09", "act1_level05"],
+      "type": "similar_structure",
+      "label": "Первые некоммутативные группы",
+      "description": "S₃ и D₄ — ваши первые некоммутативные группы",
+      "color": "#795548"
+    },
+    {
+      "halls": ["act1_level10", "act1_level11"],
+      "type": "generators_comparison",
+      "label": "Простой vs составной порядок",
+      "description": "В Z₅ каждый элемент ≠ e — генератор. В Z₆ — только r1, r5",
+      "color": "#607D8B"
+    }
+  ],
+
+  "paths": {
+    "classic": {
+      "name": "Классический путь",
+      "description": "Последовательное изучение всех концепций",
+      "halls": [
+        "act1_level01", "act1_level02", "act1_level03", "act1_level04",
+        "act1_level05", "act1_level06", "act1_level07", "act1_level08",
+        "act1_level09", "act1_level10", "act1_level11", "act1_level12"
+      ],
+      "difficulty": "balanced"
+    },
+    "fast_track": {
+      "name": "Быстрый путь",
+      "description": "Минимальный набор для понимания основ",
+      "halls": [
+        "act1_level01", "act1_level02", "act1_level03", "act1_level04",
+        "act1_level09", "act1_level10", "act1_level11", "act1_level12"
+      ],
+      "difficulty": "harder (skips concepts)"
+    },
+    "explorer": {
+      "name": "Путь исследователя",
+      "description": "Сначала нерегулярные графы, потом диэдральные",
+      "halls": [
+        "act1_level01", "act1_level02", "act1_level03", "act1_level07",
+        "act1_level08", "act1_level04", "act1_level05", "act1_level06",
+        "act1_level09", "act1_level10", "act1_level11", "act1_level12"
+      ],
+      "difficulty": "easier (more examples)"
+    }
+  },
+
+  "achievements": {
+    "resonance_hunter": {
+      "name": "Охотник за резонансами",
+      "description": "Найдите все 19 математических связей между залами",
+      "condition": "discover_all_resonances"
+    },
+    "pathfinder": {
+      "name": "Проводник",
+      "description": "Пройдите Акт 1 тремя разными путями",
+      "condition": "complete_act1_with_3_different_paths"
+    },
+    "minimalist": {
+      "name": "Минималист",
+      "description": "Пройдите Акт 1 минимальным количеством залов (8 залов)",
+      "condition": "complete_act1_with_min_halls"
+    },
+    "completionist": {
+      "name": "Перфекционист",
+      "description": "Пройдите все 12 залов Акта 1 без подсказок",
+      "condition": "complete_all_12_no_hints"
+    }
+  },
+
+  "notes": [
+    "Level 1 has a mathematical issue: claimed Z3 but graph has D3 symmetry",
+    "Consider either: (1) add 3 reflections, (2) make edges directed, or (3) keep as tutorial simplification",
+    "Resonances should be visualized as glowing threads on the map",
+    "Shortcut from L4 to L9 allows skilled players to skip, but they miss V4 concept"
+  ]
+}

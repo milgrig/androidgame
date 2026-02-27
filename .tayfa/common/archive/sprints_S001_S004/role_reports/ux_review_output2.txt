@@ -1,0 +1,724 @@
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+======================================================================
+UX REVIEW: The Symmetry Vaults - Levels 1-12
+Reviewer: Skeptical Non-Mathematician Player
+======================================================================
+
+============================================================
+Starting Level 1: level_01
+============================================================
+
+Initial State:
+  Crystals: 3
+  Edges: 3
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 15 chars]
+  - [Russian text: 26 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  red: 3
+
+Edge Types:
+  standard: 3
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 1 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+============================================================
+Starting Level 2: level_02
+============================================================
+
+Initial State:
+  Crystals: 3
+  Edges: 3
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 18 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  blue: 3
+
+Edge Types:
+  standard: 3
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 2 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+============================================================
+Starting Level 3: level_03
+============================================================
+
+Initial State:
+  Crystals: 3
+  Edges: 3
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  red: 1
+  green: 2
+
+Edge Types:
+  standard: 3
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 3 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+============================================================
+Starting Level 4: level_04
+============================================================
+
+Initial State:
+  Crystals: 4
+  Edges: 4
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 14 chars]
+  - [Russian text: 33 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  blue: 4
+
+Edge Types:
+  standard: 4
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 4 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+============================================================
+Starting Level 5: level_05
+============================================================
+
+Initial State:
+  Crystals: 4
+  Edges: 4
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 18 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  blue: 4
+
+Edge Types:
+  standard: 4
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 5 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+============================================================
+Starting Level 6: level_06
+============================================================
+
+Initial State:
+  Crystals: 4
+  Edges: 4
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 20 chars]
+  - [Russian text: 28 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  gold: 2
+  purple: 2
+
+Edge Types:
+  standard: 4
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 6 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+============================================================
+Starting Level 7: level_07
+============================================================
+
+Initial State:
+  Crystals: 5
+  Edges: 4
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 34 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  green: 2
+  orange: 2
+  cyan: 1
+
+Edge Types:
+  standard: 4
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+Found 1 symmetries out of ?
+
+Preliminary Scores for Level 7:
+  progression: 2/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 9/10
+  education: 9/10
+  russian_text: 8/10
+
+============================================================
+Starting Level 8: level_08
+============================================================
+
+Initial State:
+  Crystals: 6
+  Edges: 7
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 15 chars]
+  - [Russian text: 26 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:Traceback (most recent call last):
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 253, in review_all_levels
+    data = self.explore_level(level_num)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_all_levels.py", line 112, in explore_level
+    print(f"  Testing swap {i}\u2194{j}...")
+  File "C:\Users\Xaser\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1254.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  red: 2
+  blue: 4
+
+Edge Types:
+  thick: 2
+  standard: 4
+  dashed: 1
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+Found 1 symmetries out of ?
+
+Preliminary Scores for Level 8:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 9/10
+  education: 9/10
+  russian_text: 8/10
+
+============================================================
+Starting Level 9: level_09
+============================================================
+
+Initial State:
+  Crystals: 6
+  Edges: 9
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 19 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 45 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  red: 3
+  blue: 3
+
+Edge Types:
+  standard: 6
+  thick: 3
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+Found 1 symmetries out of ?
+
+Preliminary Scores for Level 9:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 9/10
+  education: 9/10
+  russian_text: 8/10
+
+============================================================
+Starting Level 10: level_10
+============================================================
+
+Initial State:
+  Crystals: 5
+  Edges: 5
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 20 chars]
+  - [Russian text: 9 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  gold: 5
+
+Edge Types:
+  standard: 5
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+Found 1 symmetries out of ?
+
+Preliminary Scores for Level 10:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 6/10
+  education: 10/10
+  russian_text: 8/10
+
+============================================================
+Starting Level 11: level_11
+============================================================
+
+Initial State:
+  Crystals: 6
+  Edges: 6
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 20 chars]
+  - [Russian text: 14 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  cyan: 6
+
+Edge Types:
+  standard: 6
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+Found 1 symmetries out of ?
+
+Preliminary Scores for Level 11:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 6/10
+  education: 10/10
+  russian_text: 8/10
+
+============================================================
+Starting Level 12: level_12
+============================================================
+
+Initial State:
+  Crystals: 4
+  Edges: 4
+  Expected symmetries: 0
+
+UI Text:
+  - [Russian text: 20 chars]
+  - [Russian text: 15 chars]
+  - [Russian text: 17 chars]
+  - [Russian text: 12 chars]
+  - [Russian text: 52 chars]
+  - [Russian text: 30 chars]
+  - [Russian text: 44 chars]
+  - [Russian text: 182 chars]
+  - [Russian text: 86 chars]
+  - [Russian text: 35 chars]
+  - [Russian text: 19 chars]
+  - [Russian text: 21 chars]
+  - [Russian text: 10 chars]
+  - [Russian text: 16 chars]
+
+Buttons:
+  - [Button: 5 chars]
+  - [Button: 14 chars]
+  - ?
+  - [Button: 14 chars]
+  - [Button: 20 chars]
+
+Crystal Colors:
+  green: 4
+
+Edge Types:
+  glowing: 4
+
+Exploring symmetries...
+  Testing identity...
+    OK Identity found
+
+[ERROR] Level 12 failed: 'charmap' codec can't encode character '\u2194' in position 16: character maps to <undefined>
+
+======================================================================
+DETAILED UX REVIEW REPORT
+The Symmetry Vaults - Levels 1-12
+======================================================================
+
+OVERALL SCORES (Average across 12 levels):
+
+  Progression: 1.2/10
+  Aha_moment: 5.0/10
+  Hints: 6.0/10
+  Variety: 7.8/10
+  Education: 9.4/10
+  Russian_text: 8.0/10
+
+----------------------------------------------------------------------
+
+LEVEL 7
+----------------------------------------------------------------------
+Scores:
+  progression: 2/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 9/10
+  education: 9/10
+  russian_text: 8/10
+
+
+LEVEL 8
+----------------------------------------------------------------------
+Scores:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 9/10
+  education: 9/10
+  russian_text: 8/10
+
+
+LEVEL 9
+----------------------------------------------------------------------
+Scores:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 9/10
+  education: 9/10
+  russian_text: 8/10
+
+
+LEVEL 10
+----------------------------------------------------------------------
+Scores:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 6/10
+  education: 10/10
+  russian_text: 8/10
+
+
+LEVEL 11
+----------------------------------------------------------------------
+Scores:
+  progression: 1/10
+  aha_moment: 5/10
+  hints: 6/10
+  variety: 6/10
+  education: 10/10
+  russian_text: 8/10
+
+
+OK Report saved to: C:\Cursor\TayfaProject\AndroidGame\.tayfa\game_designer\ux_review_report.txt

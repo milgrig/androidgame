@@ -1,0 +1,186 @@
+{
+  "meta": {
+    "id": "act2_level15",
+    "act": 2,
+    "level": 15,
+    "title": "Два мира",
+    "subtitle": "Два кластера кристаллов — подгруппа видна на глаз",
+    "group_name": "Z2 × Z3",
+    "group_order": 6,
+    "pedagogical_goal": "Подгруппа может быть ВИЗУАЛЬНО очевидна: если граф состоит из кластеров, симметрии каждого кластера образуют подгруппу"
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "red", "position": [320, 260], "label": "A1"},
+      {"id": 1, "color": "red", "position": [480, 180], "label": "A2"},
+      {"id": 2, "color": "red", "position": [420, 380], "label": "A3"},
+      {"id": 3, "color": "blue", "position": [720, 260], "label": "B1"},
+      {"id": 4, "color": "blue", "position": [880, 180], "label": "B2"},
+      {"id": 5, "color": "blue", "position": [820, 380], "label": "B3"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 2, "to": 0, "type": "standard", "weight": 1},
+      {"from": 3, "to": 4, "type": "standard", "weight": 1},
+      {"from": 4, "to": 5, "type": "standard", "weight": 1},
+      {"from": 5, "to": 3, "type": "standard", "weight": 1},
+      {"from": 0, "to": 3, "type": "thick", "weight": 1},
+      {"from": 1, "to": 4, "type": "thick", "weight": 1},
+      {"from": 2, "to": 5, "type": "thick", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",   "mapping": [0,1,2,3,4,5], "name": "Тождество",         "description": "Всё остаётся на месте"},
+      {"id": "rA",  "mapping": [1,2,0,4,5,3], "name": "Вращение кластера A", "description": "Повернуть красный треугольник и синий треугольник синхронно"},
+      {"id": "rAA", "mapping": [2,0,1,5,3,4], "name": "Двойное вращение A",  "description": "Двукратное вращение обоих треугольников"},
+      {"id": "swap","mapping": [3,4,5,0,1,2], "name": "Обмен кластеров",     "description": "Поменять красный и синий треугольники местами"},
+      {"id": "swapR1", "mapping": [4,5,3,1,2,0], "name": "Обмен + поворот 1", "description": "Обменять кластеры и провернуть на 120°"},
+      {"id": "swapR2", "mapping": [5,3,4,2,0,1], "name": "Обмен + поворот 2", "description": "Обменять кластеры и провернуть на 240°"}
+    ],
+    "generators": ["rA", "swap"],
+    "cayley_table": {
+      "e":      {"e":"e",      "rA":"rA",     "rAA":"rAA",    "swap":"swap",    "swapR1":"swapR1", "swapR2":"swapR2"},
+      "rA":     {"e":"rA",     "rA":"rAA",    "rAA":"e",      "swap":"swapR1",  "swapR1":"swapR2", "swapR2":"swap"},
+      "rAA":    {"e":"rAA",    "rA":"e",      "rAA":"rA",     "swap":"swapR2",  "swapR1":"swap",   "swapR2":"swapR1"},
+      "swap":   {"e":"swap",   "rA":"swapR2", "rAA":"swapR1", "swap":"e",       "swapR1":"rAA",    "swapR2":"rA"},
+      "swapR1": {"e":"swapR1", "rA":"swap",   "rAA":"swapR2", "swap":"rA",      "swapR1":"e",      "swapR2":"rAA"},
+      "swapR2": {"e":"swapR2", "rA":"swapR1", "rAA":"swap",   "swap":"rAA",     "swapR1":"rA",     "swapR2":"e"}
+    }
+  },
+
+  "subgroups": [
+    {
+      "name": "Trivial",
+      "order": 1,
+      "elements": ["e"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Тривиальная подгруппа",
+      "lattice_level": 0
+    },
+    {
+      "name": "Z3_rotations",
+      "order": 3,
+      "elements": ["e", "rA", "rAA"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "ВИЗУАЛЬНО ОЧЕВИДНАЯ подгруппа: вращения внутри каждого кластера",
+      "lattice_level": 1,
+      "pedagogical_hint": "Эта подгруппа ВИДНА на графе! Оба треугольника вращаются синхронно. Толстые связи сохраняются.",
+      "visual_marker": "Внутренняя дверь с узором двух вращающихся треугольников",
+      "verification": {
+        "closure": "rA∘rA=rAA, rA∘rAA=e, rAA∘rAA=rA — все в подгруппе",
+        "identity": "e ∈ Z3",
+        "inverses": "rA⁻¹=rAA, rAA⁻¹=rA",
+        "normality": "НОРМАЛЬНАЯ: индекс 2 в Z2×Z3"
+      }
+    },
+    {
+      "name": "Z2_swap",
+      "order": 2,
+      "elements": ["e", "swap"],
+      "is_normal": true,
+      "is_inner_door": true,
+      "description": "Подгруппа обмена двух кластеров",
+      "lattice_level": 1,
+      "pedagogical_hint": "Обмен двух одинаковых треугольников — тоже подгруппа!",
+      "verification": {
+        "closure": "swap∘swap=e",
+        "identity": "e ∈ Z2",
+        "inverses": "swap⁻¹=swap",
+        "normality": "НОРМАЛЬНАЯ: центр группы"
+      }
+    },
+    {
+      "name": "Full_group",
+      "order": 6,
+      "elements": ["e", "rA", "rAA", "swap", "swapR1", "swapR2"],
+      "is_normal": true,
+      "is_inner_door": false,
+      "description": "Полная группа Z2 × Z3 ≅ Z6",
+      "lattice_level": 2
+    }
+  ],
+
+  "subgroup_lattice": {
+    "description": "Решётка подгрупп Z6: линейная цепочка {e} < Z2, Z3 < Z6",
+    "edges": [
+      {"from": "Trivial", "to": "Z3_rotations"},
+      {"from": "Trivial", "to": "Z2_swap"},
+      {"from": "Z3_rotations", "to": "Full_group"},
+      {"from": "Z2_swap", "to": "Full_group"}
+    ],
+    "note": "Группа Z6 ≅ Z2 × Z3 имеет три нетривиальные собственные подгруппы: Z2, Z3, все нормальны"
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap", "combine"],
+    "show_cayley_button": true,
+    "show_generators_hint": false,
+    "inner_doors": [
+      {
+        "id": "cluster_rotation_door",
+        "required_subgroup": "Z3_rotations",
+        "visual_hint": "Дверь с двумя синхронно вращающимися треугольниками",
+        "unlock_message": "Вращения внутри кластеров открыли дверь!",
+        "reward": "Понимание: симметрии подструктуры образуют подгруппу",
+        "pedagogical_note": "Это ГЛАВНАЯ идея уровня: если граф состоит из кластеров, симметрии кластера видны визуально"
+      },
+      {
+        "id": "swap_door",
+        "required_subgroup": "Z2_swap",
+        "visual_hint": "Дверь с символом обмена ⇄",
+        "unlock_message": "Обмен двух миров открыл портал!",
+        "reward": "Доступ к межкластерному проходу"
+      }
+    ],
+    "palette": null,
+    "visual_clustering": {
+      "enabled": true,
+      "clusters": [
+        {"id": "clusterA", "nodes": [0,1,2], "color": "red", "label": "Мир A"},
+        {"id": "clusterB", "nodes": [3,4,5], "color": "blue", "label": "Мир B"}
+      ],
+      "inter_cluster_edges": [
+        {"from": 0, "to": 3, "type": "thick"},
+        {"from": 1, "to": 4, "type": "thick"},
+        {"from": 2, "to": 5, "type": "thick"}
+      ]
+    }
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread",
+    "thick_edge_style": "glowing_bridge",
+    "cluster_highlight": "subtle_glow",
+    "inner_door_style": "cluster_pattern"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Граф состоит из ДВУХ одинаковых треугольников. Симметрии каждого треугольника образуют подгруппу!"},
+    {"trigger": "after_3_found", "text": "Три вращения найдены — они крутят оба треугольника одновременно. Это подгруппа Z₃!"},
+    {"trigger": "after_all_found", "text": "Все 6 ключей найдены. Попробуйте открыть внутреннюю дверь тремя вращениями {e, rA, rAA}."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Два треугольника — два мира. Каждый мир можно вращать независимо... или вместе!",
+      "target_crystals": []
+    },
+    {
+      "text": "Три толстые связи соединяют миры. Вращения сохраняют эти связи — это подгруппа!",
+      "target_crystals": [0, 1, 2, 3, 4, 5]
+    },
+    {
+      "text": "Попробуйте {e, rA, rAA} — три синхронных вращения. Или {e, swap} — обмен миров.",
+      "target_crystals": [0, 1, 2, 3, 4, 5]
+    }
+  ]
+}

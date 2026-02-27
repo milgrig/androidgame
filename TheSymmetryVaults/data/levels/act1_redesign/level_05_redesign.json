@@ -1,0 +1,232 @@
+{
+  "meta": {
+    "id": "act1_redesign_level05",
+    "act": 1,
+    "level": 5,
+    "title": "Тетраэдр",
+    "subtitle": "Первая экзотическая группа — знакопеременная A₄",
+    "group_name": "A4",
+    "group_order": 12,
+    "generator_count": 2,
+    "is_exotic": true,
+    "visual_difficulty": "medium",
+    "mathematical_difficulty": "medium"
+  },
+
+  "initial_state": {
+    "scrambled": true,
+    "initial_permutation": [2, 0, 3, 1],
+    "hint_for_identity": "Все узлы соединены со всеми — найди правильную расстановку"
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "red", "position": [360, 240], "label": "A"},
+      {"id": 1, "color": "blue", "position": [680, 240], "label": "B"},
+      {"id": 2, "color": "green", "position": [680, 480], "label": "C"},
+      {"id": 3, "color": "yellow", "position": [360, 480], "label": "D"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 0, "to": 2, "type": "standard", "weight": 1},
+      {"from": 0, "to": 3, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 1, "to": 3, "type": "standard", "weight": 1},
+      {"from": 2, "to": 3, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {
+        "id": "e",
+        "mapping": [0, 1, 2, 3],
+        "name": "Тождество",
+        "description": "Всё на месте",
+        "is_identity": true,
+        "order": 1,
+        "parity": "even"
+      },
+      {
+        "id": "g1",
+        "mapping": [1, 2, 0, 3],
+        "name": "Цикл (A,B,C)",
+        "description": "Вращение трёх узлов A→B→C→A, D на месте",
+        "is_generator": true,
+        "order": 3,
+        "cycle_notation": "(0,1,2)",
+        "parity": "even"
+      },
+      {
+        "id": "g2",
+        "mapping": [2, 1, 0, 3],
+        "name": "Цикл (A,C)",
+        "description": "Вращение: A→C→B→A, D на месте",
+        "order": 3,
+        "cycle_notation": "(0,2,1)",
+        "parity": "even",
+        "generated_by": "g1^2"
+      },
+      {
+        "id": "h1",
+        "mapping": [3, 2, 1, 0],
+        "name": "Цикл (A,D,B)",
+        "description": "Вращение A→D→B→A, C на месте",
+        "order": 3,
+        "cycle_notation": "(0,3,1)",
+        "parity": "even"
+      },
+      {
+        "id": "h2",
+        "mapping": [3, 1, 0, 2],
+        "name": "Цикл (A,D,C)",
+        "description": "Вращение A→D→C→A, B на месте",
+        "order": 3,
+        "cycle_notation": "(0,3,2)",
+        "parity": "even"
+      },
+      {
+        "id": "h3",
+        "mapping": [1, 3, 2, 0],
+        "name": "Цикл (A,B,D)",
+        "description": "Вращение A→B→D→A, C на месте",
+        "order": 3,
+        "cycle_notation": "(0,1,3)",
+        "parity": "even"
+      },
+      {
+        "id": "h4",
+        "mapping": [2, 0, 3, 1],
+        "name": "Цикл (A,C,D)",
+        "description": "Вращение A→C→D→A, B на месте",
+        "order": 3,
+        "cycle_notation": "(0,2,3)",
+        "parity": "even"
+      },
+      {
+        "id": "h5",
+        "mapping": [0, 3, 1, 2],
+        "name": "Цикл (B,D,C)",
+        "description": "Вращение B→D→C→B, A на месте",
+        "order": 3,
+        "cycle_notation": "(1,3,2)",
+        "parity": "even"
+      },
+      {
+        "id": "h6",
+        "mapping": [0, 2, 3, 1],
+        "name": "Цикл (B,C,D)",
+        "description": "Вращение B→C→D→B, A на месте",
+        "order": 3,
+        "cycle_notation": "(1,2,3)",
+        "parity": "even"
+      },
+      {
+        "id": "swap1",
+        "mapping": [1, 0, 3, 2],
+        "name": "Обмен (A,B)(C,D)",
+        "description": "Обмен двух пар узлов",
+        "is_generator": true,
+        "order": 2,
+        "cycle_notation": "(0,1)(2,3)",
+        "parity": "even"
+      },
+      {
+        "id": "swap2",
+        "mapping": [2, 3, 0, 1],
+        "name": "Обмен (A,C)(B,D)",
+        "description": "Обмен другой пары",
+        "order": 2,
+        "cycle_notation": "(0,2)(1,3)",
+        "parity": "even"
+      },
+      {
+        "id": "swap3",
+        "mapping": [3, 2, 1, 0],
+        "name": "Обмен (A,D)(B,C)",
+        "description": "Обмен третьей пары",
+        "order": 2,
+        "cycle_notation": "(0,3)(1,2)",
+        "parity": "even"
+      }
+    ],
+
+    "generators": ["g1", "swap1"],
+
+    "manual_discovery": {
+      "expected_manual_finds": 3,
+      "expected_identities": ["e", "g1", "swap1"],
+      "rest_via_buttons": 9,
+      "composition_examples": [
+        {"buttons": ["g1"], "result": "g1"},
+        {"buttons": ["g1", "g1"], "result": "g2"},
+        {"buttons": ["swap1"], "result": "swap1"},
+        {"buttons": ["swap1", "swap1"], "result": "e"},
+        {"buttons": ["g1", "swap1"], "result": "h3"},
+        {"buttons": ["swap1", "g1"], "result": "h1"}
+      ]
+    },
+
+    "cayley_table": {
+      "e": {"e": "e", "g1": "g1", "g2": "g2", "swap1": "swap1", "swap2": "swap2", "swap3": "swap3"},
+      "g1": {"e": "g1", "g1": "g2", "g2": "e", "swap1": "h3", "swap2": "h5", "swap3": "h1"},
+      "g2": {"e": "g2", "g1": "e", "g2": "g1", "swap1": "h1", "swap2": "h3", "swap3": "h5"},
+      "swap1": {"e": "swap1", "g1": "h1", "g2": "h3", "swap1": "e", "swap2": "h6", "swap3": "h4"},
+      "swap2": {"e": "swap2", "g1": "h5", "g2": "h3", "swap1": "h4", "swap2": "e", "swap3": "h2"},
+      "swap3": {"e": "swap3", "g1": "h3", "g2": "h5", "swap1": "h6", "swap2": "h4", "swap3": "e"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["drag", "action_button"],
+    "start_scrambled": true,
+    "show_action_buttons": true,
+    "action_buttons_appear_on_discovery": true,
+    "allow_button_composition": true,
+    "highlight_new_symmetries": true,
+    "max_manual_finds": 3
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "faceted_gem",
+    "edge_style": "thin_thread",
+    "asymmetric_layout": false,
+    "color_diversity": "high",
+    "special_note": "K4 graph - all nodes connected to all"
+  },
+
+  "pedagogical": {
+    "difficulty": 3,
+    "focus": "First exotic group - alternating group A4",
+    "new_concept": "Not all permutations work! Only EVEN permutations (12 out of 24)",
+    "challenge": "Find two generators: 3-cycle and double transposition",
+    "key_learning": "Groups can be exotic - not just rotations and reflections",
+    "visual_symmetry": "high",
+    "mathematical_symmetry": "high",
+    "comparison": "Same graph as Level 12 (S4), but only half the symmetries!"
+  },
+
+  "hints": [
+    {"trigger": "after_60_seconds_no_action", "text": "Все узлы соединены со всеми — граф K₄. Но не все перестановки работают!"},
+    {"trigger": "after_first_valid", "text": "Тождество найдено! Теперь ищи ЦИКЛ — вращение трёх узлов."},
+    {"trigger": "after_second_valid", "text": "Отлично! Теперь найди ОБМЕН ДВУХ ПАР — например (A,B)(C,D)."},
+    {"trigger": "after_both_generators", "text": "Два генератора найдены! Комбинируй их кнопками — получишь все 12 симметрий!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Полный граф K₄ — каждый узел соединён со всеми. Но симметрий только 12, не 24!",
+      "target_crystals": []
+    },
+    {
+      "text": "Найди вращение трёх узлов (один остаётся на месте). Потом найди обмен двух пар.",
+      "target_crystals": []
+    },
+    {
+      "text": "Это группа A₄ — только ЧЁТНЫЕ перестановки. Нечётные (как одиночный обмен) НЕ работают!",
+      "target_crystals": [0, 1, 2, 3]
+    }
+  ]
+}
