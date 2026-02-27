@@ -1,0 +1,503 @@
+[
+  {
+    "level": 1,
+    "title": "Треугольный зал",
+    "group_name": "Z3",
+    "group_order": 3,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 3
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "red"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 2,
+    "title": "Направленный поток",
+    "group_name": "Z3",
+    "group_order": 3,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 3
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "blue"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 3,
+    "title": "Цвет имеет значение",
+    "group_name": "Z2",
+    "group_order": 2,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 3
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "red",
+      "green"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 4,
+    "title": "Квадратный зал",
+    "group_name": "Z4",
+    "group_order": 4,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 4
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "blue"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 5,
+    "title": "Зеркальный квадрат",
+    "group_name": "D4",
+    "group_order": 8,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 4
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "blue"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 6,
+    "title": "Разноцветный квадрат",
+    "group_name": "V4",
+    "group_order": 4,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 4
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "gold",
+      "purple"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 7,
+    "title": "Кривая тропа",
+    "group_name": "Z2",
+    "group_order": 2,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 4
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "green",
+      "orange",
+      "cyan"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 8,
+    "title": "Звёзды-близнецы",
+    "group_name": "Z2",
+    "group_order": 2,
+    "edge_types": [
+      "thick",
+      "standard",
+      "dashed"
+    ],
+    "edge_type_counts": {
+      "thick": 2,
+      "standard": 4,
+      "dashed": 1
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "red",
+      "blue"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "KEEP_VARIED"
+  },
+  {
+    "level": 9,
+    "title": "Скрытый треугольник",
+    "group_name": "S3",
+    "group_order": 6,
+    "edge_types": [
+      "standard",
+      "thick"
+    ],
+    "edge_type_counts": {
+      "standard": 6,
+      "thick": 3
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "red",
+      "blue"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "KEEP_VARIED"
+  },
+  {
+    "level": 10,
+    "title": "Цепь силы",
+    "group_name": "Z5",
+    "group_order": 5,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 5
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "gold"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 11,
+    "title": "Две шестерёнки",
+    "group_name": "Z6",
+    "group_order": 6,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 6
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "cyan"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 12,
+    "title": "Зал двух ключей",
+    "group_name": "D4",
+    "group_order": 8,
+    "edge_types": [
+      "glowing"
+    ],
+    "edge_type_counts": {
+      "glowing": 4
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "green"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 13,
+    "title": "Тетраэдральный зал",
+    "group_name": "S4",
+    "group_order": 24,
+    "edge_types": [
+      "glowing"
+    ],
+    "edge_type_counts": {
+      "glowing": 6
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "red",
+      "blue",
+      "green",
+      "yellow"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 14,
+    "title": "Радужный лабиринт",
+    "group_name": "D4",
+    "group_order": 8,
+    "edge_types": [
+      "glowing",
+      "standard",
+      "thick"
+    ],
+    "edge_type_counts": {
+      "glowing": 1,
+      "standard": 2,
+      "thick": 1
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": false,
+    "node_colors": [
+      "red",
+      "blue",
+      "green",
+      "yellow"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "SIMPLIFY_TO_STANDARD"
+  },
+  {
+    "level": 15,
+    "title": "Зал четных перестановок",
+    "group_name": "A4",
+    "group_order": 12,
+    "edge_types": [
+      "glowing"
+    ],
+    "edge_type_counts": {
+      "glowing": 6
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "red",
+      "blue",
+      "green",
+      "yellow"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 16,
+    "title": "Семиугольный зал",
+    "group_name": "Z7",
+    "group_order": 7,
+    "edge_types": [
+      "directed"
+    ],
+    "edge_type_counts": {
+      "directed": 7
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "violet"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 17,
+    "title": "Восьмиугольная башня",
+    "group_name": "Z8",
+    "group_order": 8,
+    "edge_types": [
+      "directed"
+    ],
+    "edge_type_counts": {
+      "directed": 8
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "orange"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 18,
+    "title": "Треугольное зеркало",
+    "group_name": "D3",
+    "group_order": 6,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 3
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "silver"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 19,
+    "title": "Пентагональная крепость",
+    "group_name": "D5",
+    "group_order": 10,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 5
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "bronze"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 20,
+    "title": "Шестигранный храм",
+    "group_name": "D6",
+    "group_order": 12,
+    "edge_types": [
+      "standard"
+    ],
+    "edge_type_counts": {
+      "standard": 6
+    },
+    "all_edges_same_type": true,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "aqua"
+    ],
+    "all_nodes_same_color": true,
+    "recommendation": "OK_STANDARD"
+  },
+  {
+    "level": 21,
+    "title": "Кватернионный куб",
+    "group_name": "Q8",
+    "group_order": 8,
+    "edge_types": [
+      "thick",
+      "standard",
+      "dashed"
+    ],
+    "edge_type_counts": {
+      "thick": 6,
+      "standard": 4,
+      "dashed": 4
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": false,
+    "node_colors": [
+      "red",
+      "blue",
+      "green",
+      "yellow"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "SIMPLIFY_TO_STANDARD"
+  },
+  {
+    "level": 22,
+    "title": "Кубический граф",
+    "group_name": "Aut(Cube_graph)",
+    "group_order": 8,
+    "edge_types": [
+      "standard",
+      "thick",
+      "dashed"
+    ],
+    "edge_type_counts": {
+      "standard": 4,
+      "thick": 4,
+      "dashed": 4
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "white",
+      "gray"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "KEEP_VARIED"
+  },
+  {
+    "level": 23,
+    "title": "Граф Петерсена",
+    "group_name": "D5",
+    "group_order": 10,
+    "edge_types": [
+      "thick",
+      "standard",
+      "glowing"
+    ],
+    "edge_type_counts": {
+      "thick": 5,
+      "standard": 5,
+      "glowing": 5
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "magenta",
+      "lime"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "KEEP_VARIED"
+  },
+  {
+    "level": 24,
+    "title": "Призматический зал",
+    "group_name": "D4 × Z2",
+    "group_order": 16,
+    "edge_types": [
+      "standard",
+      "thick"
+    ],
+    "edge_type_counts": {
+      "standard": 8,
+      "thick": 4
+    },
+    "all_edges_same_type": false,
+    "edge_types_preserved": true,
+    "node_colors": [
+      "cyan",
+      "purple"
+    ],
+    "all_nodes_same_color": false,
+    "recommendation": "KEEP_VARIED"
+  }
+]

@@ -8,78 +8,435 @@
     "group_name": "D4 × Z2",
     "group_order": 16
   },
-
   "graph": {
     "nodes": [
-      {"id": 0, "color": "cyan",   "position": [480, 200], "label": "A0"},
-      {"id": 1, "color": "cyan",   "position": [800, 200], "label": "B0"},
-      {"id": 2, "color": "cyan",   "position": [800, 380], "label": "C0"},
-      {"id": 3, "color": "cyan",   "position": [480, 380], "label": "D0"},
-      {"id": 4, "color": "purple", "position": [480, 440], "label": "A1"},
-      {"id": 5, "color": "purple", "position": [800, 440], "label": "B1"},
-      {"id": 6, "color": "purple", "position": [800, 620], "label": "C1"},
-      {"id": 7, "color": "purple", "position": [480, 620], "label": "D1"}
+      {
+        "id": 0,
+        "color": "cyan",
+        "position": [
+          480,
+          200
+        ],
+        "label": "A0"
+      },
+      {
+        "id": 1,
+        "color": "cyan",
+        "position": [
+          800,
+          200
+        ],
+        "label": "B0"
+      },
+      {
+        "id": 2,
+        "color": "cyan",
+        "position": [
+          800,
+          380
+        ],
+        "label": "C0"
+      },
+      {
+        "id": 3,
+        "color": "cyan",
+        "position": [
+          480,
+          380
+        ],
+        "label": "D0"
+      },
+      {
+        "id": 4,
+        "color": "purple",
+        "position": [
+          480,
+          440
+        ],
+        "label": "A1"
+      },
+      {
+        "id": 5,
+        "color": "purple",
+        "position": [
+          800,
+          440
+        ],
+        "label": "B1"
+      },
+      {
+        "id": 6,
+        "color": "purple",
+        "position": [
+          800,
+          620
+        ],
+        "label": "C1"
+      },
+      {
+        "id": 7,
+        "color": "purple",
+        "position": [
+          480,
+          620
+        ],
+        "label": "D1"
+      }
     ],
     "edges": [
-      {"from": 0, "to": 1, "type": "standard", "weight": 1},
-      {"from": 1, "to": 2, "type": "standard", "weight": 1},
-      {"from": 2, "to": 3, "type": "standard", "weight": 1},
-      {"from": 3, "to": 0, "type": "standard", "weight": 1},
-      {"from": 4, "to": 5, "type": "standard", "weight": 1},
-      {"from": 5, "to": 6, "type": "standard", "weight": 1},
-      {"from": 6, "to": 7, "type": "standard", "weight": 1},
-      {"from": 7, "to": 4, "type": "standard", "weight": 1},
-      {"from": 0, "to": 4, "type": "thick",    "weight": 1},
-      {"from": 1, "to": 5, "type": "thick",    "weight": 1},
-      {"from": 2, "to": 6, "type": "thick",    "weight": 1},
-      {"from": 3, "to": 7, "type": "thick",    "weight": 1}
+      {
+        "from": 0,
+        "to": 1,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 3,
+        "to": 0,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 4,
+        "to": 5,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 5,
+        "to": 6,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 6,
+        "to": 7,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 7,
+        "to": 4,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 0,
+        "to": 4,
+        "type": "thick",
+        "weight": 1
+      },
+      {
+        "from": 1,
+        "to": 5,
+        "type": "thick",
+        "weight": 1
+      },
+      {
+        "from": 2,
+        "to": 6,
+        "type": "thick",
+        "weight": 1
+      },
+      {
+        "from": 3,
+        "to": 7,
+        "type": "thick",
+        "weight": 1
+      }
     ]
   },
-
   "symmetries": {
     "automorphisms": [
-      {"id": "e_id",   "mapping": [0,1,2,3,4,5,6,7], "name": "(e, id)",         "description": "Ничего не делать"},
-      {"id": "r1_id",  "mapping": [1,2,3,0,5,6,7,4], "name": "(r90°, id)",      "description": "Повернуть только верхний квадрат"},
-      {"id": "r2_id",  "mapping": [2,3,0,1,6,7,4,5], "name": "(r180°, id)",     "description": "Повернуть только верхний квадрат"},
-      {"id": "r3_id",  "mapping": [3,0,1,2,7,4,5,6], "name": "(r270°, id)",     "description": "Повернуть только верхний квадрат"},
-      {"id": "sh_id",  "mapping": [1,0,3,2,5,4,7,6], "name": "(sh, id)",        "description": "Отразить только верхний квадрат по горизонтали"},
-      {"id": "sv_id",  "mapping": [3,2,1,0,7,6,5,4], "name": "(sv, id)",        "description": "Отразить только верхний квадрат по вертикали"},
-      {"id": "sd_id",  "mapping": [0,3,2,1,4,7,6,5], "name": "(sd, id)",        "description": "Отразить только верхний квадрат по диагонали"},
-      {"id": "sa_id",  "mapping": [2,1,0,3,6,5,4,7], "name": "(sa, id)",        "description": "Отразить только верхний квадрат по побочной диагонали"},
-      {"id": "e_flip", "mapping": [4,5,6,7,0,1,2,3], "name": "(e, flip)",       "description": "Поменять квадраты местами"},
-      {"id": "r1_flip","mapping": [5,6,7,4,1,2,3,0], "name": "(r90°, flip)",    "description": "Повернуть + поменять"},
-      {"id": "r2_flip","mapping": [6,7,4,5,2,3,0,1], "name": "(r180°, flip)",   "description": "Повернуть + поменять"},
-      {"id": "r3_flip","mapping": [7,4,5,6,3,0,1,2], "name": "(r270°, flip)",   "description": "Повернуть + поменять"},
-      {"id": "sh_flip","mapping": [5,4,7,6,1,0,3,2], "name": "(sh, flip)",      "description": "Отразить + поменять"},
-      {"id": "sv_flip","mapping": [7,6,5,4,3,2,1,0], "name": "(sv, flip)",      "description": "Отразить + поменять"},
-      {"id": "sd_flip","mapping": [4,7,6,5,0,3,2,1], "name": "(sd, flip)",      "description": "Отразить + поменять"},
-      {"id": "sa_flip","mapping": [6,5,4,7,2,1,0,3], "name": "(sa, flip)",      "description": "Отразить + поменять"}
+      {
+        "id": "e_id",
+        "mapping": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "name": "(e, id)",
+        "description": "Ничего не делать"
+      },
+      {
+        "id": "r1_id",
+        "mapping": [
+          1,
+          2,
+          3,
+          0,
+          5,
+          6,
+          7,
+          4
+        ],
+        "name": "(r90°, id)",
+        "description": "Повернуть только верхний квадрат"
+      },
+      {
+        "id": "r2_id",
+        "mapping": [
+          2,
+          3,
+          0,
+          1,
+          6,
+          7,
+          4,
+          5
+        ],
+        "name": "(r180°, id)",
+        "description": "Повернуть только верхний квадрат"
+      },
+      {
+        "id": "r3_id",
+        "mapping": [
+          3,
+          0,
+          1,
+          2,
+          7,
+          4,
+          5,
+          6
+        ],
+        "name": "(r270°, id)",
+        "description": "Повернуть только верхний квадрат"
+      },
+      {
+        "id": "sh_id",
+        "mapping": [
+          1,
+          0,
+          3,
+          2,
+          5,
+          4,
+          7,
+          6
+        ],
+        "name": "(sh, id)",
+        "description": "Отразить только верхний квадрат по горизонтали"
+      },
+      {
+        "id": "sv_id",
+        "mapping": [
+          3,
+          2,
+          1,
+          0,
+          7,
+          6,
+          5,
+          4
+        ],
+        "name": "(sv, id)",
+        "description": "Отразить только верхний квадрат по вертикали"
+      },
+      {
+        "id": "sd_id",
+        "mapping": [
+          0,
+          3,
+          2,
+          1,
+          4,
+          7,
+          6,
+          5
+        ],
+        "name": "(sd, id)",
+        "description": "Отразить только верхний квадрат по диагонали"
+      },
+      {
+        "id": "sa_id",
+        "mapping": [
+          2,
+          1,
+          0,
+          3,
+          6,
+          5,
+          4,
+          7
+        ],
+        "name": "(sa, id)",
+        "description": "Отразить только верхний квадрат по побочной диагонали"
+      },
+      {
+        "id": "e_flip",
+        "mapping": [
+          4,
+          5,
+          6,
+          7,
+          0,
+          1,
+          2,
+          3
+        ],
+        "name": "(e, flip)",
+        "description": "Поменять квадраты местами"
+      },
+      {
+        "id": "r1_flip",
+        "mapping": [
+          5,
+          6,
+          7,
+          4,
+          1,
+          2,
+          3,
+          0
+        ],
+        "name": "(r90°, flip)",
+        "description": "Повернуть + поменять"
+      },
+      {
+        "id": "r2_flip",
+        "mapping": [
+          6,
+          7,
+          4,
+          5,
+          2,
+          3,
+          0,
+          1
+        ],
+        "name": "(r180°, flip)",
+        "description": "Повернуть + поменять"
+      },
+      {
+        "id": "r3_flip",
+        "mapping": [
+          7,
+          4,
+          5,
+          6,
+          3,
+          0,
+          1,
+          2
+        ],
+        "name": "(r270°, flip)",
+        "description": "Повернуть + поменять"
+      },
+      {
+        "id": "sh_flip",
+        "mapping": [
+          5,
+          4,
+          7,
+          6,
+          1,
+          0,
+          3,
+          2
+        ],
+        "name": "(sh, flip)",
+        "description": "Отразить + поменять"
+      },
+      {
+        "id": "sv_flip",
+        "mapping": [
+          7,
+          6,
+          5,
+          4,
+          3,
+          2,
+          1,
+          0
+        ],
+        "name": "(sv, flip)",
+        "description": "Отразить + поменять"
+      },
+      {
+        "id": "sd_flip",
+        "mapping": [
+          4,
+          7,
+          6,
+          5,
+          0,
+          3,
+          2,
+          1
+        ],
+        "name": "(sd, flip)",
+        "description": "Отразить + поменять"
+      },
+      {
+        "id": "sa_flip",
+        "mapping": [
+          6,
+          5,
+          4,
+          7,
+          2,
+          1,
+          0,
+          3
+        ],
+        "name": "(sa, flip)",
+        "description": "Отразить + поменять"
+      }
     ],
-    "generators": ["r1_id", "sh_id", "e_flip"],
+    "generators": [
+      "r1_id",
+      "sh_id",
+      "e_flip"
+    ],
     "cayley_table": {}
   },
-
   "mechanics": {
-    "allowed_actions": ["swap"],
+    "allowed_actions": [
+      "swap"
+    ],
     "show_cayley_button": false,
     "show_generators_hint": true,
     "inner_doors": [],
     "palette": null
   },
-
   "visuals": {
     "background_theme": "stone_vault",
     "ambient_particles": "dust_motes",
     "crystal_style": "basic_gem",
     "edge_style": "glowing"
   },
-
   "hints": [
-    {"trigger": "after_30_seconds_no_action", "text": "Призма: два квадрата (циан и фиолетовый), соединенные вертикальными ребрами."},
-    {"trigger": "after_first_valid", "text": "Группа D4 × Z2 — прямое произведение. Можно вращать/отражать квадраты независимо."},
-    {"trigger": "after_8_found", "text": "Первые 8 ключей — симметрии только верхнего квадрата. Ещё 8 — с обменом квадратов!"}
+    {
+      "trigger": "after_30_seconds_no_action",
+      "text": "Призма: два квадрата (циан и фиолетовый), соединенные вертикальными ребрами."
+    },
+    {
+      "trigger": "after_first_valid",
+      "text": "Группа D4 × Z2 — прямое произведение. Можно вращать/отражать квадраты независимо."
+    },
+    {
+      "trigger": "after_8_found",
+      "text": "Первые 8 ключей — симметрии только верхнего квадрата. Ещё 8 — с обменом квадратов!"
+    }
   ],
-
   "echo_hints": [
     {
       "text": "Призма из двух квадратов. Можно вращать каждый квадрат независимо (D4) и менять их местами (Z2).",
@@ -91,7 +448,515 @@
     },
     {
       "text": "Финал Слоя 1! Прямое произведение — способ строить большие группы из малых. Богатая структура для слоев 2-5.",
-      "target_crystals": [0, 1, 2, 3, 4, 5, 6, 7]
+      "target_crystals": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7
+      ]
     }
-  ]
+  ],
+  "layers": {
+    "layer_3": {
+      "title": "Группы — брелки",
+      "instruction": "Соберите все брелки — наборы ключей, образующие группу",
+      "subgroup_count": 10,
+      "subgroups": [
+        {
+          "order": 1,
+          "elements": [
+            "e_id"
+          ],
+          "generators": [],
+          "is_trivial": true,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "r2_id"
+          ],
+          "generators": [
+            "r2_id"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sh_id"
+          ],
+          "generators": [
+            "sh_id"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sv_id"
+          ],
+          "generators": [
+            "sv_id"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sd_id"
+          ],
+          "generators": [
+            "sd_id"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sa_id"
+          ],
+          "generators": [
+            "sa_id"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "e_flip"
+          ],
+          "generators": [
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "r2_flip"
+          ],
+          "generators": [
+            "r2_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sh_flip"
+          ],
+          "generators": [
+            "sh_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sv_flip"
+          ],
+          "generators": [
+            "sv_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sd_flip"
+          ],
+          "generators": [
+            "sd_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sa_flip"
+          ],
+          "generators": [
+            "sa_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "r1_id",
+            "r2_id",
+            "r3_id"
+          ],
+          "generators": [
+            "r1_id"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "r2_id",
+            "r1_flip",
+            "r3_flip"
+          ],
+          "generators": [
+            "r1_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sh_id",
+            "r2_id",
+            "sv_id"
+          ],
+          "generators": [
+            "sh_id",
+            "r2_id"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sd_id",
+            "sa_id",
+            "r2_id"
+          ],
+          "generators": [
+            "sd_id",
+            "sa_id"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "r2_id",
+            "e_flip",
+            "r2_flip"
+          ],
+          "generators": [
+            "r2_id",
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "r2_id",
+            "sh_flip",
+            "sv_flip"
+          ],
+          "generators": [
+            "r2_id",
+            "sh_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "r2_id",
+            "sd_flip",
+            "sa_flip"
+          ],
+          "generators": [
+            "r2_id",
+            "sd_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sh_id",
+            "e_flip",
+            "sh_flip"
+          ],
+          "generators": [
+            "sh_id",
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sh_id",
+            "r2_flip",
+            "sv_flip"
+          ],
+          "generators": [
+            "sh_id",
+            "r2_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sv_id",
+            "e_flip",
+            "sv_flip"
+          ],
+          "generators": [
+            "sv_id",
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sv_id",
+            "sh_flip",
+            "r2_flip"
+          ],
+          "generators": [
+            "sv_id",
+            "sh_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sd_id",
+            "e_flip",
+            "sd_flip"
+          ],
+          "generators": [
+            "sd_id",
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sd_id",
+            "sa_flip",
+            "r2_flip"
+          ],
+          "generators": [
+            "sd_id",
+            "sa_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sa_id",
+            "e_flip",
+            "sa_flip"
+          ],
+          "generators": [
+            "sa_id",
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e_id",
+            "sa_id",
+            "sd_flip",
+            "r2_flip"
+          ],
+          "generators": [
+            "sa_id",
+            "sd_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 8,
+          "elements": [
+            "e_id",
+            "sd_id",
+            "sh_id",
+            "r1_id",
+            "sa_id",
+            "r2_id",
+            "r3_id",
+            "sv_id"
+          ],
+          "generators": [
+            "sd_id",
+            "sh_id"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 8,
+          "elements": [
+            "e_id",
+            "r1_id",
+            "r2_id",
+            "r3_id",
+            "e_flip",
+            "r1_flip",
+            "r2_flip",
+            "r3_flip"
+          ],
+          "generators": [
+            "r1_id",
+            "e_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 8,
+          "elements": [
+            "e_id",
+            "r1_id",
+            "r2_id",
+            "r3_id",
+            "sd_flip",
+            "sh_flip",
+            "sa_flip",
+            "sv_flip"
+          ],
+          "generators": [
+            "r1_id",
+            "sd_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 8,
+          "elements": [
+            "e_id",
+            "sh_id",
+            "r2_id",
+            "sv_id",
+            "sd_flip",
+            "r1_flip",
+            "sa_flip",
+            "r3_flip"
+          ],
+          "generators": [
+            "sh_id",
+            "sd_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 8,
+          "elements": [
+            "e_id",
+            "sd_id",
+            "sa_id",
+            "r2_id",
+            "sh_flip",
+            "r1_flip",
+            "r3_flip",
+            "sv_flip"
+          ],
+          "generators": [
+            "sd_id",
+            "sh_flip"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 16,
+          "elements": [
+            "e_id",
+            "r1_id",
+            "r2_id",
+            "r3_id",
+            "sh_id",
+            "sv_id",
+            "sd_id",
+            "sa_id",
+            "e_flip",
+            "r1_flip",
+            "r2_flip",
+            "r3_flip",
+            "sh_flip",
+            "sv_flip",
+            "sd_flip",
+            "sa_flip"
+          ],
+          "generators": [
+            "r1_id",
+            "sh_id",
+            "e_flip"
+          ],
+          "is_trivial": true,
+          "is_normal": true
+        }
+      ],
+      "filtered": true,
+      "full_subgroup_count": 33,
+      "filter_strategy": "pedagogical_top10"
+    }
+  }
 }

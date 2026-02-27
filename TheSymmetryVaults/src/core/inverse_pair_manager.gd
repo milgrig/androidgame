@@ -51,7 +51,7 @@ func setup(level_data: Dictionary, layer_config: Dictionary = {}) -> void:
 	var autos: Array = level_data.get("symmetries", {}).get("automorphisms", [])
 	for auto in autos:
 		var sym_id: String = auto.get("id", "")
-		var perm := Permutation.from_array(auto.get("mapping", []))
+		var perm: Permutation = Permutation.from_array(auto.get("mapping", []))
 		_sym_id_to_perm[sym_id] = perm
 		_sym_id_to_name[sym_id] = auto.get("name", sym_id)
 
@@ -67,12 +67,12 @@ func setup(level_data: Dictionary, layer_config: Dictionary = {}) -> void:
 		var inv_perm: Permutation = perm.inverse()
 
 		# Find the sym_id of the inverse
-		var inv_sym_id := _find_sym_id_for_perm(inv_perm)
+		var inv_sym_id: String = _find_sym_id_for_perm(inv_perm)
 		if inv_sym_id == "":
 			push_warning("InversePairManager: no inverse found for %s" % sym_id)
 			continue
 
-		var pair := InversePair.new()
+		var pair: InversePair = InversePair.new()
 		pair.key_sym_id = sym_id
 		pair.key_perm = perm
 		pair.key_name = _sym_id_to_name.get(sym_id, sym_id)
@@ -104,7 +104,7 @@ func setup(level_data: Dictionary, layer_config: Dictionary = {}) -> void:
 ## Attempt to pair key_sym_id with candidate_sym_id.
 ## Returns: {success: bool, reason: String, pair_index: int, is_self_inverse: bool}
 func try_pair(key_sym_id: String, candidate_sym_id: String) -> Dictionary:
-	var pair := _find_pair_by_key(key_sym_id)
+	var pair: InversePair = _find_pair_by_key(key_sym_id)
 	if pair == null:
 		return {"success": false, "reason": "unknown_key", "pair_index": -1, "is_self_inverse": false}
 	if pair.paired:
@@ -117,15 +117,15 @@ func try_pair(key_sym_id: String, candidate_sym_id: String) -> Dictionary:
 	# THE CORE CHECK: is candidate the inverse of key?
 	if pair.key_perm.compose(candidate_perm).is_identity():
 		pair.paired = true
-		var pair_index := pairs.find(pair)
-		var is_self_inv := pair.is_self_inverse
+		var pair_index: int = pairs.find(pair)
+		var is_self_inv: bool = pair.is_self_inverse
 
 		# Bidirectional: if we paired A->B, also pair B->A
 		if bidirectional and not pair.is_self_inverse:
-			var reverse_pair := _find_pair_by_key(candidate_sym_id)
+			var reverse_pair = _find_pair_by_key(candidate_sym_id)
 			if reverse_pair != null and not reverse_pair.paired:
 				reverse_pair.paired = true
-				var rev_idx := pairs.find(reverse_pair)
+				var rev_idx: int = pairs.find(reverse_pair)
 				pair_matched.emit(rev_idx, reverse_pair.key_sym_id, reverse_pair.inverse_sym_id)
 
 		pair_matched.emit(pair_index, key_sym_id, candidate_sym_id)
@@ -137,7 +137,7 @@ func try_pair(key_sym_id: String, candidate_sym_id: String) -> Dictionary:
 	else:
 		# Show what the composition actually is (for feedback)
 		var result_perm: Permutation = pair.key_perm.compose(candidate_perm)
-		var result_name := _lookup_perm_name(result_perm)
+		var result_name: String = _lookup_perm_name(result_perm)
 		return {
 			"success": false,
 			"reason": "not_inverse",
@@ -158,8 +158,8 @@ func is_complete() -> bool:
 ## Get progress: {matched: int, total: int}
 ## total excludes identity (which is auto-paired).
 func get_progress() -> Dictionary:
-	var matched := 0
-	var total := 0
+	var matched: int = 0
+	var total: int = 0
 	for pair in pairs:
 		if not pair.is_identity:
 			total += 1
@@ -209,7 +209,7 @@ func get_all_sym_ids() -> Array:
 ##           pair_index: int, is_self_inverse: bool}
 func try_pair_by_sym_ids(sym_a: String, sym_b: String) -> Dictionary:
 	# Try both orderings: maybe pair has sym_a as key, or sym_b as key
-	var result := try_pair(sym_a, sym_b)
+	var result: Dictionary = try_pair(sym_a, sym_b)
 	if result["success"]:
 		return {
 			"success": true,
@@ -278,7 +278,7 @@ func _find_sym_id_for_perm(perm: Permutation) -> String:
 
 ## Look up the display name for a given permutation.
 func _lookup_perm_name(perm: Permutation) -> String:
-	var sym_id := _find_sym_id_for_perm(perm)
+	var sym_id: String = _find_sym_id_for_perm(perm)
 	if sym_id != "":
 		return _sym_id_to_name.get(sym_id, sym_id)
 	return perm.to_cycle_notation()
@@ -286,7 +286,7 @@ func _lookup_perm_name(perm: Permutation) -> String:
 
 ## Pre-reveal a pair (for tutorial levels).
 func _reveal_pair(key_id: String, inv_id: String) -> void:
-	var pair := _find_pair_by_key(key_id)
+	var pair: InversePair = _find_pair_by_key(key_id)
 	if pair != null and pair.inverse_sym_id == inv_id:
 		pair.paired = true
 		pair.revealed = true

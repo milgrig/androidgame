@@ -1,0 +1,2927 @@
+[
+  {
+    "level": 1,
+    "title": "Треугольный зал",
+    "group_name": "Z3",
+    "group_order": 3,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 3,
+        "elements": [
+          "e",
+          "r1",
+          "r2"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 2,
+    "title": "Направленный поток",
+    "group_name": "Z3",
+    "group_order": 3,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 3,
+        "elements": [
+          "e",
+          "r1",
+          "r2"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 3,
+    "title": "Цвет имеет значение",
+    "group_name": "Z2",
+    "group_order": 2,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s"
+        ],
+        "generators": [
+          "s"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 4,
+    "title": "Квадратный зал",
+    "group_name": "Z4",
+    "group_order": 4,
+    "subgroup_count": 3,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r2"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 5,
+    "title": "Зеркальный квадрат",
+    "group_name": "D4",
+    "group_order": 8,
+    "subgroup_count": 10,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r2"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sh"
+        ],
+        "generators": [
+          "sh"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sv"
+        ],
+        "generators": [
+          "sv"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sd"
+        ],
+        "generators": [
+          "sd"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sa"
+        ],
+        "generators": [
+          "sa"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "sh",
+          "r2",
+          "sv"
+        ],
+        "generators": [
+          "sh",
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "sd",
+          "sa",
+          "r2"
+        ],
+        "generators": [
+          "sd",
+          "sa"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "sh",
+          "sv",
+          "sd",
+          "sa"
+        ],
+        "generators": [
+          "r1",
+          "sh"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 6,
+    "title": "Разноцветный квадрат",
+    "group_name": "V4",
+    "group_order": 4,
+    "subgroup_count": 5,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r2"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sd"
+        ],
+        "generators": [
+          "sd"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sa"
+        ],
+        "generators": [
+          "sa"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r2",
+          "sd",
+          "sa"
+        ],
+        "generators": [
+          "r2",
+          "sd"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 7,
+    "title": "Кривая тропа",
+    "group_name": "Z2",
+    "group_order": 2,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "flip"
+        ],
+        "generators": [
+          "flip"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 8,
+    "title": "Звёзды-близнецы",
+    "group_name": "Z2",
+    "group_order": 2,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "mirror"
+        ],
+        "generators": [
+          "mirror"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 9,
+    "title": "Скрытый треугольник",
+    "group_name": "S3",
+    "group_order": 6,
+    "subgroup_count": 6,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s01"
+        ],
+        "generators": [
+          "s01"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s02"
+        ],
+        "generators": [
+          "s02"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s12"
+        ],
+        "generators": [
+          "s12"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "e",
+          "r1",
+          "r2"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 6,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "s01",
+          "s02",
+          "s12"
+        ],
+        "generators": [
+          "r1",
+          "s01"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 10,
+    "title": "Цепь силы",
+    "group_name": "Z5",
+    "group_order": 5,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 5,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 11,
+    "title": "Две шестерёнки",
+    "group_name": "Z6",
+    "group_order": 6,
+    "subgroup_count": 4,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r3"
+        ],
+        "generators": [
+          "r3"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 3,
+        "elements": [
+          "e",
+          "r2",
+          "r4"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 6,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 12,
+    "title": "Зал двух ключей",
+    "group_name": "D4",
+    "group_order": 8,
+    "subgroup_count": 10,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r2"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sh"
+        ],
+        "generators": [
+          "sh"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sv"
+        ],
+        "generators": [
+          "sv"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sd"
+        ],
+        "generators": [
+          "sd"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "sa"
+        ],
+        "generators": [
+          "sa"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "sh",
+          "r2",
+          "sv"
+        ],
+        "generators": [
+          "sh",
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "sd",
+          "sa",
+          "r2"
+        ],
+        "generators": [
+          "sd",
+          "sa"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "sh",
+          "sv",
+          "sd",
+          "sa"
+        ],
+        "generators": [
+          "r1",
+          "sh"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 13,
+    "title": "Тетраэдральный зал",
+    "group_name": "S4",
+    "group_order": 24,
+    "subgroup_count": 30,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "perm_0"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_1"
+        ],
+        "generators": [
+          "perm_1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_2"
+        ],
+        "generators": [
+          "perm_2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_5"
+        ],
+        "generators": [
+          "perm_5"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_6"
+        ],
+        "generators": [
+          "perm_6"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_7"
+        ],
+        "generators": [
+          "perm_7"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_14"
+        ],
+        "generators": [
+          "perm_14"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_16"
+        ],
+        "generators": [
+          "perm_16"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_21"
+        ],
+        "generators": [
+          "perm_21"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "perm_0",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_23"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "perm_0",
+          "perm_3",
+          "perm_4"
+        ],
+        "generators": [
+          "perm_3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "perm_0",
+          "perm_8",
+          "perm_12"
+        ],
+        "generators": [
+          "perm_8"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "perm_0",
+          "perm_11",
+          "perm_19"
+        ],
+        "generators": [
+          "perm_11"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "perm_0",
+          "perm_15",
+          "perm_20"
+        ],
+        "generators": [
+          "perm_15"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_9",
+          "perm_16",
+          "perm_18"
+        ],
+        "generators": [
+          "perm_9"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_10",
+          "perm_13",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_10"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_7",
+          "perm_17",
+          "perm_22"
+        ],
+        "generators": [
+          "perm_17"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_1",
+          "perm_6",
+          "perm_7"
+        ],
+        "generators": [
+          "perm_1",
+          "perm_6"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_2",
+          "perm_21",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_2",
+          "perm_21"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_5",
+          "perm_14",
+          "perm_16"
+        ],
+        "generators": [
+          "perm_5",
+          "perm_14"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "perm_0",
+          "perm_7",
+          "perm_16",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_7",
+          "perm_16"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 6,
+        "elements": [
+          "perm_0",
+          "perm_1",
+          "perm_2",
+          "perm_3",
+          "perm_4",
+          "perm_5"
+        ],
+        "generators": [
+          "perm_1",
+          "perm_2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 6,
+        "elements": [
+          "perm_0",
+          "perm_1",
+          "perm_14",
+          "perm_15",
+          "perm_20",
+          "perm_21"
+        ],
+        "generators": [
+          "perm_1",
+          "perm_14"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 6,
+        "elements": [
+          "perm_0",
+          "perm_2",
+          "perm_6",
+          "perm_8",
+          "perm_12",
+          "perm_14"
+        ],
+        "generators": [
+          "perm_2",
+          "perm_6"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 6,
+        "elements": [
+          "perm_0",
+          "perm_5",
+          "perm_6",
+          "perm_11",
+          "perm_19",
+          "perm_21"
+        ],
+        "generators": [
+          "perm_5",
+          "perm_6"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "perm_0",
+          "perm_1",
+          "perm_6",
+          "perm_7",
+          "perm_16",
+          "perm_17",
+          "perm_22",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_1",
+          "perm_16"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "perm_0",
+          "perm_2",
+          "perm_7",
+          "perm_10",
+          "perm_13",
+          "perm_16",
+          "perm_21",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_2",
+          "perm_7"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "perm_0",
+          "perm_5",
+          "perm_7",
+          "perm_9",
+          "perm_14",
+          "perm_16",
+          "perm_18",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_5",
+          "perm_7"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 12,
+        "elements": [
+          "perm_0",
+          "perm_3",
+          "perm_4",
+          "perm_7",
+          "perm_8",
+          "perm_11",
+          "perm_12",
+          "perm_15",
+          "perm_16",
+          "perm_19",
+          "perm_20",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_3",
+          "perm_7"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 24,
+        "elements": [
+          "perm_0",
+          "perm_1",
+          "perm_2",
+          "perm_3",
+          "perm_4",
+          "perm_5",
+          "perm_6",
+          "perm_7",
+          "perm_8",
+          "perm_9",
+          "perm_10",
+          "perm_11",
+          "perm_12",
+          "perm_13",
+          "perm_14",
+          "perm_15",
+          "perm_16",
+          "perm_17",
+          "perm_18",
+          "perm_19",
+          "perm_20",
+          "perm_21",
+          "perm_22",
+          "perm_23"
+        ],
+        "generators": [
+          "perm_1",
+          "perm_8"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 14,
+    "title": "Радужный лабиринт",
+    "group_name": "D4",
+    "group_order": 8,
+    "subgroup_count": 10,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r2"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s0"
+        ],
+        "generators": [
+          "s0"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s1"
+        ],
+        "generators": [
+          "s1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s2"
+        ],
+        "generators": [
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s3"
+        ],
+        "generators": [
+          "s3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s0",
+          "s2",
+          "r2"
+        ],
+        "generators": [
+          "s0",
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s1",
+          "r2",
+          "s3"
+        ],
+        "generators": [
+          "s1",
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "s0",
+          "s1",
+          "s2",
+          "s3"
+        ],
+        "generators": [
+          "r1",
+          "s0"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 15,
+    "title": "Зал четных перестановок",
+    "group_name": "A4",
+    "group_order": 12,
+    "subgroup_count": 10,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "even_perm_0"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "even_perm_0",
+          "even_perm_3"
+        ],
+        "generators": [
+          "even_perm_3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "even_perm_0",
+          "even_perm_8"
+        ],
+        "generators": [
+          "even_perm_8"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "even_perm_0",
+          "even_perm_11"
+        ],
+        "generators": [
+          "even_perm_11"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "even_perm_0",
+          "even_perm_1",
+          "even_perm_2"
+        ],
+        "generators": [
+          "even_perm_1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "even_perm_0",
+          "even_perm_4",
+          "even_perm_6"
+        ],
+        "generators": [
+          "even_perm_4"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "even_perm_0",
+          "even_perm_5",
+          "even_perm_9"
+        ],
+        "generators": [
+          "even_perm_5"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "even_perm_0",
+          "even_perm_7",
+          "even_perm_10"
+        ],
+        "generators": [
+          "even_perm_7"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "even_perm_0",
+          "even_perm_3",
+          "even_perm_8",
+          "even_perm_11"
+        ],
+        "generators": [
+          "even_perm_3",
+          "even_perm_8"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 12,
+        "elements": [
+          "even_perm_0",
+          "even_perm_1",
+          "even_perm_2",
+          "even_perm_3",
+          "even_perm_4",
+          "even_perm_5",
+          "even_perm_6",
+          "even_perm_7",
+          "even_perm_8",
+          "even_perm_9",
+          "even_perm_10",
+          "even_perm_11"
+        ],
+        "generators": [
+          "even_perm_1",
+          "even_perm_3"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 16,
+    "title": "Семиугольный зал",
+    "group_name": "Z7",
+    "group_order": 7,
+    "subgroup_count": 2,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 7,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "r6"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 17,
+    "title": "Восьмиугольная башня",
+    "group_name": "Z8",
+    "group_order": 8,
+    "subgroup_count": 4,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r4"
+        ],
+        "generators": [
+          "r4"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r2",
+          "r4",
+          "r6"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "r6",
+          "r7"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 18,
+    "title": "Треугольное зеркало",
+    "group_name": "D3",
+    "group_order": 6,
+    "subgroup_count": 6,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s0"
+        ],
+        "generators": [
+          "s0"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s1"
+        ],
+        "generators": [
+          "s1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s2"
+        ],
+        "generators": [
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "e",
+          "r1",
+          "r2"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 6,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "s0",
+          "s1",
+          "s2"
+        ],
+        "generators": [
+          "r1",
+          "s0"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 19,
+    "title": "Пентагональная крепость",
+    "group_name": "D5",
+    "group_order": 10,
+    "subgroup_count": 8,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s0"
+        ],
+        "generators": [
+          "s0"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s1"
+        ],
+        "generators": [
+          "s1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s2"
+        ],
+        "generators": [
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s3"
+        ],
+        "generators": [
+          "s3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s4"
+        ],
+        "generators": [
+          "s4"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 5,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 10,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "s0",
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "generators": [
+          "r1",
+          "s0"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 20,
+    "title": "Шестигранный храм",
+    "group_name": "D6",
+    "group_order": 12,
+    "subgroup_count": 16,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r3"
+        ],
+        "generators": [
+          "r3"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s0"
+        ],
+        "generators": [
+          "s0"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s1"
+        ],
+        "generators": [
+          "s1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s2"
+        ],
+        "generators": [
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s3"
+        ],
+        "generators": [
+          "s3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s4"
+        ],
+        "generators": [
+          "s4"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s5"
+        ],
+        "generators": [
+          "s5"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 3,
+        "elements": [
+          "e",
+          "r2",
+          "r4"
+        ],
+        "generators": [
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s0",
+          "s5",
+          "r3"
+        ],
+        "generators": [
+          "s0",
+          "s5"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s1",
+          "r3",
+          "s4"
+        ],
+        "generators": [
+          "s1",
+          "r3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s2",
+          "r3",
+          "s3"
+        ],
+        "generators": [
+          "s2",
+          "r3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 6,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 6,
+        "elements": [
+          "e",
+          "s0",
+          "s2",
+          "r2",
+          "s4",
+          "r4"
+        ],
+        "generators": [
+          "s0",
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 6,
+        "elements": [
+          "e",
+          "s1",
+          "r2",
+          "s5",
+          "r4",
+          "s3"
+        ],
+        "generators": [
+          "s1",
+          "r2"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 12,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "r5",
+          "s0",
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5"
+        ],
+        "generators": [
+          "r1",
+          "s0"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 21,
+    "title": "Кватернионный куб",
+    "group_name": "Q8",
+    "group_order": 8,
+    "subgroup_count": 12,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "id"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "id",
+          "neg"
+        ],
+        "generators": [
+          "neg"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "id",
+          "neg",
+          "i",
+          "ni"
+        ],
+        "generators": [
+          "i"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "id",
+          "neg",
+          "j",
+          "nj"
+        ],
+        "generators": [
+          "j"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "id",
+          "k"
+        ],
+        "generators": [
+          "k"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "id",
+          "nk"
+        ],
+        "generators": [],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "id",
+          "neg",
+          "i",
+          "ni",
+          "j",
+          "nj",
+          "k",
+          "nk"
+        ],
+        "generators": [
+          "neg",
+          "i",
+          "ni"
+        ],
+        "is_trivial": true,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "id",
+          "neg",
+          "k",
+          "nk"
+        ],
+        "generators": [
+          "k"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "id",
+          "neg",
+          "i",
+          "ni",
+          "j",
+          "nj"
+        ],
+        "generators": [
+          "i",
+          "j"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 32,
+        "elements": [
+          "id",
+          "neg",
+          "i",
+          "ni",
+          "k",
+          "nk"
+        ],
+        "generators": [],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 32,
+        "elements": [
+          "id",
+          "neg",
+          "j",
+          "nj",
+          "k",
+          "nk"
+        ],
+        "generators": [],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 64,
+        "elements": [
+          "id",
+          "neg",
+          "i",
+          "ni",
+          "j",
+          "nj",
+          "k",
+          "nk"
+        ],
+        "generators": [],
+        "is_trivial": false,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 22,
+    "title": "Кубический граф",
+    "group_name": "Aut(Cube_graph)",
+    "group_order": 8,
+    "subgroup_count": 10,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s_bc"
+        ],
+        "generators": [
+          "s_bc"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s_ab"
+        ],
+        "generators": [
+          "s_ab"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "r180"
+        ],
+        "generators": [
+          "r180"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s_ad"
+        ],
+        "generators": [
+          "s_ad"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s_dg"
+        ],
+        "generators": [
+          "s_dg"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "r90",
+          "r270",
+          "r180"
+        ],
+        "generators": [
+          "r90"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s_bc",
+          "s_dg",
+          "r180"
+        ],
+        "generators": [
+          "s_bc",
+          "s_dg"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e",
+          "s_ab",
+          "s_ad",
+          "r180"
+        ],
+        "generators": [
+          "s_ab",
+          "s_ad"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e",
+          "s_bc",
+          "s_ab",
+          "r90",
+          "r180",
+          "r270",
+          "s_ad",
+          "s_dg"
+        ],
+        "generators": [
+          "s_bc",
+          "s_ab"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 23,
+    "title": "Граф Петерсена",
+    "group_name": "D5",
+    "group_order": 10,
+    "subgroup_count": 8,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s0"
+        ],
+        "generators": [
+          "s0"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s1"
+        ],
+        "generators": [
+          "s1"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s2"
+        ],
+        "generators": [
+          "s2"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s3"
+        ],
+        "generators": [
+          "s3"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e",
+          "s4"
+        ],
+        "generators": [
+          "s4"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 5,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4"
+        ],
+        "generators": [
+          "r1"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 10,
+        "elements": [
+          "e",
+          "r1",
+          "r2",
+          "r3",
+          "r4",
+          "s0",
+          "s1",
+          "s2",
+          "s3",
+          "s4"
+        ],
+        "generators": [
+          "r1",
+          "s0"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  },
+  {
+    "level": 24,
+    "title": "Призматический зал",
+    "group_name": "D4 × Z2",
+    "group_order": 16,
+    "subgroup_count": 33,
+    "subgroups": [
+      {
+        "order": 1,
+        "elements": [
+          "e_id"
+        ],
+        "generators": [],
+        "is_trivial": true,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "r2_id"
+        ],
+        "generators": [
+          "r2_id"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sh_id"
+        ],
+        "generators": [
+          "sh_id"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sv_id"
+        ],
+        "generators": [
+          "sv_id"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sd_id"
+        ],
+        "generators": [
+          "sd_id"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sa_id"
+        ],
+        "generators": [
+          "sa_id"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "e_flip"
+        ],
+        "generators": [
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "r2_flip"
+        ],
+        "generators": [
+          "r2_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sh_flip"
+        ],
+        "generators": [
+          "sh_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sv_flip"
+        ],
+        "generators": [
+          "sv_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sd_flip"
+        ],
+        "generators": [
+          "sd_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 2,
+        "elements": [
+          "e_id",
+          "sa_flip"
+        ],
+        "generators": [
+          "sa_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "r1_id",
+          "r2_id",
+          "r3_id"
+        ],
+        "generators": [
+          "r1_id"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "r2_id",
+          "r1_flip",
+          "r3_flip"
+        ],
+        "generators": [
+          "r1_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sh_id",
+          "r2_id",
+          "sv_id"
+        ],
+        "generators": [
+          "sh_id",
+          "r2_id"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sd_id",
+          "sa_id",
+          "r2_id"
+        ],
+        "generators": [
+          "sd_id",
+          "sa_id"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "r2_id",
+          "e_flip",
+          "r2_flip"
+        ],
+        "generators": [
+          "r2_id",
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "r2_id",
+          "sh_flip",
+          "sv_flip"
+        ],
+        "generators": [
+          "r2_id",
+          "sh_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "r2_id",
+          "sd_flip",
+          "sa_flip"
+        ],
+        "generators": [
+          "r2_id",
+          "sd_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sh_id",
+          "e_flip",
+          "sh_flip"
+        ],
+        "generators": [
+          "sh_id",
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sh_id",
+          "r2_flip",
+          "sv_flip"
+        ],
+        "generators": [
+          "sh_id",
+          "r2_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sv_id",
+          "e_flip",
+          "sv_flip"
+        ],
+        "generators": [
+          "sv_id",
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sv_id",
+          "sh_flip",
+          "r2_flip"
+        ],
+        "generators": [
+          "sv_id",
+          "sh_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sd_id",
+          "e_flip",
+          "sd_flip"
+        ],
+        "generators": [
+          "sd_id",
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sd_id",
+          "sa_flip",
+          "r2_flip"
+        ],
+        "generators": [
+          "sd_id",
+          "sa_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sa_id",
+          "e_flip",
+          "sa_flip"
+        ],
+        "generators": [
+          "sa_id",
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 4,
+        "elements": [
+          "e_id",
+          "sa_id",
+          "sd_flip",
+          "r2_flip"
+        ],
+        "generators": [
+          "sa_id",
+          "sd_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": false
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e_id",
+          "sd_id",
+          "sh_id",
+          "r1_id",
+          "sa_id",
+          "r2_id",
+          "r3_id",
+          "sv_id"
+        ],
+        "generators": [
+          "sd_id",
+          "sh_id"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e_id",
+          "r1_id",
+          "r2_id",
+          "r3_id",
+          "e_flip",
+          "r1_flip",
+          "r2_flip",
+          "r3_flip"
+        ],
+        "generators": [
+          "r1_id",
+          "e_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e_id",
+          "r1_id",
+          "r2_id",
+          "r3_id",
+          "sd_flip",
+          "sh_flip",
+          "sa_flip",
+          "sv_flip"
+        ],
+        "generators": [
+          "r1_id",
+          "sd_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e_id",
+          "sh_id",
+          "r2_id",
+          "sv_id",
+          "sd_flip",
+          "r1_flip",
+          "sa_flip",
+          "r3_flip"
+        ],
+        "generators": [
+          "sh_id",
+          "sd_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 8,
+        "elements": [
+          "e_id",
+          "sd_id",
+          "sa_id",
+          "r2_id",
+          "sh_flip",
+          "r1_flip",
+          "r3_flip",
+          "sv_flip"
+        ],
+        "generators": [
+          "sd_id",
+          "sh_flip"
+        ],
+        "is_trivial": false,
+        "is_normal": true
+      },
+      {
+        "order": 16,
+        "elements": [
+          "e_id",
+          "r1_id",
+          "r2_id",
+          "r3_id",
+          "sh_id",
+          "sv_id",
+          "sd_id",
+          "sa_id",
+          "e_flip",
+          "r1_flip",
+          "r2_flip",
+          "r3_flip",
+          "sh_flip",
+          "sv_flip",
+          "sd_flip",
+          "sa_flip"
+        ],
+        "generators": [
+          "r1_id",
+          "sh_id",
+          "e_flip"
+        ],
+        "is_trivial": true,
+        "is_normal": true
+      }
+    ]
+  }
+]

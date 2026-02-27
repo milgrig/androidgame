@@ -73,15 +73,15 @@ func load_from_file(path: String) -> bool:
 		push_error("HallTreeData: file not found: %s" % path)
 		return false
 
-	var file := FileAccess.open(path, FileAccess.READ)
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		push_error("HallTreeData: cannot open file: %s" % path)
 		return false
 
-	var json_text := file.get_as_text()
+	var json_text: String = file.get_as_text()
 	file.close()
 
-	var json := JSON.new()
+	var json: JSON = JSON.new()
 	if json.parse(json_text) != OK:
 		push_error("HallTreeData: JSON parse error in %s: %s" % [path, json.get_error_message()])
 		return false
@@ -110,7 +110,7 @@ func parse(data: Dictionary) -> void:
 
 	# --- Wings ---
 	for w in data.get("wings", []):
-		var wing := WingData.new()
+		var wing: WingData = WingData.new()
 		wing.id = str(w.get("id", ""))
 		wing.name = str(w.get("name", ""))
 		wing.subtitle = str(w.get("subtitle", ""))
@@ -120,7 +120,7 @@ func parse(data: Dictionary) -> void:
 		# Gate
 		var g = w.get("gate", {})
 		if g is Dictionary and not g.is_empty():
-			var gate := GateData.new()
+			var gate: GateData = GateData.new()
 			gate.type = str(g.get("type", "threshold"))
 			gate.required_halls = int(g.get("required_halls", 0))
 			gate.total_halls = int(g.get("total_halls", 0))
@@ -153,7 +153,7 @@ func parse(data: Dictionary) -> void:
 
 	# --- Edges ---
 	for e in data.get("edges", []):
-		var edge := HallEdge.new()
+		var edge: HallEdge = HallEdge.new()
 		edge.from_hall = str(e.get("from", ""))
 		edge.to_hall = str(e.get("to", ""))
 		edge.type = str(e.get("type", "path"))
@@ -164,7 +164,7 @@ func parse(data: Dictionary) -> void:
 
 	# --- Resonances ---
 	for r in data.get("resonances", []):
-		var res := ResonanceData.new()
+		var res: ResonanceData = ResonanceData.new()
 		res.halls = []
 		for h in r.get("halls", []):
 			res.halls.append(str(h))
@@ -202,7 +202,7 @@ func get_wing(wing_id: String) -> WingData:
 
 ## Get all hall IDs in a wing. Returns empty array if wing not found.
 func get_wing_halls(wing_id: String) -> Array[String]:
-	var wing := get_wing(wing_id)
+	var wing: WingData = get_wing(wing_id)
 	if wing == null:
 		return []
 	return wing.halls
@@ -292,7 +292,7 @@ func validate() -> Array[String]:
 				errors.append("Resonance references unknown hall '%s'" % h)
 
 	# Check for cycles (DAG property)
-	var cycle_errors := _check_for_cycles(all_halls)
+	var cycle_errors: Array[String] = _check_for_cycles(all_halls)
 	errors.append_array(cycle_errors)
 
 	return errors

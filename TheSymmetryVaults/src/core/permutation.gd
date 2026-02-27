@@ -15,10 +15,10 @@ func apply(i: int) -> int:
 	return mapping[i]
 
 func is_valid() -> bool:
-	var n := size()
+	var n: int = size()
 	if n == 0:
 		return false
-	var seen := {}
+	var seen: Dictionary = {}
 	for val in mapping:
 		if val < 0 or val >= n or seen.has(val):
 			return false
@@ -51,15 +51,15 @@ func inverse() -> Permutation:
 
 func order() -> int:
 	## Returns smallest k > 0 such that self^k = identity
-	var current := self
-	var identity := Permutation.create_identity(size())
+	var current: Permutation = self
+	var identity: Permutation = Permutation.create_identity(size())
 	for k in range(1, size() + 1):  # order divides n! but <= n for single perm
 		if current.equals(identity):
 			return k
 		current = current.compose(self)
 	# Fallback: should not reach here for valid permutations
 	# but order can be up to lcm of cycle lengths
-	var max_order := 1
+	var max_order: int = 1
 	for i in range(size() + 1, _factorial(size()) + 1):
 		current = current.compose(self)
 		if current.equals(identity):
@@ -75,13 +75,13 @@ func equals(other: Permutation) -> bool:
 	return true
 
 func to_cycle_notation() -> String:
-	var visited := {}
+	var visited: Dictionary = {}
 	var cycles: Array[String] = []
 	for i in range(size()):
 		if visited.has(i):
 			continue
 		var cycle: Array[int] = []
-		var j := i
+		var j: int = i
 		while not visited.has(j):
 			visited[j] = true
 			cycle.append(j)
@@ -111,7 +111,7 @@ static func from_array(arr: Array) -> Permutation:
 	return Permutation.new(typed)
 
 func _factorial(n: int) -> int:
-	var result := 1
+	var result: int = 1
 	for i in range(2, n + 1):
 		result *= i
 	return result
@@ -145,7 +145,7 @@ static func generate_subgroup_from(generators: Array, n: int) -> Array:
 
 	# Add all generators (if not already present)
 	for gen in generators:
-		var found := false
+		var found: bool = false
 		for s in subgroup:
 			if s.equals(gen):
 				found = true
@@ -154,7 +154,7 @@ static func generate_subgroup_from(generators: Array, n: int) -> Array:
 			subgroup.append(gen)
 
 	# Iteratively close under composition and inverse
-	var changed := true
+	var changed: bool = true
 	while changed:
 		changed = false
 		var to_add: Array = []  # Array[Permutation]
@@ -163,7 +163,7 @@ static func generate_subgroup_from(generators: Array, n: int) -> Array:
 		for a in subgroup:
 			for b in subgroup:
 				var product: Permutation = a.compose(b)
-				var exists := false
+				var exists: bool = false
 				for s in subgroup:
 					if s.equals(product):
 						exists = true
@@ -179,7 +179,7 @@ static func generate_subgroup_from(generators: Array, n: int) -> Array:
 		# Close under inverse
 		for a in subgroup:
 			var inv: Permutation = a.inverse()
-			var exists := false
+			var exists: bool = false
 			for s in subgroup:
 				if s.equals(inv):
 					exists = true

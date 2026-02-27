@@ -377,5 +377,471 @@
       "text": "Это сложный уровень. Попробуйте найти закономерности в структуре."
     }
   ],
-  "echo_hints": []
+  "echo_hints": [],
+  "layers": {
+    "layer_3": {
+      "title": "Группы — брелки",
+      "instruction": "Соберите все брелки — наборы ключей, образующие группу",
+      "subgroup_count": 10,
+      "subgroups": [
+        {
+          "order": 1,
+          "elements": [
+            "perm_0"
+          ],
+          "generators": [],
+          "is_trivial": true,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_1"
+          ],
+          "generators": [
+            "perm_1"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_2"
+          ],
+          "generators": [
+            "perm_2"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_5"
+          ],
+          "generators": [
+            "perm_5"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_6"
+          ],
+          "generators": [
+            "perm_6"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_7"
+          ],
+          "generators": [
+            "perm_7"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_14"
+          ],
+          "generators": [
+            "perm_14"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_16"
+          ],
+          "generators": [
+            "perm_16"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_21"
+          ],
+          "generators": [
+            "perm_21"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_23"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 3,
+          "elements": [
+            "perm_0",
+            "perm_3",
+            "perm_4"
+          ],
+          "generators": [
+            "perm_3"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 3,
+          "elements": [
+            "perm_0",
+            "perm_8",
+            "perm_12"
+          ],
+          "generators": [
+            "perm_8"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 3,
+          "elements": [
+            "perm_0",
+            "perm_11",
+            "perm_19"
+          ],
+          "generators": [
+            "perm_11"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 3,
+          "elements": [
+            "perm_0",
+            "perm_15",
+            "perm_20"
+          ],
+          "generators": [
+            "perm_15"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_9",
+            "perm_16",
+            "perm_18"
+          ],
+          "generators": [
+            "perm_9"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_10",
+            "perm_13",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_10"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_7",
+            "perm_17",
+            "perm_22"
+          ],
+          "generators": [
+            "perm_17"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_1",
+            "perm_6",
+            "perm_7"
+          ],
+          "generators": [
+            "perm_1",
+            "perm_6"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_2",
+            "perm_21",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_2",
+            "perm_21"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_5",
+            "perm_14",
+            "perm_16"
+          ],
+          "generators": [
+            "perm_5",
+            "perm_14"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 4,
+          "elements": [
+            "perm_0",
+            "perm_7",
+            "perm_16",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_7",
+            "perm_16"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 6,
+          "elements": [
+            "perm_0",
+            "perm_1",
+            "perm_2",
+            "perm_3",
+            "perm_4",
+            "perm_5"
+          ],
+          "generators": [
+            "perm_1",
+            "perm_2"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 6,
+          "elements": [
+            "perm_0",
+            "perm_1",
+            "perm_14",
+            "perm_15",
+            "perm_20",
+            "perm_21"
+          ],
+          "generators": [
+            "perm_1",
+            "perm_14"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 6,
+          "elements": [
+            "perm_0",
+            "perm_2",
+            "perm_6",
+            "perm_8",
+            "perm_12",
+            "perm_14"
+          ],
+          "generators": [
+            "perm_2",
+            "perm_6"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 6,
+          "elements": [
+            "perm_0",
+            "perm_5",
+            "perm_6",
+            "perm_11",
+            "perm_19",
+            "perm_21"
+          ],
+          "generators": [
+            "perm_5",
+            "perm_6"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 8,
+          "elements": [
+            "perm_0",
+            "perm_1",
+            "perm_6",
+            "perm_7",
+            "perm_16",
+            "perm_17",
+            "perm_22",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_1",
+            "perm_16"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 8,
+          "elements": [
+            "perm_0",
+            "perm_2",
+            "perm_7",
+            "perm_10",
+            "perm_13",
+            "perm_16",
+            "perm_21",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_2",
+            "perm_7"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 8,
+          "elements": [
+            "perm_0",
+            "perm_5",
+            "perm_7",
+            "perm_9",
+            "perm_14",
+            "perm_16",
+            "perm_18",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_5",
+            "perm_7"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 12,
+          "elements": [
+            "perm_0",
+            "perm_3",
+            "perm_4",
+            "perm_7",
+            "perm_8",
+            "perm_11",
+            "perm_12",
+            "perm_15",
+            "perm_16",
+            "perm_19",
+            "perm_20",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_3",
+            "perm_7"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 24,
+          "elements": [
+            "perm_0",
+            "perm_1",
+            "perm_2",
+            "perm_3",
+            "perm_4",
+            "perm_5",
+            "perm_6",
+            "perm_7",
+            "perm_8",
+            "perm_9",
+            "perm_10",
+            "perm_11",
+            "perm_12",
+            "perm_13",
+            "perm_14",
+            "perm_15",
+            "perm_16",
+            "perm_17",
+            "perm_18",
+            "perm_19",
+            "perm_20",
+            "perm_21",
+            "perm_22",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_1",
+            "perm_8"
+          ],
+          "is_trivial": true,
+          "is_normal": true
+        }
+      ],
+      "filtered": true,
+      "full_subgroup_count": 30,
+      "filter_strategy": "pedagogical_top10"
+    }
+  }
 }

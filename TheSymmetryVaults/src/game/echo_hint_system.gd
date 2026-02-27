@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
 	_idle_time += delta
 
 	# Check if next echo level should trigger
-	var next_level := _current_echo_level + 1
+	var next_level: int = _current_echo_level + 1
 	if next_level <= 3 and next_level <= _echo_hints.size():
 		var threshold: float = IDLE_THRESHOLDS[next_level - 1]
 		if _idle_time >= threshold:
@@ -264,10 +264,10 @@ func _show_echo(level: int) -> void:
 
 	# Narrative framing: wrap with researcher's notes prefix
 	var prefix: String = ECHO_PREFIXES[level - 1]
-	var display_text := prefix + raw_text
+	var display_text: String = prefix + raw_text
 
 	# Level indicator labels
-	var level_names := ["Шёпот эха", "Голос эха", "Видение эха"]
+	var level_names: Array = ["Шёпот эха", "Голос эха", "Видение эха"]
 
 	# Update panel content
 	if _echo_level_indicator:

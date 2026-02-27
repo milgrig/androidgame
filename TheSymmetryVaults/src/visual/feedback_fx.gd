@@ -242,7 +242,7 @@ func _spawn_burst(center: Vector2, color: Color, count: int) -> void:
 
 
 func _update_particles(delta: float) -> void:
-	var to_remove := []
+	var to_remove: Array = []
 	for i in range(_particles.size()):
 		var p = _particles[i]
 		p["pos"] += p["vel"] * delta

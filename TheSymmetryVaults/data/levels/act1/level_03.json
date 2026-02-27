@@ -3,34 +3,41 @@
     "id": "act1_level03",
     "act": 1,
     "level": 3,
-    "title": "\u0426\u0432\u0435\u0442 \u0438\u043c\u0435\u0435\u0442 \u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435",
-    "subtitle": "\u041d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b \u043e\u0442\u043b\u0438\u0447\u0430\u044e\u0442\u0441\u044f",
+    "title": "Цвет имеет значение",
+    "subtitle": "Некоторые кристаллы отличаются",
     "group_name": "Z2",
     "group_order": 2
   },
-
   "graph": {
     "nodes": [
       {
         "id": 0,
         "color": "red",
-        "position": [640, 220],
+        "position": [
+          640,
+          220
+        ],
         "label": "A"
       },
       {
         "id": 1,
         "color": "green",
-        "position": [440, 460],
+        "position": [
+          440,
+          460
+        ],
         "label": "B"
       },
       {
         "id": 2,
         "color": "green",
-        "position": [840, 460],
+        "position": [
+          840,
+          460
+        ],
         "label": "C"
       }
     ],
-
     "edges": [
       {
         "from": 0,
@@ -52,67 +59,114 @@
       }
     ]
   },
-
   "symmetries": {
     "automorphisms": [
       {
         "id": "e",
-        "mapping": [0, 1, 2],
-        "name": "\u0422\u043e\u0436\u0434\u0435\u0441\u0442\u0432\u043e",
-        "description": "\u0412\u0441\u0451 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435"
+        "mapping": [
+          0,
+          1,
+          2
+        ],
+        "name": "Тождество",
+        "description": "Всё остаётся на месте"
       },
       {
         "id": "s",
-        "mapping": [0, 2, 1],
-        "name": "\u041e\u0442\u0440\u0430\u0436\u0435\u043d\u0438\u0435",
-        "description": "\u041f\u043e\u043c\u0435\u043d\u044f\u0442\u044c \u043c\u0435\u0441\u0442\u0430\u043c\u0438 \u0434\u0432\u0430 \u0437\u0435\u043b\u0451\u043d\u044b\u0445 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u0430"
+        "mapping": [
+          0,
+          2,
+          1
+        ],
+        "name": "Отражение",
+        "description": "Поменять местами два зелёных кристалла"
       }
     ],
-    "generators": ["s"],
+    "generators": [
+      "s"
+    ],
     "cayley_table": {
-      "e": {"e": "e", "s": "s"},
-      "s": {"e": "s", "s": "e"}
+      "e": {
+        "e": "e",
+        "s": "s"
+      },
+      "s": {
+        "e": "s",
+        "s": "e"
+      }
     }
   },
-
   "mechanics": {
-    "allowed_actions": ["swap"],
+    "allowed_actions": [
+      "swap"
+    ],
     "show_cayley_button": false,
     "show_generators_hint": false,
     "inner_doors": [],
     "palette": null
   },
-
   "visuals": {
     "background_theme": "stone_vault",
     "ambient_particles": "dust_motes",
     "crystal_style": "basic_gem",
     "edge_style": "thin_thread"
   },
-
   "hints": [
     {
       "trigger": "after_30_seconds_no_action",
-      "text": "\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b \u043e\u0442\u043b\u0438\u0447\u0430\u0435\u0442\u0441\u044f \u043e\u0442 \u0437\u0435\u043b\u0451\u043d\u044b\u0445..."
+      "text": "Красный кристалл отличается от зелёных..."
     },
     {
       "trigger": "after_first_valid",
-      "text": "\u0426\u0432\u0435\u0442\u0430 \u0434\u043e\u043b\u0436\u043d\u044b \u0441\u043e\u0432\u043f\u0430\u0434\u0430\u0442\u044c! \u0422\u043e\u043b\u044c\u043a\u043e \u043d\u0435\u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u043e\u0431\u043c\u0435\u043d\u044b \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u044e\u0442 \u0443\u0437\u043e\u0440."
+      "text": "Цвета должны совпадать! Только некоторые обмены сохраняют узор."
     }
   ],
-
   "echo_hints": [
     {
-      "text": "\u0426\u0432\u0435\u0442\u0430 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u043e\u0432 \u2014 \u043d\u0435 \u043f\u0440\u043e\u0441\u0442\u043e \u0443\u043a\u0440\u0430\u0448\u0435\u043d\u0438\u0435. \u041e\u043d\u0438 \u0434\u043e\u043b\u0436\u043d\u044b \u0441\u043e\u0432\u043f\u0430\u0441\u0442\u044c \u043f\u043e\u0441\u043b\u0435 \u043e\u0431\u043c\u0435\u043d\u0430.",
+      "text": "Цвета кристаллов — не просто украшение. Они должны совпасть после обмена.",
       "target_crystals": []
     },
     {
-      "text": "\u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b \u0443\u043d\u0438\u043a\u0430\u043b\u0435\u043d \u2014 \u043e\u043d \u043c\u043e\u0436\u0435\u0442 \u043e\u0441\u0442\u0430\u0442\u044c\u0441\u044f \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0430 \u0441\u0432\u043e\u0451\u043c \u043c\u0435\u0441\u0442\u0435. \u0418\u0449\u0438\u0442\u0435 \u043e\u0431\u043c\u0435\u043d \u0437\u0435\u043b\u0451\u043d\u044b\u0445.",
+      "text": "Красный кристалл уникален — он может остаться только на своём месте. Ищите обмен зелёных.",
       "target_crystals": []
     },
     {
-      "text": "\u041f\u043e\u043c\u0435\u043d\u044f\u0439\u0442\u0435 \u0434\u0432\u0430 \u0437\u0435\u043b\u0451\u043d\u044b\u0445 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u0430 \u043c\u0435\u0436\u0434\u0443 \u0441\u043e\u0431\u043e\u0439. \u041a\u0440\u0430\u0441\u043d\u044b\u0439 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435.",
-      "target_crystals": [1, 2]
+      "text": "Поменяйте два зелёных кристалла между собой. Красный остаётся на месте.",
+      "target_crystals": [
+        1,
+        2
+      ]
     }
-  ]
+  ],
+  "layers": {
+    "layer_3": {
+      "title": "Группы — брелки",
+      "instruction": "Соберите все брелки — наборы ключей, образующие группу",
+      "subgroup_count": 2,
+      "subgroups": [
+        {
+          "order": 1,
+          "elements": [
+            "e"
+          ],
+          "generators": [],
+          "is_trivial": true,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s"
+          ],
+          "generators": [
+            "s"
+          ],
+          "is_trivial": true,
+          "is_normal": true
+        }
+      ],
+      "filtered": false
+    }
+  }
 }

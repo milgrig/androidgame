@@ -40,7 +40,7 @@ var _badge_container: Node2D    ## Container for layer badge dots
 ## --- Animation state ---
 var _pulse_time: float = 0.0
 var _is_hovered: bool = false
-var _base_scale := Vector2(1.0, 1.0)
+var _base_scale: Vector2 = Vector2(1.0, 1.0)
 
 ## Crystal visual constants
 const CRYSTAL_RADIUS := 28.0
@@ -107,18 +107,18 @@ func _process(delta: float) -> void:
 
 	# Pulse animation for AVAILABLE state
 	if state == VisualState.AVAILABLE:
-		var pulse := sin(_pulse_time * 2.5) * 0.08 + 1.0
+		var pulse: float = sin(_pulse_time * 2.5) * 0.08 + 1.0
 		_crystal_shape.scale = _base_scale * pulse
 
 	# Gold shimmer for PERFECT state
 	if state == VisualState.PERFECT:
-		var shimmer := sin(_pulse_time * 3.0) * 0.04 + 1.0
+		var shimmer: float = sin(_pulse_time * 3.0) * 0.04 + 1.0
 		_crystal_shape.scale = _base_scale * shimmer
 
 	# Hover scale interpolation
-	var target_scale := HOVER_SCALE if _is_hovered else 1.0
-	var current := scale.x
-	var new_val := lerpf(current, target_scale, delta * 10.0)
+	var target_scale: float = HOVER_SCALE if _is_hovered else 1.0
+	var current: float = scale.x
+	var new_val: float = lerpf(current, target_scale, delta * 10.0)
 	scale = Vector2(new_val, new_val)
 
 	_crystal_shape.queue_redraw()
@@ -210,7 +210,7 @@ func _update_visuals() -> void:
 
 	if _label:
 		_label.text = hall_name
-		var alpha := 0.5 if state == VisualState.LOCKED else 0.9
+		var alpha: float = 0.5 if state == VisualState.LOCKED else 0.9
 		_label.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85, alpha))
 		# Shift label down if badges are present
 		if _layer_badges.size() > 0:
@@ -232,17 +232,17 @@ func _draw_layer_badges() -> void:
 	if _layer_badges.is_empty():
 		return
 
-	var total := _layer_badges.size()
-	var total_width := (total - 1) * BADGE_GAP
-	var start_x := -total_width / 2.0
+	var total: int = _layer_badges.size()
+	var total_width: float = (total - 1) * BADGE_GAP
+	var start_x: float = -total_width / 2.0
 
 	for i in range(total):
 		var badge: Dictionary = _layer_badges[i]
 		var layer_num: int = badge.get("layer", 1)
 		var badge_state: String = badge.get("state", "locked")
 		var color: Color = LAYER_COLORS.get(layer_num, Color.WHITE)
-		var x := start_x + i * BADGE_GAP
-		var center := Vector2(x, 0)
+		var x: float = start_x + i * BADGE_GAP
+		var center: Vector2 = Vector2(x, 0)
 
 		# Draw based on state
 		match badge_state:
@@ -252,8 +252,8 @@ func _draw_layer_badges() -> void:
 				_badge_container.draw_arc(center, BADGE_RADIUS, 0, TAU, 12, Color(0.4, 0.4, 0.45, 0.3), 1.0)
 			"available":
 				# Pulsing colored dot
-				var pulse_alpha := sin(_pulse_time * 3.0) * 0.2 + 0.7
-				var pulse_color := Color(color.r, color.g, color.b, pulse_alpha)
+				var pulse_alpha: float = sin(_pulse_time * 3.0) * 0.2 + 0.7
+				var pulse_color: Color = Color(color.r, color.g, color.b, pulse_alpha)
 				_badge_container.draw_circle(center, BADGE_RADIUS, pulse_color)
 				_badge_container.draw_arc(center, BADGE_RADIUS, 0, TAU, 12, color, 1.5)
 			"in_progress":
@@ -280,17 +280,17 @@ func _draw_crystal() -> void:
 
 	# Glow circle behind crystal
 	if glow_color.a > 0.0:
-		var glow_radius := CRYSTAL_RADIUS * 1.8
+		var glow_radius: float = CRYSTAL_RADIUS * 1.8
 		if state == VisualState.AVAILABLE:
-			var pulse_alpha := sin(_pulse_time * 2.5) * 0.15 + 0.35
+			var pulse_alpha: float = sin(_pulse_time * 2.5) * 0.15 + 0.35
 			glow_color.a = pulse_alpha
 			glow_radius = CRYSTAL_RADIUS * (1.8 + sin(_pulse_time * 2.5) * 0.15)
 		_crystal_shape.draw_circle(Vector2.ZERO, glow_radius, glow_color)
 
 	# Crystal polygon (hexagon)
-	var points := PackedVector2Array()
+	var points: PackedVector2Array = PackedVector2Array()
 	for i in range(CRYSTAL_SIDES):
-		var angle := (TAU / CRYSTAL_SIDES) * i - PI / 2.0  # Point up
+		var angle: float = (TAU / CRYSTAL_SIDES) * i - PI / 2.0  # Point up
 		points.append(Vector2(cos(angle), sin(angle)) * CRYSTAL_RADIUS)
 
 	# Fill
@@ -307,7 +307,7 @@ func _draw_crystal() -> void:
 
 	# Inner decorative lines (crystal facets)
 	if state != VisualState.LOCKED:
-		var inner_color := Color(edge_color.r, edge_color.g, edge_color.b, edge_color.a * 0.3)
+		var inner_color: Color = Color(edge_color.r, edge_color.g, edge_color.b, edge_color.a * 0.3)
 		_crystal_shape.draw_line(points[0], points[3], inner_color, 1.0)
 		_crystal_shape.draw_line(points[1], points[4], inner_color, 1.0)
 		_crystal_shape.draw_line(points[2], points[5], inner_color, 1.0)

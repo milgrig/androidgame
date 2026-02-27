@@ -37,7 +37,7 @@ func _ready() -> void:
 	position_smoothing_speed = smooth_speed
 	# Default: camera looks at viewport center so world coords = screen coords.
 	# This keeps crystals positioned by build_positions_map() inside their zone.
-	var vp := get_viewport_rect().size
+	var vp: Vector2 = get_viewport_rect().size
 	if vp != Vector2.ZERO:
 		position = vp / 2.0
 		_target_position = position
@@ -65,7 +65,7 @@ func _process(delta: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	# Zoom with mouse wheel
 	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.pressed:
 			if mouse_event.button_index == MOUSE_BUTTON_WHEEL_UP:
 				_target_zoom *= (1.0 + zoom_speed)
@@ -124,7 +124,7 @@ func center_on_points(points: Array[Vector2], margin: float = 100.0,
 	_target_position = center
 
 	# Calculate zoom to fit within visible_area (or full viewport)
-	var area_size := visible_area if visible_area != Vector2.ZERO else get_viewport_rect().size
+	var area_size: Vector2 = visible_area if visible_area != Vector2.ZERO else get_viewport_rect().size
 	var zoom_x = area_size.x / size.x if size.x > 0 else 1.0
 	var zoom_y = area_size.y / size.y if size.y > 0 else 1.0
 	var fit_zoom = min(zoom_x, zoom_y)

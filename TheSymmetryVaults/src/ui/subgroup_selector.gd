@@ -67,7 +67,7 @@ func setup(doors_data: Array, subgroups_data: Array, key_ring_ref: KeyRing, leve
 
 
 func _build_panel_style() -> void:
-	var style := StyleBoxFlat.new()
+	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.05, 0.05, 0.1, 0.93)
 	style.corner_radius_top_left = 10
 	style.corner_radius_top_right = 10
@@ -124,7 +124,7 @@ func _build_ui() -> void:
 	_update_progress_label()
 
 	# Found subgroups section
-	var found_header := Label.new()
+	var found_header: Label = Label.new()
 	found_header.name = "FoundHeader"
 	found_header.text = "Найденные подгруппы:"
 	found_header.add_theme_font_size_override("font_size", 12)
@@ -137,12 +137,12 @@ func _build_ui() -> void:
 	_rebuild_found_display()
 
 	# Separator
-	var sep := HSeparator.new()
+	var sep: HSeparator = HSeparator.new()
 	sep.add_theme_constant_override("separation", 6)
 	_content.add_child(sep)
 
 	# Keys selection header
-	var keys_header := Label.new()
+	var keys_header: Label = Label.new()
 	keys_header.name = "KeysHeader"
 	keys_header.text = "Выберите ключи для набора:"
 	keys_header.add_theme_font_size_override("font_size", 13)
@@ -178,7 +178,7 @@ func _build_ui() -> void:
 
 
 func _apply_button_style(btn: Button, bg: Color, border: Color) -> void:
-	var style := StyleBoxFlat.new()
+	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = bg
 	style.corner_radius_top_left = 6
 	style.corner_radius_top_right = 6
@@ -191,7 +191,7 @@ func _apply_button_style(btn: Button, bg: Color, border: Color) -> void:
 	style.border_width_bottom = 1
 	btn.add_theme_stylebox_override("normal", style)
 
-	var hover: StyleBoxFlat = style.duplicate() as StyleBoxFlat
+	var hover: StyleBoxFlat = style.duplicate()
 	hover.bg_color = bg.lightened(0.15)
 	btn.add_theme_stylebox_override("hover", hover)
 
@@ -214,20 +214,20 @@ func _rebuild_found_display() -> void:
 		var elements: Array = sg.get("elements", [])
 		var is_found: bool = sg_name in found
 
-		var row := HBoxContainer.new()
+		var row: HBoxContainer = HBoxContainer.new()
 		row.custom_minimum_size = Vector2(0, 22)
 
 		# Status icon
-		var icon_label := Label.new()
+		var icon_label: Label = Label.new()
 		icon_label.text = "✅" if is_found else "⬜"
 		icon_label.add_theme_font_size_override("font_size", 13)
 		icon_label.custom_minimum_size = Vector2(22, 22)
 		row.add_child(icon_label)
 
 		# Info
-		var info_label := Label.new()
+		var info_label: Label = Label.new()
 		if is_found:
-			var elements_str := "{%s}" % ", ".join(elements)
+			var elements_str: String = "{%s}" % ", ".join(elements)
 			info_label.text = "%s — %s" % [sg_desc, elements_str]
 			info_label.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4, 0.9))
 		else:
@@ -261,25 +261,25 @@ func _rebuild_key_checkboxes() -> void:
 		return
 
 	for i in range(_key_ring.count()):
-		var row := HBoxContainer.new()
+		var row: HBoxContainer = HBoxContainer.new()
 		row.name = "KeySelectRow_%d" % i
 		row.custom_minimum_size = Vector2(0, 30)
 
 		# Checkbox
-		var cb := CheckBox.new()
+		var cb: CheckBox = CheckBox.new()
 		cb.name = "KeyCB_%d" % i
-		var display_name := _get_key_name(i)
+		var display_name: String = _get_key_name(i)
 		cb.text = display_name
 		cb.add_theme_font_size_override("font_size", 12)
 		cb.add_theme_color_override("font_color", Color(0.7, 0.8, 0.7, 0.9))
 		cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var cb_index := i
+		var cb_index: int = i
 		cb.toggled.connect(_on_key_checkbox_toggled.bind(cb_index))
 		row.add_child(cb)
 		_key_checkboxes.append(cb)
 
 		# Mini permutation diagram
-		var diagram := _create_mini_diagram(i)
+		var diagram: Control = _create_mini_diagram(i)
 		row.add_child(diagram)
 		_mini_diagrams.append(diagram)
 
@@ -290,7 +290,7 @@ func _rebuild_key_checkboxes() -> void:
 
 func _create_mini_diagram(key_index: int) -> Control:
 	## Create a mini diagram showing the permutation arrows.
-	var diagram := Control.new()
+	var diagram: Control = Control.new()
 	diagram.name = "MiniDiagram_%d" % key_index
 	diagram.custom_minimum_size = Vector2(MINI_DIAGRAM_SIZE, MINI_DIAGRAM_SIZE)
 	diagram.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -311,12 +311,12 @@ func _draw_mini_diagram(ctrl: Control) -> void:
 		return
 
 	var n: int = mapping.size()
-	var center := Vector2(MINI_DIAGRAM_SIZE / 2.0, MINI_DIAGRAM_SIZE / 2.0)
-	var radius := MINI_DIAGRAM_SIZE / 2.0 - 3.0
+	var center: Vector2 = Vector2(MINI_DIAGRAM_SIZE / 2.0, MINI_DIAGRAM_SIZE / 2.0)
+	var radius: float = MINI_DIAGRAM_SIZE / 2.0 - 3.0
 
 	var positions: Array[Vector2] = []
 	for i in range(n):
-		var angle := (TAU / n) * i - PI / 2.0
+		var angle: float = (TAU / n) * i - PI / 2.0
 		positions.append(center + Vector2(cos(angle), sin(angle)) * radius)
 
 	for i in range(n):
@@ -328,7 +328,7 @@ func _draw_mini_diagram(ctrl: Control) -> void:
 
 	for i in range(n):
 		var is_fixed: bool = mapping[i] == i
-		var col := Color(0.4, 0.7, 0.4, 0.8) if is_fixed else Color(0.8, 0.6, 0.3, 0.9)
+		var col: Color = Color(0.4, 0.7, 0.4, 0.8) if is_fixed else Color(0.8, 0.6, 0.3, 0.9)
 		ctrl.draw_circle(positions[i], 2.5, col)
 
 
@@ -365,8 +365,8 @@ func _on_key_toggled(pressed: bool, index: int) -> void:
 
 
 func _update_buttons() -> void:
-	var has_selection := not _selected_indices.is_empty()
-	var has_unfound := _inner_panel != null and _inner_panel.get_opened_count() < _inner_panel.get_total_count()
+	var has_selection: bool = not _selected_indices.is_empty()
+	var has_unfound: bool = _inner_panel != null and _inner_panel.get_opened_count() < _inner_panel.get_total_count()
 
 	if _check_button:
 		_check_button.disabled = not has_selection or not has_unfound
@@ -406,19 +406,19 @@ func _on_check_subgroup() -> void:
 			_show_status(msg, col)
 	else:
 		var reasons: Array = result.get("reasons", [])
-		var msg := "Это не подгруппа. "
+		var msg: String = "Это не подгруппа. "
 		if reasons.has("missing_identity"):
 			msg += "Нет Тождества (e) — «ничего не делать» тоже ключ! Добавьте его в набор."
 		elif reasons.has("missing_inverse"):
-			var inv_example := _get_inverse_example_text()
+			var inv_example: String = _get_inverse_example_text()
 			msg += "Не у всех ключей есть обратный. %s Каждый ключ должен иметь ОТМЕНУ!" % inv_example
 		elif reasons.has("not_closed_composition"):
-			var closure_example := _get_closure_example_text()
+			var closure_example: String = _get_closure_example_text()
 			msg += "Набор НЕ ЗАМКНУТ. %s Попробуйте добавить недостающий ключ!" % closure_example
 		_show_status(msg, Color(1.0, 0.4, 0.3, 0.95))
 
 	# Reset checkbox colors after delay
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	tween.tween_interval(4.0)
 	tween.tween_callback(_reset_checkbox_colors)
 
@@ -436,7 +436,7 @@ func _get_closure_example_text() -> String:
 			var key_b: Permutation = _key_ring.get_key(j)
 			var product: Permutation = key_a.compose(key_b)
 
-			var found_in_subset := false
+			var found_in_subset: bool = false
 			for k in _selected_indices:
 				if k >= _key_ring.count():
 					continue
@@ -446,9 +446,9 @@ func _get_closure_example_text() -> String:
 					break
 
 			if not found_in_subset:
-				var name_a := _get_key_name(i)
-				var name_b := _get_key_name(j)
-				var product_name := "?"
+				var name_a: String = _get_key_name(i)
+				var name_b: String = _get_key_name(j)
+				var product_name: String = "?"
 				for p in range(_key_ring.count()):
 					if _key_ring.get_key(p).equals(product):
 						product_name = _get_key_name(p)
@@ -469,7 +469,7 @@ func _get_inverse_example_text() -> String:
 		var key: Permutation = _key_ring.get_key(i)
 		var inv: Permutation = key.inverse()
 
-		var found_inv := false
+		var found_inv: bool = false
 		for j in _selected_indices:
 			if j >= _key_ring.count():
 				continue
@@ -478,8 +478,8 @@ func _get_inverse_example_text() -> String:
 				break
 
 		if not found_inv and not key.is_identity():
-			var key_name := _get_key_name(i)
-			var inv_name := "?"
+			var key_name: String = _get_key_name(i)
+			var inv_name: String = "?"
 			for p in range(_key_ring.count()):
 				if _key_ring.get_key(p).equals(inv):
 					inv_name = _get_key_name(p)
@@ -500,7 +500,7 @@ func _show_status(text: String, color: Color) -> void:
 	if _status_label:
 		_status_label.text = text
 		_status_label.add_theme_color_override("font_color", color)
-		var tween := create_tween()
+		var tween: Tween = create_tween()
 		tween.tween_interval(4.0)
 		tween.tween_callback(_reset_status_label)
 
@@ -542,7 +542,7 @@ func get_total_count() -> int:
 
 func get_state() -> Dictionary:
 	## Serializable state for Agent Bridge.
-	var base := _inner_panel.get_state() if _inner_panel else {}
+	var base: Dictionary = _inner_panel.get_state() if _inner_panel else {}
 	base["selected_keys"] = _selected_indices.duplicate()
 	return base
 

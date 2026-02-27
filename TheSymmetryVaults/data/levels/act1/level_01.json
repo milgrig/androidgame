@@ -3,34 +3,41 @@
     "id": "act1_level01",
     "act": 1,
     "level": 1,
-    "title": "\u0422\u0440\u0435\u0443\u0433\u043e\u043b\u044c\u043d\u044b\u0439 \u0437\u0430\u043b",
-    "subtitle": "\u0422\u0440\u0438 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u0430, \u0442\u0440\u0438 \u0441\u0435\u043a\u0440\u0435\u0442\u0430",
+    "title": "Треугольный зал",
+    "subtitle": "Три кристалла, три секрета",
     "group_name": "Z3",
     "group_order": 3
   },
-
   "graph": {
     "nodes": [
       {
         "id": 0,
         "color": "red",
-        "position": [640, 220],
+        "position": [
+          640,
+          220
+        ],
         "label": "A"
       },
       {
         "id": 1,
         "color": "red",
-        "position": [440, 460],
+        "position": [
+          440,
+          460
+        ],
         "label": "B"
       },
       {
         "id": 2,
         "color": "red",
-        "position": [840, 460],
+        "position": [
+          840,
+          460
+        ],
         "label": "C"
       }
     ],
-
     "edges": [
       {
         "from": 0,
@@ -52,74 +59,133 @@
       }
     ]
   },
-
   "symmetries": {
     "automorphisms": [
       {
         "id": "e",
-        "mapping": [0, 1, 2],
-        "name": "\u0422\u043e\u0436\u0434\u0435\u0441\u0442\u0432\u043e",
-        "description": "\u0412\u0441\u0451 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435"
+        "mapping": [
+          0,
+          1,
+          2
+        ],
+        "name": "Тождество",
+        "description": "Всё остаётся на месте"
       },
       {
         "id": "r1",
-        "mapping": [1, 2, 0],
-        "name": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u043d\u0430 120\u00b0",
-        "description": "\u041e\u0434\u0438\u043d \u0448\u0430\u0433 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439"
+        "mapping": [
+          1,
+          2,
+          0
+        ],
+        "name": "Поворот на 120°",
+        "description": "Один шаг по часовой"
       },
       {
         "id": "r2",
-        "mapping": [2, 0, 1],
-        "name": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u043d\u0430 240\u00b0",
-        "description": "\u0414\u0432\u0430 \u0448\u0430\u0433\u0430 \u043f\u043e \u0447\u0430\u0441\u043e\u0432\u043e\u0439"
+        "mapping": [
+          2,
+          0,
+          1
+        ],
+        "name": "Поворот на 240°",
+        "description": "Два шага по часовой"
       }
     ],
-    "generators": ["r1"],
+    "generators": [
+      "r1"
+    ],
     "cayley_table": {
-      "e":  {"e": "e",  "r1": "r1", "r2": "r2"},
-      "r1": {"e": "r1", "r1": "r2", "r2": "e"},
-      "r2": {"e": "r2", "r1": "e",  "r2": "r1"}
+      "e": {
+        "e": "e",
+        "r1": "r1",
+        "r2": "r2"
+      },
+      "r1": {
+        "e": "r1",
+        "r1": "r2",
+        "r2": "e"
+      },
+      "r2": {
+        "e": "r2",
+        "r1": "e",
+        "r2": "r1"
+      }
     }
   },
-
   "mechanics": {
-    "allowed_actions": ["swap"],
+    "allowed_actions": [
+      "swap"
+    ],
     "show_cayley_button": false,
     "show_generators_hint": false,
     "inner_doors": [],
     "palette": null
   },
-
   "visuals": {
     "background_theme": "stone_vault",
     "ambient_particles": "dust_motes",
     "crystal_style": "basic_gem",
     "edge_style": "thin_thread"
   },
-
   "hints": [
     {
       "trigger": "after_30_seconds_no_action",
-      "text": "\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u044c \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b \u043d\u0430 \u0434\u0440\u0443\u0433\u043e\u0439"
+      "text": "Попробуйте перетащить кристалл на другой"
     },
     {
       "trigger": "after_first_valid",
-      "text": "\u0412\u044b \u043d\u0430\u0448\u043b\u0438 \u0441\u0438\u043c\u043c\u0435\u0442\u0440\u0438\u044e! \u041d\u0430\u0439\u0434\u0451\u0442\u0435 \u0435\u0449\u0451?"
+      "text": "Вы нашли симметрию! Найдёте ещё?"
     }
   ],
-
   "echo_hints": [
     {
-      "text": "\u042d\u0442\u043e\u0442 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b \u043f\u043e\u0445\u043e\u0436 \u043d\u0430 \u0434\u0440\u0443\u0433\u043e\u0439... \u043c\u043e\u0436\u0435\u0442, \u043e\u043d\u0438 \u043c\u043e\u0433\u0443\u0442 \u043f\u043e\u043c\u0435\u043d\u044f\u0442\u044c\u0441\u044f?",
+      "text": "Этот кристалл похож на другой... может, они могут поменяться?",
       "target_crystals": []
     },
     {
-      "text": "\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043f\u0435\u0440\u0435\u0442\u0430\u0449\u0438\u0442\u044c \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b A \u043d\u0430 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b B \u2014 \u0432\u0441\u0435 \u0442\u0440\u0438 \u0441\u0434\u0432\u0438\u043d\u0443\u0442\u0441\u044f \u043f\u043e \u043a\u0440\u0443\u0433\u0443.",
+      "text": "Попробуйте перетащить кристалл A на кристалл B — все три сдвинутся по кругу.",
       "target_crystals": []
     },
     {
-      "text": "\u0421\u0434\u0435\u043b\u0430\u0439\u0442\u0435 \u043e\u0431\u043c\u0435\u043d A\u2194B, \u0437\u0430\u0442\u0435\u043c \u043f\u0440\u043e\u0432\u0435\u0440\u044c\u0442\u0435 \u0443\u0437\u043e\u0440. \u041f\u043e\u0442\u043e\u043c \u0441\u0431\u0440\u043e\u0441\u044c\u0442\u0435 \u0438 \u043e\u0431\u043c\u0435\u043d\u044f\u0439\u0442\u0435 A\u2194C.",
-      "target_crystals": [0, 1, 2]
+      "text": "Сделайте обмен A↔B, затем проверьте узор. Потом сбросьте и обменяйте A↔C.",
+      "target_crystals": [
+        0,
+        1,
+        2
+      ]
     }
-  ]
+  ],
+  "layers": {
+    "layer_3": {
+      "title": "Группы — брелки",
+      "instruction": "Соберите все брелки — наборы ключей, образующие группу",
+      "subgroup_count": 2,
+      "subgroups": [
+        {
+          "order": 1,
+          "elements": [
+            "e"
+          ],
+          "generators": [],
+          "is_trivial": true,
+          "is_normal": true
+        },
+        {
+          "order": 3,
+          "elements": [
+            "e",
+            "r1",
+            "r2"
+          ],
+          "generators": [
+            "r1"
+          ],
+          "is_trivial": true,
+          "is_normal": true
+        }
+      ],
+      "filtered": false
+    }
+  }
 }

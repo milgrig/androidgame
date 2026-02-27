@@ -3,76 +3,271 @@
     "id": "act1_level06",
     "act": 1,
     "level": 6,
-    "title": "\u0420\u0430\u0437\u043d\u043e\u0446\u0432\u0435\u0442\u043d\u044b\u0439 \u043a\u0432\u0430\u0434\u0440\u0430\u0442",
-    "subtitle": "\u0426\u0432\u0435\u0442\u0430 \u043e\u0433\u0440\u0430\u043d\u0438\u0447\u0438\u0432\u0430\u044e\u0442 \u0441\u0438\u043c\u043c\u0435\u0442\u0440\u0438\u044e",
+    "title": "Разноцветный квадрат",
+    "subtitle": "Цвета ограничивают симметрию",
     "group_name": "V4",
     "group_order": 4
   },
-
   "graph": {
     "nodes": [
-      {"id": 0, "color": "gold",   "position": [520, 240], "label": "A"},
-      {"id": 1, "color": "purple", "position": [760, 240], "label": "B"},
-      {"id": 2, "color": "gold",   "position": [760, 480], "label": "C"},
-      {"id": 3, "color": "purple", "position": [520, 480], "label": "D"}
+      {
+        "id": 0,
+        "color": "gold",
+        "position": [
+          520,
+          240
+        ],
+        "label": "A"
+      },
+      {
+        "id": 1,
+        "color": "purple",
+        "position": [
+          760,
+          240
+        ],
+        "label": "B"
+      },
+      {
+        "id": 2,
+        "color": "gold",
+        "position": [
+          760,
+          480
+        ],
+        "label": "C"
+      },
+      {
+        "id": 3,
+        "color": "purple",
+        "position": [
+          520,
+          480
+        ],
+        "label": "D"
+      }
     ],
     "edges": [
-      {"from": 0, "to": 1, "type": "standard", "weight": 1},
-      {"from": 1, "to": 2, "type": "standard", "weight": 1},
-      {"from": 2, "to": 3, "type": "standard", "weight": 1},
-      {"from": 3, "to": 0, "type": "standard", "weight": 1}
+      {
+        "from": 0,
+        "to": 1,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 3,
+        "to": 0,
+        "type": "standard",
+        "weight": 1
+      }
     ]
   },
-
   "symmetries": {
     "automorphisms": [
-      {"id": "e",  "mapping": [0,1,2,3], "name": "\u0422\u043e\u0436\u0434\u0435\u0441\u0442\u0432\u043e",           "description": "\u0412\u0441\u0451 \u043e\u0441\u0442\u0430\u0451\u0442\u0441\u044f \u043d\u0430 \u043c\u0435\u0441\u0442\u0435"},
-      {"id": "r2", "mapping": [2,3,0,1], "name": "\u041f\u043e\u0432\u043e\u0440\u043e\u0442 \u043d\u0430 180\u00b0",      "description": "\u041f\u043e\u043c\u0435\u043d\u044f\u0442\u044c \u043f\u0430\u0440\u044b \u043f\u043e \u0434\u0438\u0430\u0433\u043e\u043d\u0430\u043b\u0438"},
-      {"id": "sd", "mapping": [0,3,2,1], "name": "\u041e\u0442\u0440\u0430\u0436\u0435\u043d\u0438\u0435 \u043f\u043e \u0434\u0438\u0430\u0433\u043e\u043d\u0430\u043b\u0438",      "description": "\u041e\u0442\u0440\u0430\u0437\u0438\u0442\u044c \u043f\u043e \u0437\u043e\u043b\u043e\u0442\u043e\u0439 \u0434\u0438\u0430\u0433\u043e\u043d\u0430\u043b\u0438"},
-      {"id": "sa", "mapping": [2,1,0,3], "name": "\u041e\u0442\u0440\u0430\u0436\u0435\u043d\u0438\u0435 \u043f\u043e \u043f\u043e\u0431\u043e\u0447\u043d\u043e\u0439 \u0434\u0438\u0430\u0433\u043e\u043d\u0430\u043b\u0438", "description": "\u041e\u0442\u0440\u0430\u0437\u0438\u0442\u044c \u043f\u043e \u0444\u0438\u043e\u043b\u0435\u0442\u043e\u0432\u043e\u0439 \u0434\u0438\u0430\u0433\u043e\u043d\u0430\u043b\u0438"}
+      {
+        "id": "e",
+        "mapping": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "name": "Тождество",
+        "description": "Всё остаётся на месте"
+      },
+      {
+        "id": "r2",
+        "mapping": [
+          2,
+          3,
+          0,
+          1
+        ],
+        "name": "Поворот на 180°",
+        "description": "Поменять пары по диагонали"
+      },
+      {
+        "id": "sd",
+        "mapping": [
+          0,
+          3,
+          2,
+          1
+        ],
+        "name": "Отражение по диагонали",
+        "description": "Отразить по золотой диагонали"
+      },
+      {
+        "id": "sa",
+        "mapping": [
+          2,
+          1,
+          0,
+          3
+        ],
+        "name": "Отражение по побочной диагонали",
+        "description": "Отразить по фиолетовой диагонали"
+      }
     ],
-    "generators": ["r2", "sd"],
+    "generators": [
+      "r2",
+      "sd"
+    ],
     "cayley_table": {
-      "e":  {"e":"e",  "r2":"r2", "sd":"sd", "sa":"sa"},
-      "r2": {"e":"r2", "r2":"e",  "sd":"sa", "sa":"sd"},
-      "sd": {"e":"sd", "r2":"sa", "sd":"e",  "sa":"r2"},
-      "sa": {"e":"sa", "r2":"sd", "sd":"r2", "sa":"e"}
+      "e": {
+        "e": "e",
+        "r2": "r2",
+        "sd": "sd",
+        "sa": "sa"
+      },
+      "r2": {
+        "e": "r2",
+        "r2": "e",
+        "sd": "sa",
+        "sa": "sd"
+      },
+      "sd": {
+        "e": "sd",
+        "r2": "sa",
+        "sd": "e",
+        "sa": "r2"
+      },
+      "sa": {
+        "e": "sa",
+        "r2": "sd",
+        "sd": "r2",
+        "sa": "e"
+      }
     }
   },
-
   "mechanics": {
-    "allowed_actions": ["swap"],
+    "allowed_actions": [
+      "swap"
+    ],
     "show_cayley_button": true,
     "show_generators_hint": false,
     "inner_doors": [],
     "palette": null
   },
-
   "visuals": {
     "background_theme": "stone_vault",
     "ambient_particles": "dust_motes",
     "crystal_style": "basic_gem",
     "edge_style": "thin_thread"
   },
-
   "hints": [
-    {"trigger": "after_30_seconds_no_action", "text": "\u0417\u043e\u043b\u043e\u0442\u044b\u0435 \u0438 \u0444\u0438\u043e\u043b\u0435\u0442\u043e\u0432\u044b\u0435 \u0434\u043e\u043b\u0436\u043d\u044b \u043e\u0441\u0442\u0430\u0442\u044c\u0441\u044f \u043d\u0430 \u0441\u0432\u043e\u0438\u0445 \u043c\u0435\u0441\u0442\u0430\u0445. \u041a\u0430\u043a\u0438\u0435 \u043e\u0431\u043c\u0435\u043d\u044b \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u044e\u0442 \u0446\u0432\u0435\u0442\u0430 \u0438 \u0441\u0432\u044f\u0437\u0438?"},
-    {"trigger": "after_first_valid", "text": "\u041a\u0430\u0436\u0434\u0430\u044f \u0441\u0438\u043c\u043c\u0435\u0442\u0440\u0438\u044f \u0437\u0434\u0435\u0441\u044c \u0438\u043c\u0435\u0435\u0442 \u043f\u043e\u0440\u044f\u0434\u043e\u043a 2: \u0441\u0434\u0435\u043b\u0430\u0439 \u0434\u0432\u0430\u0436\u0434\u044b \u2014 \u0432\u0435\u0440\u043d\u0451\u0448\u044c\u0441\u044f \u043d\u0430\u0437\u0430\u0434. \u0412\u0438\u0434\u0438\u0442\u0435 \u043f\u043e\u0447\u0435\u043c\u0443?"},
-    {"trigger": "after_2_found", "text": "\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u0441\u043a\u043e\u043c\u0431\u0438\u043d\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0434\u0432\u0430 \u043a\u043b\u044e\u0447\u0430. \u0420\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u2014 \u0432\u0441\u0435\u0433\u0434\u0430 \u0442\u0440\u0435\u0442\u0438\u0439 \u043a\u043b\u044e\u0447, \u0443\u0436\u0435 \u043d\u0430\u0439\u0434\u0435\u043d\u043d\u044b\u0439!"}
+    {
+      "trigger": "after_30_seconds_no_action",
+      "text": "Золотые и фиолетовые должны остаться на своих местах. Какие обмены сохраняют цвета и связи?"
+    },
+    {
+      "trigger": "after_first_valid",
+      "text": "Каждая симметрия здесь имеет порядок 2: сделай дважды — вернёшься назад. Видите почему?"
+    },
+    {
+      "trigger": "after_2_found",
+      "text": "Попробуйте скомбинировать два ключа. Результат — всегда третий ключ, уже найденный!"
+    }
   ],
-
   "echo_hints": [
     {
-      "text": "\u0417\u043e\u043b\u043e\u0442\u044b\u0435 \u0438 \u0444\u0438\u043e\u043b\u0435\u0442\u043e\u0432\u044b\u0435 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u044b... \u043a\u0430\u043a\u0438\u0435 \u043e\u0431\u043c\u0435\u043d\u044b \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u044e\u0442 \u0446\u0432\u0435\u0442\u043e\u0432\u043e\u0439 \u0443\u0437\u043e\u0440?",
+      "text": "Золотые и фиолетовые кристаллы... какие обмены сохраняют цветовой узор?",
       "target_crystals": []
     },
     {
-      "text": "\u041f\u043e\u043f\u0440\u043e\u0431\u0443\u0439\u0442\u0435 \u043e\u0431\u043c\u0435\u043d\u044f\u0442\u044c \u0434\u0432\u0430 \u043a\u0440\u0438\u0441\u0442\u0430\u043b\u043b\u0430 \u043e\u0434\u043d\u043e\u0433\u043e \u0446\u0432\u0435\u0442\u0430. \u041d\u0435 \u0432\u0441\u0435 \u043e\u0431\u043c\u0435\u043d\u044b \u0440\u0430\u0431\u043e\u0442\u0430\u044e\u0442!",
+      "text": "Попробуйте обменять два кристалла одного цвета. Не все обмены работают!",
       "target_crystals": []
     },
     {
-      "text": "\u0422\u0440\u0438 \u043e\u0431\u043c\u0435\u043d\u0430: \u0437\u043e\u043b\u043e\u0442\u044b\u0435 \u043c\u0435\u0436\u0434\u0443 \u0441\u043e\u0431\u043e\u0439, \u0444\u0438\u043e\u043b\u0435\u0442\u043e\u0432\u044b\u0435 \u043c\u0435\u0436\u0434\u0443 \u0441\u043e\u0431\u043e\u0439, \u0438 \u043e\u0431\u0430 \u043e\u0434\u043d\u043e\u0432\u0440\u0435\u043c\u0435\u043d\u043d\u043e.",
-      "target_crystals": [0, 1, 2, 3]
+      "text": "Три обмена: золотые между собой, фиолетовые между собой, и оба одновременно.",
+      "target_crystals": [
+        0,
+        1,
+        2,
+        3
+      ]
     }
-  ]
+  ],
+  "layers": {
+    "layer_3": {
+      "title": "Группы — брелки",
+      "instruction": "Соберите все брелки — наборы ключей, образующие группу",
+      "subgroup_count": 5,
+      "subgroups": [
+        {
+          "order": 1,
+          "elements": [
+            "e"
+          ],
+          "generators": [],
+          "is_trivial": true,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "r2"
+          ],
+          "generators": [
+            "r2"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "sd"
+          ],
+          "generators": [
+            "sd"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "sa"
+          ],
+          "generators": [
+            "sa"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e",
+            "r2",
+            "sd",
+            "sa"
+          ],
+          "generators": [
+            "r2",
+            "sd"
+          ],
+          "is_trivial": true,
+          "is_normal": true
+        }
+      ],
+      "filtered": false
+    }
+  }
 }

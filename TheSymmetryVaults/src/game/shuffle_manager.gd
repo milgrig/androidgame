@@ -71,7 +71,7 @@ func set_arrangement(mapping: Array) -> void:
 ## Apply an automorphism permutation to current arrangement (left composition).
 ## new[i] = current[P[i]]
 func apply_permutation(auto_perm: Permutation) -> void:
-	var n := current_arrangement.size()
+	var n: int = current_arrangement.size()
 	if n == 0:
 		return
 	var new_arrangement: Array[int] = []
@@ -91,8 +91,8 @@ static func build_positions_map(nodes_data: Array, target_size: Vector2) -> Dict
 
 	# 1. Parse raw positions from JSON
 	var raw_positions: Dictionary = {}  # node_id -> Vector2
-	var min_pos := Vector2(INF, INF)
-	var max_pos := Vector2(-INF, -INF)
+	var min_pos: Vector2 = Vector2(INF, INF)
+	var max_pos: Vector2 = Vector2(-INF, -INF)
 	for node_data in nodes_data:
 		var node_id: int = int(node_data.get("id", 0))
 		var pos_arr = node_data.get("position", [0, 0])
@@ -108,27 +108,27 @@ static func build_positions_map(nodes_data: Array, target_size: Vector2) -> Dict
 		max_pos.y = max(max_pos.y, pos.y)
 
 	# 2. Compute scale to fit into target_size with padding
-	var padding := 60.0  # margin inside the crystal zone
-	var usable := target_size - Vector2(padding * 2, padding * 2)
+	var padding: float = 60.0  # margin inside the crystal zone
+	var usable: Vector2 = target_size - Vector2(padding * 2, padding * 2)
 	if usable.x < 10.0: usable.x = 10.0
 	if usable.y < 10.0: usable.y = 10.0
 
-	var range_x := max_pos.x - min_pos.x
-	var range_y := max_pos.y - min_pos.y
+	var range_x: float = max_pos.x - min_pos.x
+	var range_y: float = max_pos.y - min_pos.y
 	if range_x < 1.0: range_x = 1.0
 	if range_y < 1.0: range_y = 1.0
 
 	var scale_factor: float = min(usable.x / range_x, usable.y / range_y)
 
 	# 3. Center offset: place the scaled graph centered within target_size
-	var scaled_range := Vector2(range_x * scale_factor, range_y * scale_factor)
-	var offset := (target_size - scaled_range) / 2.0
+	var scaled_range: Vector2 = Vector2(range_x * scale_factor, range_y * scale_factor)
+	var offset: Vector2 = (target_size - scaled_range) / 2.0
 
 	# 4. Map all positions
 	var positions_map: Dictionary = {}
 	for node_id in raw_positions:
 		var raw: Vector2 = raw_positions[node_id]
-		var mapped := Vector2(
+		var mapped: Vector2 = Vector2(
 			(raw.x - min_pos.x) * scale_factor + offset.x,
 			(raw.y - min_pos.y) * scale_factor + offset.y
 		)
@@ -149,7 +149,7 @@ static func generate_shuffle(size: int, seed_val: int) -> Array[int]:
 	if size <= 1:
 		return [0]
 
-	var rng := RandomNumberGenerator.new()
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.seed = seed_val
 
 	var perm: Array[int] = []
@@ -158,13 +158,13 @@ static func generate_shuffle(size: int, seed_val: int) -> Array[int]:
 
 	# Fisher-Yates shuffle
 	for i in range(size - 1, 0, -1):
-		var j := rng.randi_range(0, i)
+		var j: int = rng.randi_range(0, i)
 		var tmp: int = perm[i]
 		perm[i] = perm[j]
 		perm[j] = tmp
 
 	# Guarantee not identity: if shuffle == identity, swap first two elements
-	var is_identity := true
+	var is_identity: bool = true
 	for i in range(size):
 		if perm[i] != i:
 			is_identity = false

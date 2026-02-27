@@ -41,7 +41,7 @@ func setup(doors_data: Array, subgroups_list: Array, key_ring: KeyRing,
 		var sg_order: int = 0
 		for sg in subgroups_list:
 			if sg.get("name", "") == req_sg: sg_order = sg.get("order", 0); break
-		var centroid := Vector2.ZERO
+		var centroid: Vector2 = Vector2.ZERO
 		if nodes_array.size() > 0:
 			for nd in nodes_array:
 				var pa = nd.get("position", [0, 0])
@@ -80,7 +80,7 @@ func on_door_opened(door_id: String, scene: Node2D, feedback_fx: FeedbackFX,
 		if hl:
 			hl.text = "Подгруппа найдена!"
 			hl.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4, 0.9)); hl.visible = true
-			var tw := scene.create_tween(); tw.tween_interval(3.0)
+			var tw: Tween = scene.create_tween(); tw.tween_interval(3.0)
 			tw.tween_callback(_fade_hint_label.bind(hl))
 
 
@@ -112,11 +112,11 @@ func _on_door_visual_clicked(door_id: String) -> void:
 
 func _play_moment_of_understanding(door_id: String, scene: Node2D,
 		hud_layer: CanvasLayer, camera) -> void:
-	var door_pos := Vector2.ZERO
+	var door_pos: Vector2 = Vector2.ZERO
 	for dv in visuals:
 		if dv.door_id == door_id: door_pos = dv.position; break
 	if camera: camera.move_to(door_pos, 0.8)
-	var ip := Panel.new(); ip.name = "MomentOfUnderstandingPanel"
+	var ip: Panel = Panel.new(); ip.name = "MomentOfUnderstandingPanel"
 	ip.position = Vector2(240, 500); ip.size = Vector2(800, 120)
 	ip.modulate = Color(1, 1, 1, 0)
 	ip.add_theme_stylebox_override("panel", HudBuilder.make_stylebox(
@@ -127,7 +127,7 @@ func _play_moment_of_understanding(door_id: String, scene: Node2D,
 			["Это фундаментальная идея алгебры: часть структуры сама образует структуру.", 13, Color(0.65, 0.7, 0.8, 0.8), Vector2(70, 82), Vector2(700, 22)]]:
 		HudBuilder.add_label(ip, "", t[0], t[1], t[2], t[3], t[4])
 	hud_layer.add_child(ip)
-	var tw := scene.create_tween()
+	var tw: Tween = scene.create_tween()
 	tw.tween_property(ip, "modulate", Color(1, 1, 1, 1), 0.6).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	tw.tween_interval(5.0); tw.tween_property(ip, "modulate", Color(1, 1, 1, 0), 0.8)
 	tw.tween_callback(_free_node.bind(ip))

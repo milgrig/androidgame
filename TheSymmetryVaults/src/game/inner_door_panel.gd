@@ -45,7 +45,7 @@ func setup(p_doors: Array, p_subgroups: Array, p_key_ring: KeyRing, p_level_scen
 
 func _build_ui() -> void:
 	# Panel title
-	var title := Label.new()
+	var title: Label = Label.new()
 	title.name = "SubgroupPanelTitle"
 	title.text = "Поиск подгрупп"
 	title.add_theme_font_size_override("font_size", 15)
@@ -61,7 +61,7 @@ func _build_ui() -> void:
 	_update_progress_label()
 
 	# Found subgroups section
-	var found_title := Label.new()
+	var found_title: Label = Label.new()
 	found_title.name = "FoundSubgroupsTitle"
 	found_title.text = "Найденные подгруппы:"
 	found_title.add_theme_font_size_override("font_size", 12)
@@ -74,12 +74,12 @@ func _build_ui() -> void:
 	_rebuild_found_list()
 
 	# Separator
-	var sep := HSeparator.new()
+	var sep: HSeparator = HSeparator.new()
 	sep.add_theme_constant_override("separation", 4)
 	add_child(sep)
 
 	# Key selection area
-	var keys_title := Label.new()
+	var keys_title: Label = Label.new()
 	keys_title.name = "KeysSelectionTitle"
 	keys_title.text = "Выберите ключи:"
 	keys_title.add_theme_font_size_override("font_size", 13)
@@ -124,9 +124,9 @@ func _rebuild_found_list() -> void:
 		var elements: Array = sg.get("elements", [])
 		var is_found: bool = sg_name in found_subgroups
 
-		var label := Label.new()
+		var label: Label = Label.new()
 		label.name = "SG_" + sg_name
-		var elements_str := "{%s}" % ", ".join(elements)
+		var elements_str: String = "{%s}" % ", ".join(elements)
 		if is_found:
 			label.text = "✅ %s — %s" % [sg_display, elements_str]
 			label.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4, 0.9))
@@ -162,7 +162,7 @@ func _rebuild_key_checkboxes() -> void:
 		return
 
 	for i in range(key_ring.count()):
-		var cb := CheckBox.new()
+		var cb: CheckBox = CheckBox.new()
 		cb.name = "KeyCB_%d" % i
 		# Get display name via ValidationManager
 		var display_name: String = _get_key_display_name(i)
@@ -187,7 +187,7 @@ func _on_key_toggled(pressed: bool, index: int) -> void:
 func _update_check_button_state() -> void:
 	if _check_button == null:
 		return
-	var has_unfound := found_subgroups.size() < _target_subgroups.size()
+	var has_unfound: bool = found_subgroups.size() < _target_subgroups.size()
 	_check_button.disabled = selected_key_indices.is_empty() or not has_unfound
 	_check_button.text = "ПРОВЕРИТЬ НАБОР (%d ключей)" % selected_key_indices.size() if not selected_key_indices.is_empty() else "ПРОВЕРИТЬ НАБОР"
 
@@ -201,7 +201,7 @@ func _on_check_pressed() -> void:
 
 	if not result["is_subgroup"]:
 		# NOT a subgroup — diagnostic feedback
-		var reason := _build_failure_reason(result)
+		var reason: Dictionary = _build_failure_reason(result)
 		subgroup_check_failed.emit(reason)
 		_show_failure_feedback(reason)
 		return
@@ -213,7 +213,7 @@ func _on_check_pressed() -> void:
 		# Valid subgroup but not a target one
 		_status_label.text = "Это подгруппа, но не из тех, что нужно найти."
 		_status_label.add_theme_color_override("font_color", Color(0.9, 0.8, 0.3, 0.9))
-		var tween := create_tween()
+		var tween: Tween = create_tween()
 		tween.tween_interval(3.0)
 		tween.tween_callback(_clear_status_label)
 		return
@@ -224,7 +224,7 @@ func _on_check_pressed() -> void:
 	if sg_name in found_subgroups:
 		_status_label.text = "Этот набор уже найден!"
 		_status_label.add_theme_color_override("font_color", Color(0.9, 0.7, 0.3, 0.9))
-		var tween := create_tween()
+		var tween: Tween = create_tween()
 		tween.tween_interval(2.0)
 		tween.tween_callback(_clear_status_label)
 		return
@@ -282,7 +282,7 @@ func _matches_target_subgroup(sg_name: String) -> bool:
 		var target_p: Permutation = target_perms.get(elem_id)
 		if target_p == null:
 			return false
-		var found_match := false
+		var found_match: bool = false
 		for sel_p in selected_rebased:
 			if sel_p.equals(target_p):
 				found_match = true
@@ -300,12 +300,12 @@ func _build_failure_reason(result: Dictionary) -> Dictionary:
 				"message": "Набор не содержит Тождество (e) — «ничего не делать» тоже ключ! Добавьте Тождество в набор."}
 
 	if reasons.has("missing_inverse"):
-		var example := _get_inverse_example()
+		var example: String = _get_inverse_example()
 		return {"reason": "no_inverses",
 				"message": "Не у всех ключей есть обратный. %s Каждый ключ должен иметь ОТМЕНУ в наборе!" % example}
 
 	if reasons.has("not_closed_composition"):
-		var example := _get_closure_example()
+		var example: String = _get_closure_example()
 		return {"reason": "not_closed",
 				"message": "Набор НЕ ЗАМКНУТ. %s\n\nПопробуйте: добавьте недостающий ключ или уберите лишние." % example}
 
@@ -325,7 +325,7 @@ func _get_closure_example() -> String:
 			var key_b: Permutation = key_ring.get_key(j)
 			var product: Permutation = key_a.compose(key_b)
 
-			var found_in_subset := false
+			var found_in_subset: bool = false
 			for k in selected_key_indices:
 				if k >= key_ring.count():
 					continue
@@ -335,9 +335,9 @@ func _get_closure_example() -> String:
 					break
 
 			if not found_in_subset:
-				var name_a := _get_key_display_name(i)
-				var name_b := _get_key_display_name(j)
-				var product_name := "результат"
+				var name_a: String = _get_key_display_name(i)
+				var name_b: String = _get_key_display_name(j)
+				var product_name: String = "результат"
 				for p in range(key_ring.count()):
 					if key_ring.get_key(p).equals(product):
 						product_name = _get_key_display_name(p)
@@ -358,7 +358,7 @@ func _get_inverse_example() -> String:
 		var key: Permutation = key_ring.get_key(i)
 		var inv: Permutation = key.inverse()
 
-		var found_inv := false
+		var found_inv: bool = false
 		for j in selected_key_indices:
 			if j >= key_ring.count():
 				continue
@@ -368,8 +368,8 @@ func _get_inverse_example() -> String:
 				break
 
 		if not found_inv and not key.is_identity():
-			var key_name := _get_key_display_name(i)
-			var inv_name := "обратный ключ"
+			var key_name: String = _get_key_display_name(i)
+			var inv_name: String = "обратный ключ"
 			for p in range(key_ring.count()):
 				if key_ring.get_key(p).equals(inv):
 					inv_name = _get_key_display_name(p)
@@ -390,7 +390,7 @@ func _show_failure_feedback(reason: Dictionary) -> void:
 	if _status_label:
 		_status_label.text = reason.get("message", "Не подгруппа")
 		_status_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3, 0.9))
-		var tween := create_tween()
+		var tween: Tween = create_tween()
 		tween.tween_interval(4.0)
 		tween.tween_callback(_reset_status_label)
 
@@ -399,8 +399,8 @@ func _show_success_feedback(sg_data: Dictionary) -> void:
 	var sg_name: String = sg_data.get("name", "")
 	var sg_desc: String = sg_data.get("description", sg_name)
 	var elements: Array = sg_data.get("elements", [])
-	var elements_str := "{%s}" % ", ".join(elements)
-	var msg := "Подгруппа найдена: %s — %s" % [sg_desc, elements_str]
+	var elements_str: String = "{%s}" % ", ".join(elements)
+	var msg: String = "Подгруппа найдена: %s — %s" % [sg_desc, elements_str]
 	if _status_label:
 		_status_label.text = msg
 		_status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4, 0.9))

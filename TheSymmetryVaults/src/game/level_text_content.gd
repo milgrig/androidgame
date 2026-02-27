@@ -77,7 +77,7 @@ static func get_generators_text(level_data: Dictionary, target_perm_names: Dicti
 	var gen_names: Array = []
 	for gen_id in generator_ids:
 		gen_names.append(target_perm_names.get(gen_id, gen_id))
-	var names_str := ", ".join(gen_names)
+	var names_str: String = ", ".join(gen_names)
 	if generator_ids.size() == 1:
 		return "Мастер-ключ: %s — повторяя его, можно получить все остальные ключи." % names_str
 	else:

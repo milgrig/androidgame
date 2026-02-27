@@ -70,7 +70,7 @@ func _build_level_registry() -> void:
 			while file_name != "":
 				if file_name.ends_with(".json"):
 					var file_path = act_dir + file_name
-					var meta_id := _read_level_meta_id(file_path)
+					var meta_id: String = _read_level_meta_id(file_path)
 					if meta_id != "":
 						level_registry[meta_id] = file_path
 					else:
@@ -103,7 +103,7 @@ func get_level_path(level_id: String) -> String:
 ## Load the hall tree world graph from data/hall_tree.json.
 ## Creates a HallProgressionEngine child node for progression tracking.
 func _load_hall_tree() -> void:
-	var path := "res://data/hall_tree.json"
+	var path: String = "res://data/hall_tree.json"
 	if not FileAccess.file_exists(path):
 		push_warning("GameManager: hall_tree.json not found, using linear fallback")
 		return
@@ -140,8 +140,8 @@ func start_game() -> void:
 	else:
 		# Linear fallback
 		printerr("[GameManager] No hall tree, falling back to direct level loading")
-		var level_id := "act%d_level%02d" % [current_act, current_level]
-		var level_path := get_level_path(level_id)
+		var level_id: String = "act%d_level%02d" % [current_act, current_level]
+		var level_path: String = get_level_path(level_id)
 
 		if level_path == "":
 			level_path = get_level_path("act1_level01")
@@ -185,18 +185,18 @@ func complete_level(level_id: String) -> void:
 		completed_levels.append(level_id)
 
 	# Advance current_act / current_level to the next one
-	var next_info := _parse_level_id(level_id)
+	var next_info: Dictionary = _parse_level_id(level_id)
 	if next_info.size() > 0:
 		var act: int = next_info["act"]
 		var lvl: int = next_info["level"]
 		# Point to the next level so game resumes there
-		var next_id := "act%d_level%02d" % [act, lvl + 1]
+		var next_id: String = "act%d_level%02d" % [act, lvl + 1]
 		if next_id in level_registry:
 			current_act = act
 			current_level = lvl + 1
 		else:
 			# Try first level of next act
-			var next_act_id := "act%d_level%02d" % [act + 1, 1]
+			var next_act_id: String = "act%d_level%02d" % [act + 1, 1]
 			if next_act_id in level_registry:
 				current_act = act + 1
 				current_level = 1
@@ -229,7 +229,7 @@ func set_save_flag(flag_name: String, value: bool) -> void:
 ## Get the file path for the next level after current_level_id.
 ## Returns "" if there are no more levels.
 func get_next_level_path(current_level_id: String) -> String:
-	var info := _parse_level_id(current_level_id)
+	var info: Dictionary = _parse_level_id(current_level_id)
 	if info.is_empty():
 		return ""
 
@@ -237,12 +237,12 @@ func get_next_level_path(current_level_id: String) -> String:
 	var lvl: int = info["level"]
 
 	# Try next level in same act
-	var next_id := "act%d_level%02d" % [act, lvl + 1]
+	var next_id: String = "act%d_level%02d" % [act, lvl + 1]
 	if next_id in level_registry:
 		return level_registry[next_id]
 
 	# Try first level of next act
-	var next_act_id := "act%d_level%02d" % [act + 1, 1]
+	var next_act_id: String = "act%d_level%02d" % [act + 1, 1]
 	if next_act_id in level_registry:
 		return level_registry[next_act_id]
 
