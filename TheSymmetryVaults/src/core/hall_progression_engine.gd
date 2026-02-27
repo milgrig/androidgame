@@ -114,7 +114,7 @@ func is_wing_accessible(wing_id: String) -> bool:
 	if hall_tree == null:
 		return false
 
-	var wing := hall_tree.get_wing(wing_id)
+	var wing = hall_tree.get_wing(wing_id)
 	if wing == null:
 		return false
 
@@ -129,7 +129,7 @@ func get_available_halls() -> Array[String]:
 
 	for wing in hall_tree.wings:
 		for hall_id in wing.halls:
-			var state := get_hall_state(hall_id)
+			var state: HallState = get_hall_state(hall_id)
 			if state == HallState.AVAILABLE:
 				result.append(hall_id)
 
@@ -142,11 +142,11 @@ func get_wing_progress(wing_id: String) -> Dictionary:
 	if hall_tree == null:
 		return {"completed": 0, "total": 0, "threshold": 0}
 
-	var wing := hall_tree.get_wing(wing_id)
+	var wing = hall_tree.get_wing(wing_id)
 	if wing == null:
 		return {"completed": 0, "total": 0, "threshold": 0}
 
-	var completed := _count_completed_in_wing(wing)
+	var completed: int = _count_completed_in_wing(wing)
 	var threshold: int = wing.gate.required_halls if wing.gate else wing.halls.size()
 
 	return {
@@ -175,7 +175,7 @@ func complete_hall(hall_id: String) -> void:
 	# Check if any wing was newly unlocked
 	var wing = hall_tree.get_hall_wing(hall_id)
 	if wing != null:
-		var next_wing := _get_next_wing(wing)
+		var next_wing = _get_next_wing(wing)
 		if next_wing != null and _is_wing_accessible_internal(next_wing):
 			wing_unlocked.emit(next_wing.id)
 
@@ -235,7 +235,7 @@ func _is_wing_accessible_internal(wing: HallTreeData.WingData) -> bool:
 	if wing.order == 1:
 		return true  # First wing always accessible
 
-	var gate := wing.gate
+	var gate = wing.gate
 	if gate == null:
 		return true  # No gate = always accessible
 
@@ -245,17 +245,17 @@ func _is_wing_accessible_internal(wing: HallTreeData.WingData) -> bool:
 			if source_wing_id == "":
 				# Default: check previous wing
 				source_wing_id = _get_previous_wing_id(wing)
-			var source_wing := hall_tree.get_wing(source_wing_id)
+			var source_wing = hall_tree.get_wing(source_wing_id)
 			if source_wing == null:
 				return false
-			var completed_count := _count_completed_in_wing(source_wing)
+			var completed_count: int = _count_completed_in_wing(source_wing)
 			return completed_count >= gate.required_halls
 
 		"all":
 			var source_wing_id: String = gate.required_from_wing
 			if source_wing_id == "":
 				source_wing_id = _get_previous_wing_id(wing)
-			var source_wing := hall_tree.get_wing(source_wing_id)
+			var source_wing = hall_tree.get_wing(source_wing_id)
 			if source_wing == null:
 				return false
 			return _count_completed_in_wing(source_wing) >= source_wing.halls.size()
@@ -272,7 +272,7 @@ func _is_wing_accessible_internal(wing: HallTreeData.WingData) -> bool:
 
 ## Count completed halls in a wing.
 func _count_completed_in_wing(wing: HallTreeData.WingData) -> int:
-	var count := 0
+	var count: int = 0
 	for hall_id in wing.halls:
 		if _is_completed(hall_id):
 			count += 1
@@ -334,7 +334,7 @@ func is_layer_unlocked(layer: int) -> bool:
 		return false
 	var required: int = threshold.get("required", 0)
 	var from_layer: int = threshold.get("from_layer", layer - 1)
-	var completed := count_layer_completed_globally(from_layer)
+	var completed: int = count_layer_completed_globally(from_layer)
 	return completed >= required
 
 
@@ -346,7 +346,7 @@ func get_hall_layer_state(hall_id: String, layer: int) -> String:
 
 	if layer == 1:
 		# Map HallState enum to string
-		var state := get_hall_state(hall_id)
+		var state: HallState = get_hall_state(hall_id)
 		match state:
 			HallState.LOCKED: return "locked"
 			HallState.AVAILABLE: return "available"
@@ -358,12 +358,12 @@ func get_hall_layer_state(hall_id: String, layer: int) -> String:
 	if not is_layer_unlocked(layer):
 		return "locked"
 
-	var prior_state := get_hall_layer_state(hall_id, layer - 1)
+	var prior_state: String = get_hall_layer_state(hall_id, layer - 1)
 	if prior_state != "completed" and prior_state != "perfect":
 		return "locked"
 
 	# Check save data for this layer's progress
-	var layer_data := _get_layer_progress(hall_id, layer)
+	var layer_data: Dictionary = _get_layer_progress(hall_id, layer)
 	return layer_data.get("status", "available")
 
 
@@ -371,7 +371,7 @@ func get_hall_layer_state(hall_id: String, layer: int) -> String:
 func count_layer_completed_globally(layer: int) -> int:
 	if hall_tree == null:
 		return 0
-	var count := 0
+	var count: int = 0
 	for wing in hall_tree.wings:
 		count += count_layer_completed(wing.id, layer)
 	return count
@@ -381,16 +381,16 @@ func count_layer_completed_globally(layer: int) -> int:
 func count_layer_completed(wing_id: String, layer: int) -> int:
 	if hall_tree == null:
 		return 0
-	var wing := hall_tree.get_wing(wing_id)
+	var wing = hall_tree.get_wing(wing_id)
 	if wing == null:
 		return 0
-	var count := 0
+	var count: int = 0
 	for hall_id in wing.halls:
 		if layer == 1:
 			if _is_completed(hall_id):
 				count += 1
 		else:
-			var lp := _get_layer_progress(hall_id, layer)
+			var lp: Dictionary = _get_layer_progress(hall_id, layer)
 			var status: String = lp.get("status", "")
 			if status == "completed" or status == "perfect":
 				count += 1

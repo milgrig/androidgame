@@ -24,7 +24,7 @@ const WING_HEADER_HEIGHT := 100.0        ## Space for wing title + progress bar
 static func compute_layout(tree: HallTreeData) -> Dictionary:
 	var positions: Dictionary = {}
 	var wing_headers: Dictionary = {}
-	var current_y := 0.0
+	var current_y: float = 0.0
 
 	for wing in tree.get_ordered_wings():
 		# Store wing header position
@@ -56,7 +56,7 @@ static func compute_layout(tree: HallTreeData) -> Dictionary:
 					current_y + layer_idx * LAYER_HEIGHT
 				)
 
-		var num_layers := layers.size() if not layers.is_empty() else 1
+		var num_layers: int = layers.size() if not layers.is_empty() else 1
 		current_y += num_layers * LAYER_HEIGHT + WING_VERTICAL_GAP
 
 	return {

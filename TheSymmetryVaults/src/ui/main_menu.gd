@@ -211,7 +211,7 @@ func _setup_ui() -> void:
 	# --- Start / Continue button ---
 	_start_button = Button.new()
 	_start_button.name = "StartButton"
-	var has_save := false
+	var has_save: bool = false
 	if GameManager and "completed_levels" in GameManager:
 		has_save = GameManager.completed_levels.size() > 0
 	_start_button.text = "Продолжить" if has_save else "Начать игру"
@@ -259,7 +259,7 @@ func _setup_ui() -> void:
 	if has_save and GameManager and "completed_levels" in GameManager:
 		var progress_label = Label.new()
 		progress_label.name = "ProgressLabel"
-		var completed_count := GameManager.completed_levels.size()
+		var completed_count: int = GameManager.completed_levels.size()
 		progress_label.text = "Пройдено уровней: %d" % completed_count
 		progress_label.add_theme_font_size_override("font_size", 14)
 		progress_label.add_theme_color_override("font_color", Color(0.45, 0.55, 0.65, 0.7))

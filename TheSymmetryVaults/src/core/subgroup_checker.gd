@@ -13,7 +13,7 @@ static func is_normal(subgroup: Array, group: Array) -> bool:
 		for h in subgroup:
 			# Compute conjugate: g * h * g^-1
 			var conjugate: Permutation = g.compose(h).compose(g_inv)
-			var found := false
+			var found: bool = false
 			for s in subgroup:
 				if s.equals(conjugate):
 					found = true
@@ -32,7 +32,7 @@ static func coset_decomposition(subgroup: Array, group: Array) -> Array:
 
 	for g in group:
 		# Check if g is already in some coset
-		var already_assigned := false
+		var already_assigned: bool = false
 		for a in assigned:
 			if a.equals(g):
 				already_assigned = true
@@ -89,7 +89,7 @@ static func lattice(group: Array) -> Dictionary:
 	# Generate and deduplicate subgroups
 	for gens in candidate_generator_sets:
 		var sub: Array = Permutation.generate_subgroup_from(gens, n)
-		var sig := _subgroup_signature(sub)
+		var sig: String = _subgroup_signature(sub)
 		if not seen_signatures.has(sig):
 			seen_signatures.append(sig)
 			all_subgroups.append(sub)
@@ -113,7 +113,7 @@ static func lattice(group: Array) -> Dictionary:
 			# Check if all_subgroups[i] ⊂ all_subgroups[j]
 			if _is_subset_of(all_subgroups[i], all_subgroups[j]):
 				# Check that this is a direct inclusion (no intermediate subgroup)
-				var is_direct := true
+				var is_direct: bool = true
 				for k in range(all_subgroups.size()):
 					if k == i or k == j:
 						continue
@@ -137,7 +137,7 @@ static func lattice(group: Array) -> Dictionary:
 static func _subgroup_signature(sub: Array) -> String:
 	var mappings: Array = []
 	for p in sub:
-		var s := ""
+		var s: String = ""
 		for v in p.mapping:
 			s += str(v) + ","
 		mappings.append(s)
@@ -148,7 +148,7 @@ static func _subgroup_signature(sub: Array) -> String:
 ## Check if all elements of sub_a are in sub_b.
 static func _is_subset_of(sub_a: Array, sub_b: Array) -> bool:
 	for a in sub_a:
-		var found := false
+		var found: bool = false
 		for b in sub_b:
 			if a.equals(b):
 				found = true

@@ -58,7 +58,7 @@ static func build_hud(hud_layer: CanvasLayer,
 	add_label(hud_layer, "SubtitleLabel", "", 14, Color(0.6, 0.65, 0.75, 0.7), Vector2(20, 56))
 
 	# Target preview
-	var target_preview := _build_target_preview_container(hud_layer)
+	var target_preview: Control = _build_target_preview_container(hud_layer)
 
 	# Right-side counter/keyring
 	add_label(hud_layer, "CounterLabel", "Ключи: 0 / 0", 18, Color(0.7, 0.8, 0.9, 0.85), Vector2(1020, 15), Vector2(240, 30), HORIZONTAL_ALIGNMENT_RIGHT)
@@ -259,20 +259,36 @@ static func _build_complete_summary_panel(hud_layer: CanvasLayer, on_next_level:
 	add_label(panel, "SummaryKeysTitle", "Найденные ключи:", 14, Color(0.6, 0.7, 0.8, 0.8), Vector2(20, 125), Vector2(760, 22), HORIZONTAL_ALIGNMENT_CENTER)
 	var skl = add_label(panel, "SummaryKeysList", "", 14, Color(0.72, 0.8, 0.68, 0.95), Vector2(60, 152), Vector2(680, 240))
 	skl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var sln = add_label(panel, "SummaryLearnedNote", "", 13, Color(0.6, 0.65, 0.8, 0.8), Vector2(40, 400), Vector2(720, 45), HORIZONTAL_ALIGNMENT_CENTER)
+	var sln = add_label(panel, "SummaryLearnedNote", "", 13, Color(0.6, 0.65, 0.8, 0.8), Vector2(40, 400), Vector2(720, 40), HORIZONTAL_ALIGNMENT_CENTER)
 	sln.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var sgi = add_label(panel, "SummaryGenInfo", "", 13, Color(0.5, 0.9, 0.4, 0.85), Vector2(40, 448), Vector2(720, 40), HORIZONTAL_ALIGNMENT_CENTER)
+	var sgi = add_label(panel, "SummaryGenInfo", "", 13, Color(0.5, 0.9, 0.4, 0.85), Vector2(40, 442), Vector2(720, 30), HORIZONTAL_ALIGNMENT_CENTER)
 	sgi.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 
+	# Bottom button row: "Вернуться на карту" (left) + "Продолжить играть" (right)
 	var btn = Button.new()
 	btn.name = "SummaryNextButton"
 	btn.text = "ВЕРНУТЬСЯ НА КАРТУ" if GameManager.hall_tree != null else "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
-	btn.add_theme_font_size_override("font_size", 20)
-	btn.position = Vector2(200, 495)
-	btn.size = Vector2(400, 50)
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.position = Vector2(60, 505)
+	btn.size = Vector2(330, 44)
 	btn.visible = false
 	btn.pressed.connect(on_next_level)
 	panel.add_child(btn)
+
+	# Dismiss button — "Продолжить играть" (T100: allow staying in level)
+	var dismiss_btn: Button = Button.new()
+	dismiss_btn.name = "SummaryDismissButton"
+	dismiss_btn.text = "Продолжить играть"
+	dismiss_btn.add_theme_font_size_override("font_size", 15)
+	dismiss_btn.position = Vector2(410, 505)
+	dismiss_btn.size = Vector2(330, 44)
+	dismiss_btn.visible = false
+	dismiss_btn.add_theme_stylebox_override("normal", make_stylebox(
+		Color(0.08, 0.1, 0.18, 0.7), 6, Color(0.4, 0.5, 0.7, 0.5), 1))
+	dismiss_btn.add_theme_stylebox_override("hover", make_stylebox(
+		Color(0.12, 0.15, 0.25, 0.85), 6, Color(0.5, 0.6, 0.8, 0.7), 1))
+	dismiss_btn.add_theme_color_override("font_color", Color(0.65, 0.7, 0.85, 0.85))
+	panel.add_child(dismiss_btn)
 
 
 ## Populate and show the complete summary panel.
@@ -282,7 +298,7 @@ static func show_complete_summary(hud_layer: CanvasLayer, meta: Dictionary,
 		echo_hint_system, scene: Node2D) -> void:
 	var p = hud_layer.get_node_or_null("CompleteSummaryPanel")
 	if p == null: return
-	var _s := func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
+	var _s: Callable = func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
 	_s.call("SummaryTitle", "Зал открыт!")
 	_s.call("SummaryLevelInfo", "Уровень %d — %s" % [meta.get("level", 0), meta.get("title", "")])
 	_s.call("SummaryGroupInfo", LevelTextContent.format_group_name(meta.get("group_name", ""), meta.get("group_order", 0)))
@@ -293,7 +309,7 @@ static func show_complete_summary(hud_layer: CanvasLayer, meta: Dictionary,
 	var seal = p.get_node_or_null("SummarySealInfo")
 	if seal == null:
 		seal = Label.new(); seal.name = "SummarySealInfo"; seal.add_theme_font_size_override("font_size", 14)
-		seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; seal.position = Vector2(50, 465); seal.size = Vector2(700, 25); p.add_child(seal)
+		seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; seal.position = Vector2(50, 478); seal.size = Vector2(700, 22); p.add_child(seal)
 	if echo_hint_system and echo_hint_system.used_solution_hint():
 		seal.text = "Эхо-видение использовано — Печать совершенства потеряна"; seal.add_theme_color_override("font_color", Color(0.8, 0.5, 0.3, 0.8))
 	else: seal.text = "Печать совершенства получена"; seal.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.8))
@@ -302,6 +318,10 @@ static func show_complete_summary(hud_layer: CanvasLayer, meta: Dictionary,
 	if nb:
 		if GameManager.hall_tree != null: nb.text = "ВЕРНУТЬСЯ НА КАРТУ"; nb.visible = true
 		else: nb.visible = GameManager.get_next_level_path(level_id) != ""
+	# Show dismiss button (T100: stay and play)
+	var db = p.get_node_or_null("SummaryDismissButton")
+	if db:
+		db.visible = true
 	p.visible = true; p.modulate = Color(1, 1, 1, 0); scene.create_tween().tween_property(p, "modulate", Color(1, 1, 1, 1), 0.5)
 
 
@@ -338,7 +358,7 @@ static func update_target_preview_border(target_preview: Control, identity_found
 	if bg == null: return
 	var st: StyleBoxFlat = bg.get_theme_stylebox("panel") as StyleBoxFlat
 	if st == null: return
-	var ns := st.duplicate() as StyleBoxFlat
+	var ns: StyleBoxFlat = st.duplicate()
 	ns.border_color = Color(0.3, 0.9, 0.4, 0.7) if identity_found else Color(0.75, 0.65, 0.2, 0.7)
 	bg.add_theme_stylebox_override("panel", ns)
 	var tl = target_preview.get_node_or_null("TargetTitle")
@@ -352,10 +372,10 @@ static func show_instruction_panel(hud_layer: CanvasLayer, level_data: Dictionar
 	var p = hud_layer.get_node_or_null("InstructionPanel")
 	if p == null: return
 	var meta = level_data.get("meta", {})
-	var _s := func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
+	var _s: Callable = func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
 	_s.call("InstrTitle", "Уровень %d — %s" % [meta.get("level", 1), meta.get("title", "")])
 	_s.call("InstrGoal", "Найдите все %d ключей, чтобы открыть этот зал" % meta.get("group_order", 1))
-	var texts := LevelTextContent.get_instruction_text(meta, level_data.get("mechanics", {}))
+	var texts: Dictionary = LevelTextContent.get_instruction_text(meta, level_data.get("mechanics", {}))
 	_s.call("InstrBody", texts["body"])
 	var inm = p.get_node_or_null("InstrNewMechanic")
 	if inm: inm.text = texts["new_mechanic"]; inm.visible = texts["new_mechanic"] != ""
@@ -370,6 +390,15 @@ static func dismiss_instruction_panel(hud_layer: CanvasLayer, scene: Node2D) -> 
 ## Hide a node if it is still valid (used as tween_callback to avoid lambdas).
 static func _hide_node(node: Node) -> void:
 	if is_instance_valid(node): node.visible = false
+
+
+## Dismiss the completion summary panel with a fade-out (T100: stay and play).
+static func dismiss_complete_summary(hud_layer: CanvasLayer, scene: Node2D) -> void:
+	var p = hud_layer.get_node_or_null("CompleteSummaryPanel")
+	if p and p.visible:
+		var tw = scene.create_tween()
+		tw.tween_property(p, "modulate", Color(1, 1, 1, 0), 0.3)
+		tw.tween_callback(_hide_node.bind(p))
 
 ## Rebuild the clickable key buttons in the KeyButtonsContainer.
 static func rebuild_key_buttons(hud_layer: CanvasLayer, key_ring: KeyRing,
@@ -431,16 +460,16 @@ const FRAME_BORDER_WIDTH := 2
 ## Create a Panel frame for a zone.
 static func _build_zone_frame(parent: Node, frame_name: String, rect: Rect2,
 		title: String = "", title_color: Color = Color.WHITE) -> Panel:
-	var frame := Panel.new()
+	var frame: Panel = Panel.new()
 	frame.name = frame_name
 	frame.position = rect.position
 	frame.size = rect.size
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := make_stylebox(FRAME_BG_COLOR, FRAME_CORNER, FRAME_BORDER_COLOR, FRAME_BORDER_WIDTH)
+	var style: StyleBoxFlat = make_stylebox(FRAME_BG_COLOR, FRAME_CORNER, FRAME_BORDER_COLOR, FRAME_BORDER_WIDTH)
 	frame.add_theme_stylebox_override("panel", style)
 	parent.add_child(frame)
 	if title != "":
-		var tl := Label.new()
+		var tl: Label = Label.new()
 		tl.name = frame_name + "Title"
 		tl.text = title
 		tl.add_theme_font_size_override("font_size", 10)
@@ -463,23 +492,23 @@ static func build_split_hud(hud_layer: CanvasLayer,
 		viewport_size: Vector2,
 		callbacks: Dictionary) -> Dictionary:
 
-	var w := viewport_size.x
-	var h := viewport_size.y
-	var bottom_h := BOTTOM_ROW_HEIGHT
-	var gap := 2  # gap between zone frames
+	var w: float = viewport_size.x
+	var h: float = viewport_size.y
+	var bottom_h: int = BOTTOM_ROW_HEIGHT
+	var gap: int = 2  # gap between zone frames
 
 	# ── Zone rectangles (5-zone layout) ──────────────────────────────
 	# Left column is split: target zone on top, crystal zone below.
 	# Right column: map (top), hints (bottom).
-	var top_h := h - bottom_h - gap
-	var half_w := floorf(w * 0.5)
-	var target_h := 170  # height for the target preview zone (seal)
+	var top_h: float = h - bottom_h - gap
+	var half_w: float = floorf(w * 0.5)
+	var target_h: int = 170  # height for the target preview zone (seal)
 
-	var target_rect  := Rect2(0, 0, half_w - gap, target_h)
-	var crystal_rect := Rect2(0, target_h + gap, half_w - gap, top_h - target_h - gap)
-	var map_rect     := Rect2(half_w + gap, 0, w - half_w - gap, top_h)
-	var key_bar_rect := Rect2(0, top_h + gap, half_w - gap, bottom_h)
-	var hints_rect   := Rect2(half_w + gap, top_h + gap, w - half_w - gap, bottom_h)
+	var target_rect: Rect2  = Rect2(0, 0, half_w - gap, target_h)
+	var crystal_rect: Rect2 = Rect2(0, target_h + gap, half_w - gap, top_h - target_h - gap)
+	var map_rect: Rect2     = Rect2(half_w + gap, 0, w - half_w - gap, top_h)
+	var key_bar_rect: Rect2 = Rect2(0, top_h + gap, half_w - gap, bottom_h)
+	var hints_rect: Rect2   = Rect2(half_w + gap, top_h + gap, w - half_w - gap, bottom_h)
 
 	# ── Build visible frame panels ───────────────────────────────────
 	_build_zone_frame(hud_layer, "TargetFrame", target_rect,
@@ -494,12 +523,12 @@ static func build_split_hud(hud_layer: CanvasLayer,
 		"Подсказки", Color(0.5, 0.5, 0.35, 0.7))
 
 	# ── Internal padding ─────────────────────────────────────────────
-	var pad := 10  # padding inside frames
-	var lw := crystal_rect.size.x   # left-half width
+	var pad: int = 10  # padding inside frames
+	var lw: float = crystal_rect.size.x   # left-half width
 
 	# ── Target zone: labels + target preview ─────────────────────────
-	var tgt_x := target_rect.position.x
-	var tgt_y := target_rect.position.y
+	var tgt_x: float = target_rect.position.x
+	var tgt_y: float = target_rect.position.y
 
 	add_label(hud_layer, "LevelNumberLabel", "", 11,
 		Color(0.55, 0.6, 0.7, 0.8),
@@ -518,7 +547,7 @@ static func build_split_hud(hud_layer: CanvasLayer,
 		HORIZONTAL_ALIGNMENT_LEFT, true)
 
 	# Target preview miniature — positioned right-side of target zone
-	var target_preview := _build_target_preview_container(hud_layer)
+	var target_preview: Control = _build_target_preview_container(hud_layer)
 	target_preview.position = Vector2(tgt_x + lw - 160, tgt_y + 14)
 
 	# ── Help button (top-right of target zone) ───────────────────────
@@ -527,10 +556,10 @@ static func build_split_hud(hud_layer: CanvasLayer,
 		_build_help_button_split(hud_layer, on_help, lw)
 
 	# ── Hint / violation / status labels — placed inside HintsFrame ──
-	var hints_x := hints_rect.position.x + pad
-	var hints_y := hints_rect.position.y + 18  # below frame title
-	var hints_w := hints_rect.size.x - pad * 2
-	var hints_inner_h := hints_rect.size.y - 22
+	var hints_x: float = hints_rect.position.x + pad
+	var hints_y: float = hints_rect.position.y + 18  # below frame title
+	var hints_w: float = hints_rect.size.x - pad * 2
+	var hints_inner_h: float = hints_rect.size.y - 22
 
 	add_label(hud_layer, "HintLabel", "", 13,
 		Color(0.7, 0.7, 0.5, 0.0),
@@ -550,6 +579,15 @@ static func build_split_hud(hud_layer: CanvasLayer,
 	_build_instruction_panel(hud_layer)
 	_build_complete_summary_panel(hud_layer,
 		callbacks.get("on_next_level", Callable()))
+
+	# ── Menu button (T100) — always visible, top-right ───────────────
+	var on_map: Callable = callbacks.get("on_map", Callable())
+	var on_settings: Callable = callbacks.get("on_settings", Callable())
+	if on_map.is_valid():
+		build_menu_button(hud_layer, viewport_size, {
+			"on_map": on_map,
+			"on_settings": on_settings,
+		})
 
 	return {
 		"crystal_rect": crystal_rect,
@@ -574,5 +612,150 @@ static func _build_help_button_split(hud_layer: CanvasLayer,
 		Color(0.15, 0.18, 0.28, 0.8), 14, Color(0.4, 0.5, 0.7, 0.5), 1))
 	btn.pressed.connect(on_help)
 	hud_layer.add_child(btn)
+
+
+## ─── Menu Button & Popup (T100) ─────────────────────────────────────
+
+## Build a hamburger menu button (always visible, top-right corner of viewport).
+## Also builds the menu popup panel (initially hidden).
+## callbacks: {on_map: Callable, on_settings: Callable}
+static func build_menu_button(hud_layer: CanvasLayer,
+		viewport_size: Vector2, callbacks: Dictionary) -> void:
+	var vw: float = viewport_size.x
+
+	# ── Menu button (hamburger icon) ─────────────────────────────────
+	var btn: Button = Button.new()
+	btn.name = "MenuButton"
+	btn.text = "☰"
+	btn.add_theme_font_size_override("font_size", 20)
+	btn.position = Vector2(vw - 46, 10)
+	btn.size = Vector2(36, 36)
+	btn.z_index = 50  # Above all HUD elements
+	btn.add_theme_stylebox_override("normal", make_stylebox(
+		Color(0.12, 0.14, 0.22, 0.85), 8, Color(0.35, 0.45, 0.65, 0.6), 1))
+	btn.add_theme_stylebox_override("hover", make_stylebox(
+		Color(0.18, 0.22, 0.32, 0.95), 8, Color(0.5, 0.6, 0.8, 0.7), 1))
+	btn.add_theme_color_override("font_color", Color(0.75, 0.8, 0.9, 0.9))
+	btn.pressed.connect(_toggle_menu_popup.bind(hud_layer))
+	hud_layer.add_child(btn)
+
+	# ── Menu popup (hidden by default) ───────────────────────────────
+	var popup: Panel = Panel.new()
+	popup.name = "MenuPopup"
+	popup.visible = false
+	popup.z_index = 100  # On top of everything
+
+	var popup_w: float = 220.0
+	var popup_h: float = 130.0
+	popup.position = Vector2(vw - popup_w - 10, 52)
+	popup.size = Vector2(popup_w, popup_h)
+	popup.add_theme_stylebox_override("panel", make_stylebox(
+		Color(0.05, 0.06, 0.1, 0.95), 10, Color(0.3, 0.4, 0.6, 0.7), 2))
+	hud_layer.add_child(popup)
+
+	# Menu title
+	var title: Label = Label.new()
+	title.name = "MenuPopupTitle"
+	title.text = "Меню"
+	title.add_theme_font_size_override("font_size", 13)
+	title.add_theme_color_override("font_color", Color(0.6, 0.65, 0.75, 0.8))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(10, 8)
+	title.size = Vector2(popup_w - 20, 18)
+	popup.add_child(title)
+
+	# "Карта" button
+	var btn_map: Button = Button.new()
+	btn_map.name = "MenuMapBtn"
+	btn_map.text = "Карта"
+	btn_map.add_theme_font_size_override("font_size", 15)
+	btn_map.position = Vector2(15, 34)
+	btn_map.size = Vector2(popup_w - 30, 38)
+	btn_map.add_theme_stylebox_override("normal", make_stylebox(
+		Color(0.08, 0.12, 0.2, 0.8), 6, Color(0.3, 0.5, 0.7, 0.5), 1))
+	btn_map.add_theme_stylebox_override("hover", make_stylebox(
+		Color(0.12, 0.18, 0.3, 0.9), 6, Color(0.4, 0.6, 0.8, 0.7), 1))
+	btn_map.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0, 0.9))
+	var on_map: Callable = callbacks.get("on_map", Callable())
+	if on_map.is_valid():
+		btn_map.pressed.connect(on_map)
+	popup.add_child(btn_map)
+
+	# "Настройки" button
+	var btn_settings: Button = Button.new()
+	btn_settings.name = "MenuSettingsBtn"
+	btn_settings.text = "Настройки"
+	btn_settings.add_theme_font_size_override("font_size", 15)
+	btn_settings.position = Vector2(15, 80)
+	btn_settings.size = Vector2(popup_w - 30, 38)
+	btn_settings.add_theme_stylebox_override("normal", make_stylebox(
+		Color(0.08, 0.12, 0.2, 0.8), 6, Color(0.3, 0.5, 0.7, 0.5), 1))
+	btn_settings.add_theme_stylebox_override("hover", make_stylebox(
+		Color(0.12, 0.18, 0.3, 0.9), 6, Color(0.4, 0.6, 0.8, 0.7), 1))
+	btn_settings.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0, 0.9))
+	var on_settings: Callable = callbacks.get("on_settings", Callable())
+	if on_settings.is_valid():
+		btn_settings.pressed.connect(on_settings)
+	popup.add_child(btn_settings)
+
+
+## Toggle menu popup visibility.
+static func _toggle_menu_popup(hud_layer: CanvasLayer) -> void:
+	var popup = hud_layer.get_node_or_null("MenuPopup")
+	if popup:
+		popup.visible = not popup.visible
+
+
+## Hide the menu popup (call when an action is selected).
+static func hide_menu_popup(hud_layer: CanvasLayer) -> void:
+	var popup = hud_layer.get_node_or_null("MenuPopup")
+	if popup:
+		popup.visible = false
+
+
+## ─── Post-completion persistent exit button (T100) ──────────────────
+
+## Show a persistent "Победа! Выход на карту" button after level completion.
+## Placed at the top-center so it doesn't obstruct gameplay.
+static func show_post_completion_exit_button(hud_layer: CanvasLayer,
+		on_exit: Callable) -> void:
+	# Remove existing if re-called
+	var existing = hud_layer.get_node_or_null("PostCompletionExitBtn")
+	if existing:
+		existing.visible = true
+		return
+
+	var btn: Button = Button.new()
+	btn.name = "PostCompletionExitBtn"
+	btn.text = "Выход на карту"
+	btn.add_theme_font_size_override("font_size", 14)
+	btn.z_index = 40
+
+	# Position: top-center
+	var vp_size: Vector2 = Vector2(1280, 720)
+	var vp: Viewport = hud_layer.get_viewport()
+	if vp:
+		var vr: Rect2 = vp.get_visible_rect()
+		if vr.size != Vector2.ZERO:
+			vp_size = vr.size
+	var btn_w: float = 200.0
+	var btn_h: float = 34.0
+	btn.position = Vector2((vp_size.x - btn_w) / 2.0, 6)
+	btn.size = Vector2(btn_w, btn_h)
+
+	btn.add_theme_stylebox_override("normal", make_stylebox(
+		Color(0.06, 0.15, 0.08, 0.9), 8, Color(0.3, 0.9, 0.4, 0.6), 2))
+	btn.add_theme_stylebox_override("hover", make_stylebox(
+		Color(0.1, 0.22, 0.12, 0.95), 8, Color(0.4, 1.0, 0.5, 0.8), 2))
+	btn.add_theme_color_override("font_color", Color(0.3, 1.0, 0.5, 0.9))
+	btn.pressed.connect(on_exit)
+	hud_layer.add_child(btn)
+
+
+## Hide the post-completion exit button (if present).
+static func hide_post_completion_exit_button(hud_layer: CanvasLayer) -> void:
+	var btn = hud_layer.get_node_or_null("PostCompletionExitBtn")
+	if btn:
+		btn.visible = false
 
 

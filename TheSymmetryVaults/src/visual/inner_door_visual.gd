@@ -61,7 +61,7 @@ func _process(delta: float) -> void:
 	# Shake decay
 	if _shake_time > 0.0:
 		_shake_time -= delta
-		var factor := _shake_time / 0.4
+		var factor: float = _shake_time / 0.4
 		_shake_offset = Vector2(
 			randf_range(-4.0, 4.0) * factor,
 			randf_range(-2.0, 2.0) * factor
@@ -77,40 +77,40 @@ func _process(delta: float) -> void:
 	_update_particles(delta)
 
 	# Hover scale
-	var target_scale := 1.08 if _is_hovered and state == DoorState.LOCKED else 1.0
-	var s := lerpf(scale.x, target_scale, delta * 8.0)
+	var target_scale: float = 1.08 if _is_hovered and state == DoorState.LOCKED else 1.0
+	var s: float = lerpf(scale.x, target_scale, delta * 8.0)
 	scale = Vector2(s, s)
 
 	queue_redraw()
 
 
 func _draw() -> void:
-	var offset := _shake_offset
+	var offset: Vector2 = _shake_offset
 
 	# Glow behind door
-	var glow_color := UNLOCKED_GLOW if state == DoorState.UNLOCKED else LOCKED_GLOW
+	var glow_color: Color = UNLOCKED_GLOW if state == DoorState.UNLOCKED else LOCKED_GLOW
 	if state == DoorState.LOCKED:
-		var pulse := sin(_pulse_time * 1.5) * 0.06 + 0.15
+		var pulse: float = sin(_pulse_time * 1.5) * 0.06 + 0.15
 		glow_color.a = pulse
 	draw_circle(offset, GLOW_RADIUS, glow_color)
 
 	# Door body (rounded rectangle via polygon)
-	var body_color := UNLOCKED_BODY if state == DoorState.UNLOCKED else LOCKED_BODY
-	var hw := DOOR_WIDTH / 2.0
-	var hh := DOOR_HEIGHT / 2.0
-	var body_rect := Rect2(offset + Vector2(-hw, -hh), Vector2(DOOR_WIDTH, DOOR_HEIGHT))
+	var body_color: Color = UNLOCKED_BODY if state == DoorState.UNLOCKED else LOCKED_BODY
+	var hw: float = DOOR_WIDTH / 2.0
+	var hh: float = DOOR_HEIGHT / 2.0
+	var body_rect: Rect2 = Rect2(offset + Vector2(-hw, -hh), Vector2(DOOR_WIDTH, DOOR_HEIGHT))
 	draw_rect(body_rect, body_color)
 
 	# Border
-	var border_color := UNLOCKED_BORDER if state == DoorState.UNLOCKED else LOCKED_BORDER
+	var border_color: Color = UNLOCKED_BORDER if state == DoorState.UNLOCKED else LOCKED_BORDER
 	if state == DoorState.UNLOCKED:
-		var shimmer := sin(_pulse_time * 2.5) * 0.15 + 0.85
+		var shimmer: float = sin(_pulse_time * 2.5) * 0.15 + 0.85
 		border_color.a = shimmer
 	draw_rect(body_rect, border_color, false, 2.5)
 
 	# Rune markings (decorative circles on the door)
-	var rune_color := Color(border_color.r, border_color.g, border_color.b, border_color.a * 0.5)
-	var rune_positions := [
+	var rune_color: Color = Color(border_color.r, border_color.g, border_color.b, border_color.a * 0.5)
+	var rune_positions: Array = [
 		offset + Vector2(0, -hh * 0.5),
 		offset + Vector2(-hw * 0.5, 0),
 		offset + Vector2(hw * 0.5, 0),
@@ -124,11 +124,11 @@ func _draw() -> void:
 	# Center icon
 	if state == DoorState.LOCKED:
 		# Lock keyhole shape
-		var keyhole_center := offset + Vector2(0, -5)
+		var keyhole_center: Vector2 = offset + Vector2(0, -5)
 		draw_circle(keyhole_center, 8.0, Color(0.1, 0.08, 0.06, 0.9))
 		draw_circle(keyhole_center, 6.0, Color(0.35, 0.28, 0.15, 0.7))
 		# Keyhole slot
-		var slot_points := PackedVector2Array([
+		var slot_points: PackedVector2Array = PackedVector2Array([
 			keyhole_center + Vector2(-3, 4),
 			keyhole_center + Vector2(3, 4),
 			keyhole_center + Vector2(2, 14),
@@ -137,29 +137,29 @@ func _draw() -> void:
 		draw_colored_polygon(slot_points, Color(0.1, 0.08, 0.06, 0.9))
 	else:
 		# Open — light rays from center
-		var center := offset
-		var ray_color := Color(1.0, 0.9, 0.5, 0.3)
+		var center: Vector2 = offset
+		var ray_color: Color = Color(1.0, 0.9, 0.5, 0.3)
 		for i in range(8):
-			var angle := (TAU / 8.0) * i + _pulse_time * 0.3
-			var from_pt := center + Vector2(cos(angle), sin(angle)) * 5.0
-			var to_pt := center + Vector2(cos(angle), sin(angle)) * 18.0
+			var angle: float = (TAU / 8.0) * i + _pulse_time * 0.3
+			var from_pt: Vector2 = center + Vector2(cos(angle), sin(angle)) * 5.0
+			var to_pt: Vector2 = center + Vector2(cos(angle), sin(angle)) * 18.0
 			draw_line(from_pt, to_pt, ray_color, 1.5)
 
 	# Crack effect (on failure)
 	if _crack_alpha > 0.01:
-		var crack_col := Color(FAILURE_COLOR.r, FAILURE_COLOR.g, FAILURE_COLOR.b, _crack_alpha)
+		var crack_col: Color = Color(FAILURE_COLOR.r, FAILURE_COLOR.g, FAILURE_COLOR.b, _crack_alpha)
 		# Jagged crack lines
 		draw_line(offset + Vector2(-hw, -hh * 0.3), offset + Vector2(-5, 2), crack_col, 2.0)
 		draw_line(offset + Vector2(-5, 2), offset + Vector2(8, -8), crack_col, 2.0)
 		draw_line(offset + Vector2(8, -8), offset + Vector2(hw, hh * 0.2), crack_col, 2.0)
 		# Flash overlay on the door
-		var flash := Color(1.0, 0.2, 0.15, _crack_alpha * 0.3)
+		var flash: Color = Color(1.0, 0.2, 0.15, _crack_alpha * 0.3)
 		draw_rect(body_rect, flash)
 
 	# Order indicator (small text below the door)
 	if state == DoorState.LOCKED and required_order > 0:
 		# Draw a small badge
-		var badge_pos := offset + Vector2(0, hh + 12)
+		var badge_pos: Vector2 = offset + Vector2(0, hh + 12)
 		draw_circle(badge_pos, 10.0, Color(0.15, 0.12, 0.1, 0.8))
 		draw_circle(badge_pos, 10.0, border_color * Color(1, 1, 1, 0.5), false, 1.5)
 
@@ -215,8 +215,8 @@ func _build_visuals() -> void:
 	_area.input_pickable = true
 	add_child(_area)
 
-	var collision := CollisionShape2D.new()
-	var rect_shape := RectangleShape2D.new()
+	var collision: CollisionShape2D = CollisionShape2D.new()
+	var rect_shape: RectangleShape2D = RectangleShape2D.new()
 	rect_shape.size = Vector2(DOOR_WIDTH + 16, DOOR_HEIGHT + 16)
 	collision.shape = rect_shape
 	_area.add_child(collision)
@@ -232,7 +232,7 @@ func _build_visuals() -> void:
 	_tooltip_panel.position = Vector2(DOOR_WIDTH / 2.0 + 10, -40)
 	_tooltip_panel.size = Vector2(220, 50)
 	_tooltip_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var style := StyleBoxFlat.new()
+	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0.06, 0.06, 0.1, 0.92)
 	style.corner_radius_top_left = 6
 	style.corner_radius_top_right = 6
@@ -288,9 +288,9 @@ func _spawn_burst(center: Vector2, color: Color, count: int) -> void:
 	for i in range(count):
 		if _unlock_particles.size() >= 60:
 			_unlock_particles.pop_front()
-		var angle := randf() * TAU
-		var speed := randf_range(30.0, 100.0)
-		var life := randf_range(0.4, 1.0)
+		var angle: float = randf() * TAU
+		var speed: float = randf_range(30.0, 100.0)
+		var life: float = randf_range(0.4, 1.0)
 		_unlock_particles.append({
 			"pos": center,
 			"vel": Vector2(cos(angle), sin(angle)) * speed,
@@ -302,7 +302,7 @@ func _spawn_burst(center: Vector2, color: Color, count: int) -> void:
 
 
 func _update_particles(delta: float) -> void:
-	var to_remove := []
+	var to_remove: Array = []
 	for i in range(_unlock_particles.size()):
 		var p = _unlock_particles[i]
 		p["pos"] += p["vel"] * delta

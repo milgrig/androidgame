@@ -27,7 +27,7 @@ const COLOR_MAP := {
 }
 
 ## Explicit draw size (used for scaling calculations)
-var _draw_size := Vector2(140, 127)
+var _draw_size: Vector2 = Vector2(140, 127)
 
 # Pre-computed draw data (built in setup, rendered in _draw)
 var _edge_segments: Array = []   # [{from: Vector2, to: Vector2}]
@@ -58,13 +58,13 @@ func _compute_draw_data() -> void:
 		return
 
 	# Compute bounding box from node positions
-	var min_pos := Vector2(INF, INF)
-	var max_pos := Vector2(-INF, -INF)
+	var min_pos: Vector2 = Vector2(INF, INF)
+	var max_pos: Vector2 = Vector2(-INF, -INF)
 	var positions_by_id: Dictionary = {}
 
 	for node_data in graph_nodes:
 		var pos_arr = node_data.get("position", [0, 0])
-		var npos := Vector2(float(pos_arr[0]), float(pos_arr[1]))
+		var npos: Vector2 = Vector2(float(pos_arr[0]), float(pos_arr[1]))
 		var nid: int = int(node_data.get("id", 0))
 		positions_by_id[nid] = npos
 		min_pos.x = min(min_pos.x, npos.x)
@@ -73,12 +73,12 @@ func _compute_draw_data() -> void:
 		max_pos.y = max(max_pos.y, npos.y)
 
 	# Scale to fit within our drawing area with padding
-	var draw_area := _draw_size
-	var padding := 12.0
-	var usable := draw_area - Vector2(padding * 2, padding * 2) - Vector2(_node_radius * 2, _node_radius * 2)
+	var draw_area: Vector2 = _draw_size
+	var padding: float = 12.0
+	var usable: Vector2 = draw_area - Vector2(padding * 2, padding * 2) - Vector2(_node_radius * 2, _node_radius * 2)
 
-	var range_x := max_pos.x - min_pos.x
-	var range_y := max_pos.y - min_pos.y
+	var range_x: float = max_pos.x - min_pos.x
+	var range_y: float = max_pos.y - min_pos.y
 	if range_x < 1.0:
 		range_x = 1.0
 	if range_y < 1.0:
@@ -87,15 +87,15 @@ func _compute_draw_data() -> void:
 	var scale_factor: float = min(usable.x / range_x, usable.y / range_y)
 
 	# Center offset
-	var scaled_range := Vector2(range_x * scale_factor, range_y * scale_factor)
-	var offset := (draw_area - scaled_range) / 2.0
+	var scaled_range: Vector2 = Vector2(range_x * scale_factor, range_y * scale_factor)
+	var offset: Vector2 = (draw_area - scaled_range) / 2.0
 
 	# Map positions into draw space
 	var mapped_positions: Dictionary = {}
 	for node_data in graph_nodes:
 		var node_id: int = int(node_data.get("id", 0))
 		var raw_pos: Vector2 = positions_by_id[node_id]
-		var mapped := Vector2(
+		var mapped: Vector2 = Vector2(
 			(raw_pos.x - min_pos.x) * scale_factor + offset.x,
 			(raw_pos.y - min_pos.y) * scale_factor + offset.y
 		)
@@ -133,7 +133,7 @@ func _draw() -> void:
 	if not _has_data:
 		return
 
-	var edge_color := Color(0.5, 0.55, 0.7, 0.6)
+	var edge_color: Color = Color(0.5, 0.55, 0.7, 0.6)
 
 	# Draw edges
 	for seg in _edge_segments:

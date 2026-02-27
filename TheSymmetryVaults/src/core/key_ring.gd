@@ -63,13 +63,13 @@ func has_inverses() -> bool:
 func build_cayley_table() -> Array:
 	## Returns 2D array: result[i][j] = index of found[i].compose(found[j])
 	## Returns empty array if set is not closed.
-	var n := found.size()
+	var n: int = found.size()
 	var table: Array = []
 	for i in range(n):
 		var row: Array = []
 		for j in range(n):
 			var product: Permutation = found[i].compose(found[j])
-			var idx := _index_of(product)
+			var idx: int = _index_of(product)
 			if idx == -1:
 				return []  # Not closed
 			row.append(idx)
@@ -94,14 +94,14 @@ func check_subgroup(key_indices: Array) -> Dictionary:
 		if idx >= 0 and idx < found.size():
 			subset.append(found[idx])
 
-	var result := {
+	var result: Dictionary = {
 		"is_subgroup": true,
 		"missing_elements": [],
 		"reasons": []
 	}
 
 	# Check: contains identity?
-	var has_id := false
+	var has_id: bool = false
 	for p in subset:
 		if p.is_identity():
 			has_id = true
@@ -114,14 +114,14 @@ func check_subgroup(key_indices: Array) -> Dictionary:
 	for a in subset:
 		for b in subset:
 			var product: Permutation = a.compose(b)
-			var found_in_subset := false
+			var found_in_subset: bool = false
 			for s in subset:
 				if s.equals(product):
 					found_in_subset = true
 					break
 			if not found_in_subset:
 				result["is_subgroup"] = false
-				var already_missing := false
+				var already_missing: bool = false
 				for m in result["missing_elements"]:
 					if m.equals(product):
 						already_missing = true
@@ -134,14 +134,14 @@ func check_subgroup(key_indices: Array) -> Dictionary:
 	# Check: closed under inverse?
 	for a in subset:
 		var inv: Permutation = a.inverse()
-		var found_in_subset := false
+		var found_in_subset: bool = false
 		for s in subset:
 			if s.equals(inv):
 				found_in_subset = true
 				break
 		if not found_in_subset:
 			result["is_subgroup"] = false
-			var already_missing := false
+			var already_missing: bool = false
 			for m in result["missing_elements"]:
 				if m.equals(inv):
 					already_missing = true
@@ -173,7 +173,7 @@ func get_subgroup_closure(key_indices: Array) -> Array:
 	# Map back to indices in found[]
 	var result_indices: Array = []  # Array[int]
 	for c in closed:
-		var idx := _index_of(c)
+		var idx: int = _index_of(c)
 		if idx != -1 and not result_indices.has(idx):
 			result_indices.append(idx)
 
@@ -185,7 +185,7 @@ func get_subgroup_closure(key_indices: Array) -> Array:
 ## For small groups (≤24 elements), does full subset enumeration.
 ## Returns: [{indices: Array[int], order: int, elements: Array[Permutation]}]
 func find_all_subgroups() -> Array:
-	var n := found.size()
+	var n: int = found.size()
 	if n == 0:
 		return []
 
@@ -215,7 +215,7 @@ func find_all_subgroups() -> Array:
 ## Check if a given array of permutations forms a subgroup (has identity, closed, inverses).
 func _is_subset_subgroup(subset: Array) -> bool:
 	# Must contain identity
-	var has_id := false
+	var has_id: bool = false
 	for p in subset:
 		if p.is_identity():
 			has_id = true
@@ -227,7 +227,7 @@ func _is_subset_subgroup(subset: Array) -> bool:
 	for a in subset:
 		for b in subset:
 			var product: Permutation = a.compose(b)
-			var found_product := false
+			var found_product: bool = false
 			for s in subset:
 				if s.equals(product):
 					found_product = true
@@ -238,7 +238,7 @@ func _is_subset_subgroup(subset: Array) -> bool:
 	# Must be closed under inverse
 	for a in subset:
 		var inv: Permutation = a.inverse()
-		var found_inv := false
+		var found_inv: bool = false
 		for s in subset:
 			if s.equals(inv):
 				found_inv = true

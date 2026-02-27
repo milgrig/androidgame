@@ -20,8 +20,8 @@ const PROTOCOL_VERSION := "1.0.0"
 static func parse_command(json_str: String) -> Dictionary:
 	## Parse a JSON command string into {cmd, args, id}.
 	## Returns {error: "..."} on failure.
-	var json := JSON.new()
-	var err := json.parse(json_str.strip_edges())
+	var json: JSON = JSON.new()
+	var err: int = json.parse(json_str.strip_edges())
 	if err != OK:
 		return {"error": "JSON parse error: %s" % json.get_error_message()}
 	var data = json.data
@@ -41,12 +41,12 @@ static func parse_command(json_str: String) -> Dictionary:
 # ──────────────────────────────────────────────
 
 static func success(data: Dictionary, events: Array = [], cmd_id: int = 0) -> String:
-	var response := {"ok": true, "id": cmd_id, "data": data, "events": events}
+	var response: Dictionary = {"ok": true, "id": cmd_id, "data": data, "events": events}
 	return JSON.stringify(response)
 
 
 static func error(message: String, code: String = "ERROR", cmd_id: int = 0) -> String:
-	var response := {"ok": false, "id": cmd_id, "error": message, "code": code}
+	var response: Dictionary = {"ok": false, "id": cmd_id, "error": message, "code": code}
 	return JSON.stringify(response)
 
 
@@ -64,7 +64,7 @@ static func _serialize_node_recursive(node: Node, depth: int, max_depth: int) ->
 	if depth > max_depth:
 		return {"name": node.name, "type": node.get_class(), "_truncated": true}
 
-	var result := _serialize_node_properties(node)
+	var result: Dictionary = _serialize_node_properties(node)
 
 	# Recurse into children
 	var children_data: Array = []
@@ -83,7 +83,7 @@ static func _serialize_node_recursive(node: Node, depth: int, max_depth: int) ->
 static func _serialize_node_properties(node: Node) -> Dictionary:
 	## Serialize a single node's properties based on its type.
 	## Automatically detects type and extracts relevant data.
-	var result := {
+	var result: Dictionary = {
 		"name": str(node.name),
 		"class": node.get_class(),
 		"path": str(node.get_path()),
@@ -91,7 +91,7 @@ static func _serialize_node_properties(node: Node) -> Dictionary:
 
 	# Custom game classes — check these first (most specific)
 	if node.get_script():
-		var script_name := ""
+		var script_name: String = ""
 		var script: Script = node.get_script()
 		if script.has_method("get_global_name"):
 			script_name = script.get_global_name()

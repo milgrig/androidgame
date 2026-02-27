@@ -61,8 +61,8 @@ const _DEFERRED_LOAD_MAX_FRAMES: int = 30  # ~0.5s at 60fps
 
 func _ready() -> void:
 	# Check for --agent-mode in command line
-	var user_args := OS.get_cmdline_user_args()
-	var all_args := OS.get_cmdline_args()
+	var user_args: PackedStringArray = OS.get_cmdline_user_args()
+	var all_args: PackedStringArray = OS.get_cmdline_args()
 
 	for arg in user_args + all_args:
 		if arg == "--agent-mode":
@@ -91,7 +91,7 @@ func _ready() -> void:
 	printerr("[AgentBridge] resp: %s" % resp_file_path)
 
 	# Write a ready marker so the client knows we're alive
-	var ready_response := AgentProtocol.success({
+	var ready_response: String = AgentProtocol.success({
 		"status": "ready",
 		"version": AgentProtocol.PROTOCOL_VERSION,
 	}, [], 0)
@@ -116,7 +116,7 @@ func _process(_delta: float) -> void:
 				_level_scene.load_level_from_file(_deferred_load_file_path)
 			if not _signals_connected:
 				_connect_level_signals()
-			var resp := AgentProtocol.success({
+			var resp: String = AgentProtocol.success({
 				"loaded": true,
 				"level_id": _level_scene.level_id,
 				"title": _level_scene.level_data.get("meta", {}).get("title", ""),
@@ -128,7 +128,7 @@ func _process(_delta: float) -> void:
 			_deferred_load_frames_waited = 0
 		elif _deferred_load_frames_waited > _DEFERRED_LOAD_MAX_FRAMES:
 			# Timed out waiting for scene transition
-			var resp := AgentProtocol.error(
+			var resp: String = AgentProtocol.error(
 				"Scene transition timed out after %d frames" % _deferred_load_frames_waited,
 				"TIMEOUT", _deferred_load_cmd_id)
 			_write_response(resp)
@@ -149,12 +149,12 @@ func _process(_delta: float) -> void:
 
 func _get_file_path(env_var: String, cli_flag: String, default_name: String) -> String:
 	# 1. Environment variable
-	var env := OS.get_environment(env_var)
+	var env: String = OS.get_environment(env_var)
 	if env != "":
 		return env
 
 	# 2. Command line flag
-	var args := OS.get_cmdline_user_args() + OS.get_cmdline_args()
+	var args: PackedStringArray = OS.get_cmdline_user_args() + OS.get_cmdline_args()
 	for i in range(args.size() - 1):
 		if args[i] == cli_flag:
 			return args[i + 1]
@@ -175,7 +175,7 @@ func _ensure_level_scene() -> void:
 		_signals_connected = false
 		_signal_callbacks.clear()
 
-	var scene := _find_level_scene()
+	var scene: LevelScene = _find_level_scene()
 	if scene == _level_scene and _signals_connected:
 		return
 
@@ -197,7 +197,7 @@ func _find_node_of_type(node: Node, type_name: String) -> Node:
 	if node is LevelScene:
 		return node
 	for child in node.get_children():
-		var found := _find_node_of_type(child, type_name)
+		var found: Node = _find_node_of_type(child, type_name)
 		if found:
 			return found
 	return null
@@ -213,19 +213,19 @@ func _connect_level_signals() -> void:
 	# Connect all LevelScene signals → event queue
 	# Store callables so we can disconnect them later
 	if _level_scene.has_signal("swap_performed"):
-		var cb := func(mapping): _push_event("swap_performed", {"mapping": Array(mapping)})
+		var cb: Callable = func(mapping): _push_event("swap_performed", {"mapping": Array(mapping)})
 		_signal_callbacks["swap_performed"] = cb
 		_level_scene.swap_performed.connect(cb)
 	if _level_scene.has_signal("symmetry_found"):
-		var cb := func(sym_id, mapping): _push_event("symmetry_found", {"sym_id": sym_id, "mapping": Array(mapping)})
+		var cb: Callable = func(sym_id, mapping): _push_event("symmetry_found", {"sym_id": sym_id, "mapping": Array(mapping)})
 		_signal_callbacks["symmetry_found"] = cb
 		_level_scene.symmetry_found.connect(cb)
 	if _level_scene.has_signal("level_completed"):
-		var cb := func(lid): _push_event("level_completed", {"level_id": lid})
+		var cb: Callable = func(lid): _push_event("level_completed", {"level_id": lid})
 		_signal_callbacks["level_completed"] = cb
 		_level_scene.level_completed.connect(cb)
 	if _level_scene.has_signal("invalid_attempt"):
-		var cb := func(mapping): _push_event("invalid_attempt", {"mapping": Array(mapping)})
+		var cb: Callable = func(mapping): _push_event("invalid_attempt", {"mapping": Array(mapping)})
 		_signal_callbacks["invalid_attempt"] = cb
 		_level_scene.invalid_attempt.connect(cb)
 
@@ -233,11 +233,11 @@ func _connect_level_signals() -> void:
 	if _level_scene._inner_door_panel != null and is_instance_valid(_level_scene._inner_door_panel):
 		var panel = _level_scene._inner_door_panel
 		if panel.has_signal("subgroup_found"):
-			var cb := func(sg_name): _push_event("subgroup_found", {"subgroup_name": sg_name, "subgroups": panel.get_state()})
+			var cb: Callable = func(sg_name): _push_event("subgroup_found", {"subgroup_name": sg_name, "subgroups": panel.get_state()})
 			_signal_callbacks["subgroup_found"] = cb
 			panel.subgroup_found.connect(cb)
 		if panel.has_signal("subgroup_check_failed"):
-			var cb := func(reason): _push_event("subgroup_check_failed", {"reason": reason})
+			var cb: Callable = func(reason): _push_event("subgroup_check_failed", {"reason": reason})
 			_signal_callbacks["subgroup_check_failed"] = cb
 			panel.subgroup_check_failed.connect(cb)
 
@@ -280,17 +280,17 @@ func _poll_command_file() -> void:
 
 	# Read command file contents every frame (file modified time has
 	# only 1-second resolution on Windows, which causes missed commands).
-	var file := FileAccess.open(cmd_file_path, FileAccess.READ)
+	var file: FileAccess = FileAccess.open(cmd_file_path, FileAccess.READ)
 	if not file:
 		return
-	var content := file.get_as_text().strip_edges()
+	var content: String = file.get_as_text().strip_edges()
 	file.close()
 
 	if content.is_empty():
 		return
 
 	# Parse and dispatch
-	var parsed := AgentProtocol.parse_command(content)
+	var parsed: Dictionary = AgentProtocol.parse_command(content)
 	if parsed.has("error"):
 		_write_response(AgentProtocol.error(parsed["error"], "PARSE_ERROR"))
 		return
@@ -307,7 +307,7 @@ func _poll_command_file() -> void:
 	_event_queue.clear()
 
 	# Dispatch command
-	var response := _dispatch(parsed["cmd"], parsed["args"], cmd_id)
+	var response: String = _dispatch(parsed["cmd"], parsed["args"], cmd_id)
 
 	# Empty response means deferred — will be sent later (e.g. scene transition)
 	if response.is_empty():
@@ -333,7 +333,7 @@ func _write_response(response_json: String) -> void:
 
 
 func _write_file(path: String, content: String) -> void:
-	var file := FileAccess.open(path, FileAccess.WRITE)
+	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
 	if file:
 		file.store_string(content)
 		file.close()
@@ -419,7 +419,7 @@ func _cmd_get_tree(args: Dictionary, cmd_id: int) -> String:
 			return AgentProtocol.error(
 				"Node not found: '%s'" % root_path, "NOT_FOUND", cmd_id)
 
-	var tree := AgentProtocol.serialize_tree(root_node, max_depth)
+	var tree: Dictionary = AgentProtocol.serialize_tree(root_node, max_depth)
 	return AgentProtocol.success({"tree": tree}, [], cmd_id)
 
 
@@ -438,7 +438,7 @@ func _cmd_get_state(cmd_id: int) -> String:
 		edges_data.append(AgentProtocol.serialize_edge(edge))
 
 	# KeyRing — always provide a well-formed dict even when key_ring is null
-	var keyring_data := {}
+	var keyring_data: Dictionary = {}
 	if _level_scene.key_ring:
 		keyring_data = AgentProtocol.serialize_keyring(_level_scene.key_ring)
 	else:
@@ -453,7 +453,7 @@ func _cmd_get_state(cmd_id: int) -> String:
 		}
 
 	# Graph
-	var graph_data := {}
+	var graph_data: Dictionary = {}
 	if _level_scene.crystal_graph:
 		graph_data = AgentProtocol.serialize_graph(_level_scene.crystal_graph)
 
@@ -461,12 +461,12 @@ func _cmd_get_state(cmd_id: int) -> String:
 	var meta: Dictionary = _level_scene.level_data.get("meta", {})
 
 	# Current permutation
-	var perm_data := {}
+	var perm_data: Dictionary = {}
 	if not _level_scene.current_arrangement.is_empty():
-		var perm := Permutation.from_array(_level_scene.current_arrangement)
+		var perm: Permutation = Permutation.from_array(_level_scene.current_arrangement)
 		perm_data = AgentProtocol.serialize_permutation(perm)
 
-	var state := {
+	var state: Dictionary = {
 		"level": {
 			"id": _level_scene.level_id,
 			"title": meta.get("title", ""),
@@ -534,7 +534,7 @@ func _cmd_list_actions(cmd_id: int) -> String:
 		})
 
 	# Discover all pressable buttons in the tree
-	var buttons := _find_all_pressable_buttons(get_tree().root)
+	var buttons: Array = _find_all_pressable_buttons(get_tree().root)
 	for btn_info in buttons:
 		actions.append({
 			"action": "press_button",
@@ -544,7 +544,7 @@ func _cmd_list_actions(cmd_id: int) -> String:
 		})
 
 	# Discover all text inputs
-	var inputs := _find_all_inputs(get_tree().root)
+	var inputs: Array = _find_all_inputs(get_tree().root)
 	for input_info in inputs:
 		actions.append({
 			"action": "set_text",
@@ -565,23 +565,23 @@ func _cmd_list_levels(cmd_id: int) -> String:
 	var levels: Array = []
 
 	# Scan level directories
-	var base_path := "res://data/levels/"
-	var acts := ["act1", "act2", "act3", "act4"]
+	var base_path: String = "res://data/levels/"
+	var acts: Array = ["act1", "act2", "act3", "act4"]
 	for act in acts:
 		var dir_path: String = base_path + act
 		if not DirAccess.dir_exists_absolute(dir_path):
 			continue
-		var dir := DirAccess.open(dir_path)
+		var dir: DirAccess = DirAccess.open(dir_path)
 		if not dir:
 			continue
 		dir.list_dir_begin()
-		var file_name := dir.get_next()
+		var file_name: String = dir.get_next()
 		while file_name != "":
 			if file_name.ends_with(".json"):
-				var level_id := file_name.get_basename()
+				var level_id: String = file_name.get_basename()
 				var full_path: String = dir_path + "/" + file_name
 				# Read level meta
-				var meta := _read_level_meta(full_path)
+				var meta: Dictionary = _read_level_meta(full_path)
 				levels.append({
 					"id": level_id,
 					"act": act,
@@ -600,7 +600,7 @@ func _cmd_load_level(args: Dictionary, cmd_id: int) -> String:
 		return AgentProtocol.error("Missing 'level_id' argument", "MISSING_ARG", cmd_id)
 
 	# Try to find the level file
-	var file_path := _resolve_level_path(level_id)
+	var file_path: String = _resolve_level_path(level_id)
 	if file_path.is_empty():
 		return AgentProtocol.error(
 			"Level not found: '%s'" % level_id, "NOT_FOUND", cmd_id)
@@ -622,7 +622,7 @@ func _cmd_load_level(args: Dictionary, cmd_id: int) -> String:
 		# Switch to LevelScene via scene change. Use deferred response:
 		# _process() will detect the new LevelScene, load the level, and
 		# send the response AFTER the scene is ready.
-		var gm := get_node_or_null("/root/GameManager")
+		var gm: Node = get_node_or_null("/root/GameManager")
 		if gm:
 			# Try to resolve the level_id to a registry key that GameManager
 			# understands. level_registry uses meta.id (e.g. "act1_level04")
@@ -697,7 +697,7 @@ func _cmd_press_button(args: Dictionary, cmd_id: int) -> String:
 	if path.is_empty():
 		return AgentProtocol.error("Missing 'path' argument", "MISSING_ARG", cmd_id)
 
-	var node := get_tree().root.get_node_or_null(path)
+	var node: Node = get_tree().root.get_node_or_null(path)
 	if not node:
 		return AgentProtocol.error(
 			"Node not found: '%s'" % path, "NOT_FOUND", cmd_id)
@@ -728,7 +728,7 @@ func _cmd_set_text(args: Dictionary, cmd_id: int) -> String:
 	if path.is_empty():
 		return AgentProtocol.error("Missing 'path' argument", "MISSING_ARG", cmd_id)
 
-	var node := get_tree().root.get_node_or_null(path)
+	var node: Node = get_tree().root.get_node_or_null(path)
 	if not node:
 		return AgentProtocol.error(
 			"Node not found: '%s'" % path, "NOT_FOUND", cmd_id)
@@ -756,7 +756,7 @@ func _cmd_set_value(args: Dictionary, cmd_id: int) -> String:
 	if value == null:
 		return AgentProtocol.error("Missing 'value' argument", "MISSING_ARG", cmd_id)
 
-	var node := get_tree().root.get_node_or_null(path)
+	var node: Node = get_tree().root.get_node_or_null(path)
 	if not node:
 		return AgentProtocol.error(
 			"Node not found: '%s'" % path, "NOT_FOUND", cmd_id)
@@ -808,18 +808,18 @@ func _cmd_get_node(args: Dictionary, cmd_id: int) -> String:
 	if path.is_empty():
 		return AgentProtocol.error("Missing 'path' argument", "MISSING_ARG", cmd_id)
 
-	var node := get_tree().root.get_node_or_null(path)
+	var node: Node = get_tree().root.get_node_or_null(path)
 	if not node:
 		return AgentProtocol.error(
 			"Node not found: '%s'" % path, "NOT_FOUND", cmd_id)
 
 	# Full serialization of this one node (without recursive children)
-	var data := AgentProtocol._serialize_node_properties(node)
+	var data: Dictionary = AgentProtocol._serialize_node_properties(node)
 
 	# Add signal info
 	var signals_info: Array = []
 	for sig in node.get_signal_list():
-		var connections_count := node.get_signal_connection_list(sig["name"]).size()
+		var connections_count: int = node.get_signal_connection_list(sig["name"]).size()
 		signals_info.append({
 			"name": sig["name"],
 			"connections": connections_count,
@@ -844,11 +844,11 @@ func _cmd_get_events(cmd_id: int) -> String:
 
 func _cmd_get_map_state(cmd_id: int) -> String:
 	## Return the current state of the world map (halls, progression, etc.)
-	var gm := get_node_or_null("/root/GameManager")
+	var gm: Node = get_node_or_null("/root/GameManager")
 	if not gm:
 		return AgentProtocol.error("GameManager not found", "NO_GM", cmd_id)
 
-	var result := {
+	var result: Dictionary = {
 		"current_scene": "",
 		"halls": [],
 		"completed_levels": Array(gm.completed_levels) if gm.completed_levels else [],
@@ -856,7 +856,7 @@ func _cmd_get_map_state(cmd_id: int) -> String:
 	}
 
 	# Determine current scene
-	var root := get_tree().root
+	var root: Window = get_tree().root
 	for child in root.get_children():
 		if child.get_class() == "Node" and child.name == "GameManager":
 			continue
@@ -877,7 +877,7 @@ func _cmd_get_map_state(cmd_id: int) -> String:
 				var hall_ids: Array = gm.hall_tree.get_wing_halls(wing_id)
 				for hall_id in hall_ids:
 					var state_enum = gm.progression.get_hall_state(hall_id)
-					var state_name := "unknown"
+					var state_name: String = "unknown"
 					match state_enum:
 						0: state_name = "locked"
 						1: state_name = "available"
@@ -922,7 +922,7 @@ func _cmd_navigate(args: Dictionary, cmd_id: int) -> String:
 			return AgentProtocol.success({"navigated": "main_menu"}, [], cmd_id)
 		"map":
 			_disconnect_level_signals()
-			var gm := get_node_or_null("/root/GameManager")
+			var gm: Node = get_node_or_null("/root/GameManager")
 			if gm and gm.has_method("open_map"):
 				gm.open_map()
 			else:
@@ -996,7 +996,7 @@ func _cmd_check_subgroup(args: Dictionary, cmd_id: int) -> String:
 
 
 func _cmd_quit(cmd_id: int) -> String:
-	var response := AgentProtocol.success({"quit": true}, [], cmd_id)
+	var response: String = AgentProtocol.success({"quit": true}, [], cmd_id)
 	_write_response(response)
 	# Give time for file to be written, then quit (deferred to avoid coroutine)
 	get_tree().create_timer(0.1).timeout.connect(func(): get_tree().quit())
@@ -1016,7 +1016,7 @@ func _find_all_pressable_buttons(root: Node) -> Array:
 
 func _collect_buttons(node: Node, result: Array) -> void:
 	if node is BaseButton and node.visible and not node.disabled:
-		var text := ""
+		var text: String = ""
 		if node is Button:
 			text = node.text
 		result.append({
@@ -1048,10 +1048,10 @@ func _collect_inputs(node: Node, result: Array) -> void:
 func _read_level_meta(file_path: String) -> Dictionary:
 	if not FileAccess.file_exists(file_path):
 		return {}
-	var file := FileAccess.open(file_path, FileAccess.READ)
+	var file: FileAccess = FileAccess.open(file_path, FileAccess.READ)
 	if not file:
 		return {}
-	var json := JSON.new()
+	var json: JSON = JSON.new()
 	if json.parse(file.get_as_text()) != OK:
 		return {}
 	var data = json.data
@@ -1063,7 +1063,7 @@ func _read_level_meta(file_path: String) -> Dictionary:
 func _resolve_level_path(level_id: String) -> String:
 	## Try to find a level file by ID
 	## Checks: direct path, act subdirs, with/without prefix
-	var acts := ["act1", "act2", "act3", "act4"]
+	var acts: Array = ["act1", "act2", "act3", "act4"]
 
 	# Try direct file path
 	if FileAccess.file_exists(level_id):
@@ -1071,20 +1071,20 @@ func _resolve_level_path(level_id: String) -> String:
 
 	# Try as level_XX in each act directory
 	for act in acts:
-		var path := "res://data/levels/%s/%s.json" % [act, level_id]
+		var path: String = "res://data/levels/%s/%s.json" % [act, level_id]
 		if FileAccess.file_exists(path):
 			return path
 
 	# Try with act prefix: "act1_level01" → "act1/level_01"
 	if "_" in level_id:
-		var parts := level_id.split("_", true, 1)
+		var parts: PackedStringArray = level_id.split("_", true, 1)
 		if parts.size() == 2:
-			var path := "res://data/levels/%s/%s.json" % [parts[0], parts[1]]
+			var path: String = "res://data/levels/%s/%s.json" % [parts[0], parts[1]]
 			if FileAccess.file_exists(path):
 				return path
 
 	# Try GameManager registry
-	var gm := get_node_or_null("/root/GameManager")
+	var gm: Node = get_node_or_null("/root/GameManager")
 	if gm and gm.has_method("get_level_path"):
 		var path: String = gm.get_level_path(level_id)
 		if not path.is_empty() and FileAccess.file_exists(path):

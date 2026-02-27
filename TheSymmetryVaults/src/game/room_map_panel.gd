@@ -375,26 +375,26 @@ func _draw_room_nodes(n: int) -> void:
 
 		if not is_discovered:
 			# Undiscovered: dashed outline, very faint
-			var rect := Rect2(pos.x - half, pos.y - half, sz, sz)
+			var rect: Rect2 = Rect2(pos.x - half, pos.y - half, sz, sz)
 			_draw_dashed_rect(rect, Color(0.2, 0.2, 0.2, 0.12), 0.5)
 			continue
 
 		var col: Color = room_state.colors[i] if i < room_state.colors.size() else Color.WHITE
-		var rect := Rect2(pos.x - half, pos.y - half, sz, sz)
+		var rect: Rect2 = Rect2(pos.x - half, pos.y - half, sz, sz)
 
 		# Glow for current room
 		if is_current:
-			var glow_col := col
+			var glow_col: Color = col
 			glow_col.a = 0.25
 			for g in range(3):
 				var grow: float = 3.0 + float(g) * 3.0
-				var glow_rect := Rect2(rect.position - Vector2(grow, grow), rect.size + Vector2(grow * 2, grow * 2))
-				var ga := glow_col
+				var glow_rect: Rect2 = Rect2(rect.position - Vector2(grow, grow), rect.size + Vector2(grow * 2, grow * 2))
+				var ga: Color = glow_col
 				ga.a = 0.25 - float(g) * 0.07
 				draw_rect(glow_rect, ga, true)
 
 		# Fill
-		var fill_col := col
+		var fill_col: Color = col
 		if is_current:
 			fill_col.a = 1.0
 		elif is_hover:
@@ -405,7 +405,7 @@ func _draw_room_nodes(n: int) -> void:
 		draw_rect(rect, fill_col, true)
 
 		# Outline
-		var outline_col := col
+		var outline_col: Color = col
 		outline_col.a = 1.0 if is_current else 0.27
 		var outline_width: float = 1.5 if is_current else 0.5
 		draw_rect(rect, outline_col, false, outline_width)
@@ -415,9 +415,9 @@ func _draw_room_nodes(n: int) -> void:
 			var font: Font = ThemeDB.fallback_font
 			var font_size: int = 8 if sz > 9.0 else 6
 			var label_text: String = "\u2302" if i == 0 else str(i)  # ⌂ for home
-			var label_col := Color.WHITE if is_current else (Color(0.8, 0.8, 0.8, 0.9) if is_hover else Color(0.47, 0.47, 0.47, 0.8))
+			var label_col: Color = Color.WHITE if is_current else (Color(0.8, 0.8, 0.8, 0.9) if is_hover else Color(0.47, 0.47, 0.47, 0.8))
 			var text_size: Vector2 = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-			var text_pos := Vector2(pos.x - text_size.x / 2.0, pos.y + half + 3.0 + font_size * 0.8)
+			var text_pos: Vector2 = Vector2(pos.x - text_size.x / 2.0, pos.y + half + 3.0 + font_size * 0.8)
 			draw_string(font, text_pos, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_col)
 
 
@@ -474,7 +474,7 @@ func _input(event: InputEvent) -> void:
 			queue_redraw()
 
 	elif event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
 			var local_pos: Vector2 = _get_local_mouse(event)
 			var hit: int = _hit_test(local_pos)

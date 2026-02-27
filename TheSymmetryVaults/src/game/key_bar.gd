@@ -123,7 +123,7 @@ func rebuild(room_state: RoomState) -> void:
 		var is_discovered: bool = room_state.is_discovered(i)
 		var is_current: bool = (i == _current_room)
 
-		var btn := _make_key_button(i, color, is_discovered, is_current,
+		var btn: Button = _make_key_button(i, color, is_discovered, is_current,
 				btn_size, font_sz, dot_sz)
 		_flow.add_child(btn)
 		_buttons.append(btn)
@@ -207,7 +207,7 @@ func _build_shell() -> void:
 	_panel = PanelContainer.new()
 	_panel.name = "KeyBarPanel"
 	_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	var style := StyleBoxFlat.new()
+	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0)  # transparent — outer frame provides bg
 	style.border_color = Color(0, 0, 0, 0)
 	style.border_width_top = 0
@@ -253,7 +253,7 @@ func _ensure_scroll(need_scroll: bool) -> void:
 
 func _make_key_button(idx: int, color: Color, is_discovered: bool,
 		is_current: bool, btn_size: Vector2, font_sz: int, dot_sz: int) -> Button:
-	var btn := Button.new()
+	var btn: Button = Button.new()
 	btn.name = "Key_%d" % idx
 	btn.custom_minimum_size = btn_size
 	btn.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -263,7 +263,7 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 
 	# --- Inner layout: coloured dot + number label ---
 	# We use button text = "" and place children manually via an HBoxContainer
-	var hbox := HBoxContainer.new()
+	var hbox: HBoxContainer = HBoxContainer.new()
 	hbox.name = "Content"
 	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	hbox.add_theme_constant_override("separation", 5)
@@ -271,7 +271,7 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 	btn.add_child(hbox)
 
 	# Colour dot (square with rounded corners)
-	var dot := ColorRect.new()
+	var dot: ColorRect = ColorRect.new()
 	dot.name = "Dot"
 	dot.custom_minimum_size = Vector2(dot_sz, dot_sz)
 	dot.size = Vector2(dot_sz, dot_sz)
@@ -280,7 +280,7 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 	hbox.add_child(dot)
 
 	# Number label
-	var lbl := Label.new()
+	var lbl: Label = Label.new()
 	lbl.name = "Num"
 	lbl.text = HOME_GLYPH if idx == 0 else str(idx)
 	lbl.add_theme_font_size_override("font_size", font_sz)
@@ -313,7 +313,7 @@ func _apply_button_state(btn: Button, idx: int, color: Color,
 		border_col = BORDER_COLOR
 
 	# Normal style
-	var normal_style := StyleBoxFlat.new()
+	var normal_style: StyleBoxFlat = StyleBoxFlat.new()
 	normal_style.bg_color = Color(0, 0, 0, bg_alpha)
 	normal_style.border_color = border_col
 	for prop in ["border_width_left", "border_width_right",
@@ -325,14 +325,14 @@ func _apply_button_state(btn: Button, idx: int, color: Color,
 	btn.add_theme_stylebox_override("normal", normal_style)
 
 	# Hover style (subtle lift effect via brighter border)
-	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	var hover_style: StyleBoxFlat = normal_style.duplicate()
 	if is_discovered:
 		hover_style.border_color = Color(color.r, color.g, color.b, 0.5)
 		hover_style.bg_color = Color(color.r, color.g, color.b, 0.06)
 	btn.add_theme_stylebox_override("hover", hover_style)
 
 	# Pressed style
-	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	var pressed_style: StyleBoxFlat = normal_style.duplicate()
 	if is_discovered:
 		pressed_style.bg_color = Color(color.r, color.g, color.b, 0.12)
 	btn.add_theme_stylebox_override("pressed", pressed_style)
@@ -352,7 +352,7 @@ func _apply_button_state(btn: Button, idx: int, color: Color,
 		btn.disabled = true
 
 	# Label colour
-	var lbl := _find_child_by_name(btn, "Num") as Label
+	var lbl: Label = _find_child_by_name(btn, "Num")
 	if lbl:
 		if is_discovered:
 			lbl.add_theme_color_override("font_color", color)
@@ -400,7 +400,7 @@ func _apply_paired_style(btn: Button, idx: int, room_state: RoomState,
 	var pair_accent: Color = L2_SELF_COLOR if is_self_inverse else L2_PAIR_COLOR
 
 	# Update normal style — thicker green/yellow border
-	var normal_style := StyleBoxFlat.new()
+	var normal_style: StyleBoxFlat = StyleBoxFlat.new()
 	normal_style.bg_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.06)
 	normal_style.border_color = pair_border
 	for prop in ["border_width_left", "border_width_right",
@@ -412,25 +412,25 @@ func _apply_paired_style(btn: Button, idx: int, room_state: RoomState,
 	btn.add_theme_stylebox_override("normal", normal_style)
 
 	# Hover style — brighter green/yellow background
-	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	var hover_style: StyleBoxFlat = normal_style.duplicate()
 	hover_style.border_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.8)
 	hover_style.bg_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.12)
 	btn.add_theme_stylebox_override("hover", hover_style)
 
 	# Pressed style
-	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	var pressed_style: StyleBoxFlat = normal_style.duplicate()
 	pressed_style.bg_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.18)
 	btn.add_theme_stylebox_override("pressed", pressed_style)
 
 	# Add or update pair indicator label (✓ for pair, ↻ for self-inverse)
-	var indicator_name := "PairMark"
+	var indicator_name: String = "PairMark"
 	var existing = _find_child_by_name(btn, indicator_name)
 	if existing != null:
 		existing.queue_free()
 
 	var hbox = _find_child_by_name(btn, "Content")
 	if hbox:
-		var mark := Label.new()
+		var mark: Label = Label.new()
 		mark.name = indicator_name
 		mark.text = "\u21BB" if is_self_inverse else "\u2713"  # ↻ or ✓
 		mark.add_theme_font_size_override("font_size", 9)
@@ -439,7 +439,7 @@ func _apply_paired_style(btn: Button, idx: int, room_state: RoomState,
 		hbox.add_child(mark)
 
 	# Update label color to the pair accent
-	var lbl := _find_child_by_name(btn, "Num") as Label
+	var lbl: Label = _find_child_by_name(btn, "Num")
 	if lbl:
 		lbl.add_theme_color_override("font_color", pair_accent)
 

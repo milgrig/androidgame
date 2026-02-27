@@ -8,7 +8,10 @@ Checks:
   L001  Inner class used as type annotation across files (ClassName.InnerClass)
   L002  class_name script missing from global_script_class_cache.cfg
   L003  .uid file missing for a class_name script
-  L004  := with known Variant-returning expressions (Dictionary.get, untyped array index)
+  L004  `var x :=` — BANNED.  Always use `var x: Type =` instead.
+        In Godot 4.6 with warnings-as-errors, `:=` can silently infer Variant
+        from .duplicate(), .get(), .find(), .get_node_or_null(), static functions,
+        `as` casts, etc.  There is no safe subset — ban it entirely.
 """
 import re
 import sys
@@ -141,29 +144,18 @@ def check_L003_missing_uid(gd_files: list[Path]) -> list[str]:
     return errors
 
 
-# Patterns known to return Variant in GDScript 4.6
-VARIANT_RETURN_PATTERNS = [
-    # dict.get(key, default)  — always returns Variant
-    re.compile(r":=\s+\w+\.get\("),
-    # dict[key]  — returns Variant for untyped Dictionary
-    re.compile(r":=\s+\w+\["),
-    # .duplicate()  without `as Type` cast
-    re.compile(r":=\s+\w+\.duplicate\(\)(?!\s+as\s)"),
-]
-
-# Exceptions: these return typed values even though they look like dict access
-VARIANT_FALSE_POSITIVES = [
-    # Array.find() returns int — not a problem
-    re.compile(r":=\s+\w+\.find\("),
-    # .new() returns the class — not a problem
-    re.compile(r":=\s+\w+\.new\("),
-    # .size() returns int
-    re.compile(r":=\s+\w+\.size\("),
-]
+_L004_VAR_WALRUS = re.compile(r"^\s*var\s+\w+\s*:=")
 
 
-def check_L004_variant_inference(gd_files: list[Path]) -> list[str]:
-    """L004: := with Variant-returning expression (warning-as-error in Godot 4.6)."""
+def check_L004_no_walrus(gd_files: list[Path]) -> list[str]:
+    """L004: `var x :=` is banned — always use `var x: Type =`.
+
+    Previous approach tried to whitelist "safe" patterns and blacklist
+    "dangerous" ones.  That failed repeatedly because there are too many
+    ways GDScript can infer Variant (.duplicate(), .find(), static calls,
+    `as` casts, .get_node_or_null(), …).  New rule: total ban on `:=`
+    in var declarations.  `const :=` is fine (always typed by the compiler).
+    """
     errors = []
     for f in gd_files:
         lines = f.read_text(encoding="utf-8", errors="replace").splitlines()
@@ -171,21 +163,12 @@ def check_L004_variant_inference(gd_files: list[Path]) -> list[str]:
             stripped = line.lstrip()
             if stripped.startswith("#") or stripped.startswith("##"):
                 continue
-            if ":=" not in stripped:
-                continue
-
-            # Check each Variant pattern
-            for pat in VARIANT_RETURN_PATTERNS:
-                if pat.search(stripped):
-                    # Filter false positives
-                    is_fp = any(fp.search(stripped) for fp in VARIANT_FALSE_POSITIVES)
-                    if not is_fp:
-                        rel = f.relative_to(PROJECT_ROOT)
-                        errors.append(
-                            f"L004 {rel}:{lineno}: ':=' infers Variant — "
-                            f"use explicit type annotation instead: {stripped.strip()}"
-                        )
-                    break  # one error per line
+            if _L004_VAR_WALRUS.match(line):
+                rel = f.relative_to(PROJECT_ROOT)
+                errors.append(
+                    f"L004 {rel}:{lineno}: 'var x :=' is banned — "
+                    f"use 'var x: Type =' instead: {stripped.strip()}"
+                )
     return errors
 
 
@@ -199,7 +182,7 @@ def main() -> int:
     all_errors += check_L001_inner_class_type_annotations(gd_files)
     all_errors += check_L002_cache_registration(gd_files)
     all_errors += check_L003_missing_uid(gd_files)
-    all_errors += check_L004_variant_inference(gd_files)
+    all_errors += check_L004_no_walrus(gd_files)
 
     # Split errors vs warnings
     real_errors = [e for e in all_errors if "-warn " not in e]
@@ -225,4 +208,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.exit(main())

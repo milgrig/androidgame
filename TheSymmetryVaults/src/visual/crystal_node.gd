@@ -113,8 +113,8 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	# Update pulse animation (stronger when idle pulse is active for onboarding)
-	var effective_amplitude := _pulse_amplitude
-	var effective_speed := _pulse_speed
+	var effective_amplitude: float = _pulse_amplitude
+	var effective_speed: float = _pulse_speed
 	if _idle_pulse and not _is_dragging:
 		effective_amplitude = 0.35
 		effective_speed = 2.5
@@ -192,8 +192,8 @@ func _draw() -> void:
 		body_color = body_color.lerp(Color(1.0, 0.2, 0.15, body_color.a), _violation_intensity * 0.6)
 
 	# Crystal shape — hexagonal approximation for gem look
-	var points := PackedVector2Array()
-	var num_sides := 6
+	var points: PackedVector2Array = PackedVector2Array()
+	var num_sides: int = 6
 	for i in range(num_sides):
 		var angle = float(i) / float(num_sides) * TAU - PI / 6.0
 		points.append(Vector2(cos(angle), sin(angle)) * crystal_radius)
@@ -202,7 +202,7 @@ func _draw() -> void:
 	draw_colored_polygon(points, body_color)
 
 	# Inner highlight (gem facet effect)
-	var highlight_points := PackedVector2Array()
+	var highlight_points: PackedVector2Array = PackedVector2Array()
 	var highlight_radius = crystal_radius * 0.6
 	for i in range(num_sides):
 		var angle = float(i) / float(num_sides) * TAU - PI / 6.0
@@ -237,7 +237,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseButton:
-		var mouse_event := event as InputEventMouseButton
+		var mouse_event: InputEventMouseButton = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			if mouse_event.pressed:
 				# Use get_global_mouse_position() for world-space hit testing

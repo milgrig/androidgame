@@ -8,73 +8,366 @@
     "group_name": "D5",
     "group_order": 10
   },
-
   "graph": {
     "nodes": [
-      {"id": 0, "color": "bronze", "position": [640, 150], "label": "A"},
-      {"id": 1, "color": "bronze", "position": [830, 285], "label": "B"},
-      {"id": 2, "color": "bronze", "position": [760, 540], "label": "C"},
-      {"id": 3, "color": "bronze", "position": [520, 540], "label": "D"},
-      {"id": 4, "color": "bronze", "position": [450, 285], "label": "E"}
+      {
+        "id": 0,
+        "color": "bronze",
+        "position": [
+          640,
+          150
+        ],
+        "label": "A"
+      },
+      {
+        "id": 1,
+        "color": "bronze",
+        "position": [
+          830,
+          285
+        ],
+        "label": "B"
+      },
+      {
+        "id": 2,
+        "color": "bronze",
+        "position": [
+          760,
+          540
+        ],
+        "label": "C"
+      },
+      {
+        "id": 3,
+        "color": "bronze",
+        "position": [
+          520,
+          540
+        ],
+        "label": "D"
+      },
+      {
+        "id": 4,
+        "color": "bronze",
+        "position": [
+          450,
+          285
+        ],
+        "label": "E"
+      }
     ],
     "edges": [
-      {"from": 0, "to": 1, "type": "standard", "weight": 1},
-      {"from": 1, "to": 2, "type": "standard", "weight": 1},
-      {"from": 2, "to": 3, "type": "standard", "weight": 1},
-      {"from": 3, "to": 4, "type": "standard", "weight": 1},
-      {"from": 4, "to": 0, "type": "standard", "weight": 1}
+      {
+        "from": 0,
+        "to": 1,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 3,
+        "to": 4,
+        "type": "standard",
+        "weight": 1
+      },
+      {
+        "from": 4,
+        "to": 0,
+        "type": "standard",
+        "weight": 1
+      }
     ]
   },
-
   "symmetries": {
     "automorphisms": [
-      {"id": "e",  "mapping": [0,1,2,3,4], "name": "Тождество",                "description": "Всё остаётся на месте"},
-      {"id": "r1", "mapping": [1,2,3,4,0], "name": "Поворот на 72°",           "description": "Один шаг по часовой"},
-      {"id": "r2", "mapping": [2,3,4,0,1], "name": "Поворот на 144°",          "description": "Два шага по часовой"},
-      {"id": "r3", "mapping": [3,4,0,1,2], "name": "Поворот на 216°",          "description": "Три шага по часовой"},
-      {"id": "r4", "mapping": [4,0,1,2,3], "name": "Поворот на 288°",          "description": "Четыре шага по часовой"},
-      {"id": "s0", "mapping": [0,4,3,2,1], "name": "Отражение через A",         "description": "Зеркало через вершину A"},
-      {"id": "s1", "mapping": [1,0,4,3,2], "name": "Отражение через B",         "description": "Зеркало через вершину B"},
-      {"id": "s2", "mapping": [2,1,0,4,3], "name": "Отражение через C",         "description": "Зеркало через вершину C"},
-      {"id": "s3", "mapping": [3,2,1,0,4], "name": "Отражение через D",         "description": "Зеркало через вершину D"},
-      {"id": "s4", "mapping": [4,3,2,1,0], "name": "Отражение через E",         "description": "Зеркало через вершину E"}
+      {
+        "id": "e",
+        "mapping": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "name": "Тождество",
+        "description": "Всё остаётся на месте"
+      },
+      {
+        "id": "r1",
+        "mapping": [
+          1,
+          2,
+          3,
+          4,
+          0
+        ],
+        "name": "Поворот на 72°",
+        "description": "Один шаг по часовой"
+      },
+      {
+        "id": "r2",
+        "mapping": [
+          2,
+          3,
+          4,
+          0,
+          1
+        ],
+        "name": "Поворот на 144°",
+        "description": "Два шага по часовой"
+      },
+      {
+        "id": "r3",
+        "mapping": [
+          3,
+          4,
+          0,
+          1,
+          2
+        ],
+        "name": "Поворот на 216°",
+        "description": "Три шага по часовой"
+      },
+      {
+        "id": "r4",
+        "mapping": [
+          4,
+          0,
+          1,
+          2,
+          3
+        ],
+        "name": "Поворот на 288°",
+        "description": "Четыре шага по часовой"
+      },
+      {
+        "id": "s0",
+        "mapping": [
+          0,
+          4,
+          3,
+          2,
+          1
+        ],
+        "name": "Отражение через A",
+        "description": "Зеркало через вершину A"
+      },
+      {
+        "id": "s1",
+        "mapping": [
+          1,
+          0,
+          4,
+          3,
+          2
+        ],
+        "name": "Отражение через B",
+        "description": "Зеркало через вершину B"
+      },
+      {
+        "id": "s2",
+        "mapping": [
+          2,
+          1,
+          0,
+          4,
+          3
+        ],
+        "name": "Отражение через C",
+        "description": "Зеркало через вершину C"
+      },
+      {
+        "id": "s3",
+        "mapping": [
+          3,
+          2,
+          1,
+          0,
+          4
+        ],
+        "name": "Отражение через D",
+        "description": "Зеркало через вершину D"
+      },
+      {
+        "id": "s4",
+        "mapping": [
+          4,
+          3,
+          2,
+          1,
+          0
+        ],
+        "name": "Отражение через E",
+        "description": "Зеркало через вершину E"
+      }
     ],
-    "generators": ["r1", "s0"],
+    "generators": [
+      "r1",
+      "s0"
+    ],
     "cayley_table": {
-      "e":  {"e":"e",  "r1":"r1","r2":"r2","r3":"r3","r4":"r4","s0":"s0","s1":"s1","s2":"s2","s3":"s3","s4":"s4"},
-      "r1": {"e":"r1", "r1":"r2","r2":"r3","r3":"r4","r4":"e", "s0":"s1","s1":"s2","s2":"s3","s3":"s4","s4":"s0"},
-      "r2": {"e":"r2", "r1":"r3","r2":"r4","r3":"e", "r4":"r1","s0":"s2","s1":"s3","s2":"s4","s3":"s0","s4":"s1"},
-      "r3": {"e":"r3", "r1":"r4","r2":"e", "r3":"r1","r4":"r2","s0":"s3","s1":"s4","s2":"s0","s3":"s1","s4":"s2"},
-      "r4": {"e":"r4", "r1":"e", "r2":"r1","r3":"r2","r4":"r3","s0":"s4","s1":"s0","s2":"s1","s3":"s2","s4":"s3"},
-      "s0": {"e":"s0", "r1":"s4","r2":"s3","r3":"s2","r4":"s1","s0":"e", "s1":"r4","s2":"r3","s3":"r2","s4":"r1"},
-      "s1": {"e":"s1", "r1":"s0","r2":"s4","r3":"s3","r4":"s2","s0":"r1","s1":"e", "s2":"r4","s3":"r3","s4":"r2"},
-      "s2": {"e":"s2", "r1":"s1","r2":"s0","r3":"s4","r4":"s3","s0":"r2","s1":"r1","s2":"e", "s3":"r4","s4":"r3"},
-      "s3": {"e":"s3", "r1":"s2","r2":"s1","r3":"s0","r4":"s4","s0":"r3","s1":"r2","s2":"r1","s3":"e", "s4":"r4"},
-      "s4": {"e":"s4", "r1":"s3","r2":"s2","r3":"s1","r4":"s0","s0":"r4","s1":"r3","s2":"r2","s3":"r1","s4":"e"}
+      "e": {
+        "e": "e",
+        "r1": "r1",
+        "r2": "r2",
+        "r3": "r3",
+        "r4": "r4",
+        "s0": "s0",
+        "s1": "s1",
+        "s2": "s2",
+        "s3": "s3",
+        "s4": "s4"
+      },
+      "r1": {
+        "e": "r1",
+        "r1": "r2",
+        "r2": "r3",
+        "r3": "r4",
+        "r4": "e",
+        "s0": "s1",
+        "s1": "s2",
+        "s2": "s3",
+        "s3": "s4",
+        "s4": "s0"
+      },
+      "r2": {
+        "e": "r2",
+        "r1": "r3",
+        "r2": "r4",
+        "r3": "e",
+        "r4": "r1",
+        "s0": "s2",
+        "s1": "s3",
+        "s2": "s4",
+        "s3": "s0",
+        "s4": "s1"
+      },
+      "r3": {
+        "e": "r3",
+        "r1": "r4",
+        "r2": "e",
+        "r3": "r1",
+        "r4": "r2",
+        "s0": "s3",
+        "s1": "s4",
+        "s2": "s0",
+        "s3": "s1",
+        "s4": "s2"
+      },
+      "r4": {
+        "e": "r4",
+        "r1": "e",
+        "r2": "r1",
+        "r3": "r2",
+        "r4": "r3",
+        "s0": "s4",
+        "s1": "s0",
+        "s2": "s1",
+        "s3": "s2",
+        "s4": "s3"
+      },
+      "s0": {
+        "e": "s0",
+        "r1": "s4",
+        "r2": "s3",
+        "r3": "s2",
+        "r4": "s1",
+        "s0": "e",
+        "s1": "r4",
+        "s2": "r3",
+        "s3": "r2",
+        "s4": "r1"
+      },
+      "s1": {
+        "e": "s1",
+        "r1": "s0",
+        "r2": "s4",
+        "r3": "s3",
+        "r4": "s2",
+        "s0": "r1",
+        "s1": "e",
+        "s2": "r4",
+        "s3": "r3",
+        "s4": "r2"
+      },
+      "s2": {
+        "e": "s2",
+        "r1": "s1",
+        "r2": "s0",
+        "r3": "s4",
+        "r4": "s3",
+        "s0": "r2",
+        "s1": "r1",
+        "s2": "e",
+        "s3": "r4",
+        "s4": "r3"
+      },
+      "s3": {
+        "e": "s3",
+        "r1": "s2",
+        "r2": "s1",
+        "r3": "s0",
+        "r4": "s4",
+        "s0": "r3",
+        "s1": "r2",
+        "s2": "r1",
+        "s3": "e",
+        "s4": "r4"
+      },
+      "s4": {
+        "e": "s4",
+        "r1": "s3",
+        "r2": "s2",
+        "r3": "s1",
+        "r4": "s0",
+        "s0": "r4",
+        "s1": "r3",
+        "s2": "r2",
+        "s3": "r1",
+        "s4": "e"
+      }
     }
   },
-
   "mechanics": {
-    "allowed_actions": ["swap"],
+    "allowed_actions": [
+      "swap"
+    ],
     "show_cayley_button": true,
     "show_generators_hint": true,
     "inner_doors": [],
     "palette": null
   },
-
   "visuals": {
     "background_theme": "stone_vault",
     "ambient_particles": "dust_motes",
     "crystal_style": "basic_gem",
     "edge_style": "thin_thread"
   },
-
   "hints": [
-    {"trigger": "after_30_seconds_no_action", "text": "Правильный пятиугольник. 5 поворотов + 5 отражений = 10 симметрий."},
-    {"trigger": "after_first_valid", "text": "Повороты образуют подгруппу Z5. Она нормальна в D5!"},
-    {"trigger": "after_5_found", "text": "Половина ключей найдена. Ищите отражения — они не коммутируют с поворотами!"}
+    {
+      "trigger": "after_30_seconds_no_action",
+      "text": "Правильный пятиугольник. 5 поворотов + 5 отражений = 10 симметрий."
+    },
+    {
+      "trigger": "after_first_valid",
+      "text": "Повороты образуют подгруппу Z5. Она нормальна в D5!"
+    },
+    {
+      "trigger": "after_5_found",
+      "text": "Половина ключей найдена. Ищите отражения — они не коммутируют с поворотами!"
+    }
   ],
-
   "echo_hints": [
     {
       "text": "Пятиугольник симметричен. Пять поворотов (включая тождество) и пять отражений.",
@@ -86,7 +379,128 @@
     },
     {
       "text": "Пять отражений через биссектрисы от каждой вершины. Группа D5 некоммутативна!",
-      "target_crystals": [0, 1, 2, 3, 4]
+      "target_crystals": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
     }
-  ]
+  ],
+  "layers": {
+    "layer_3": {
+      "title": "Группы — брелки",
+      "instruction": "Соберите все брелки — наборы ключей, образующие группу",
+      "subgroup_count": 8,
+      "subgroups": [
+        {
+          "order": 1,
+          "elements": [
+            "e"
+          ],
+          "generators": [],
+          "is_trivial": true,
+          "is_normal": true
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s0"
+          ],
+          "generators": [
+            "s0"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s1"
+          ],
+          "generators": [
+            "s1"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s2"
+          ],
+          "generators": [
+            "s2"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s3"
+          ],
+          "generators": [
+            "s3"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s4"
+          ],
+          "generators": [
+            "s4"
+          ],
+          "is_trivial": false,
+          "is_normal": false
+        },
+        {
+          "order": 5,
+          "elements": [
+            "e",
+            "r1",
+            "r2",
+            "r3",
+            "r4"
+          ],
+          "generators": [
+            "r1"
+          ],
+          "is_trivial": false,
+          "is_normal": true
+        },
+        {
+          "order": 10,
+          "elements": [
+            "e",
+            "r1",
+            "r2",
+            "r3",
+            "r4",
+            "s0",
+            "s1",
+            "s2",
+            "s3",
+            "s4"
+          ],
+          "generators": [
+            "r1",
+            "s0"
+          ],
+          "is_trivial": true,
+          "is_normal": true
+        }
+      ],
+      "filtered": false
+    }
+  }
 }

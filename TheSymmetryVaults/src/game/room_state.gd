@@ -63,7 +63,7 @@ func setup(level_data: Dictionary, rebase_inverse: Permutation = null) -> void:
 
 	for auto in autos:
 		var mapping: Array = auto.get("mapping", [])
-		var perm := Permutation.from_array(mapping)
+		var perm: Permutation = Permutation.from_array(mapping)
 		# Apply rebase if provided: rebased = perm compose rebase_inverse
 		if rebase_inverse != null:
 			perm = perm.compose(rebase_inverse)
@@ -72,7 +72,7 @@ func setup(level_data: Dictionary, rebase_inverse: Permutation = null) -> void:
 		raw_ids.append(auto.get("id", ""))
 
 	# Find identity and move it to index 0
-	var identity_idx := -1
+	var identity_idx: int = -1
 	for i in range(raw_perms.size()):
 		if raw_perms[i].is_identity():
 			identity_idx = i
@@ -132,7 +132,7 @@ func _build_cayley_table() -> void:
 		row.resize(group_order)
 		for b in range(group_order):
 			var product: Permutation = all_perms[b].compose(all_perms[a])
-			var idx := _find_perm_index(product)
+			var idx: int = _find_perm_index(product)
 			if idx == -1:
 				push_warning("RoomState: Cayley table — product not found for [%d][%d]" % [a, b])
 				idx = 0  # Fallback to identity
@@ -169,7 +169,7 @@ func is_discovered(idx: int) -> bool:
 
 ## Count how many rooms have been discovered.
 func discovered_count() -> int:
-	var count := 0
+	var count: int = 0
 	for d in discovered:
 		if d:
 			count += 1
@@ -209,7 +209,7 @@ func get_destination(from_room: int, key_idx: int) -> int:
 ## If rebase_inverse is provided, applies it before matching.
 ## Returns -1 if not found.
 func find_room_for_perm(perm: Permutation, rebase_inverse: Permutation = null) -> int:
-	var check_perm := perm
+	var check_perm: Permutation = perm
 	if rebase_inverse != null:
 		check_perm = perm.compose(rebase_inverse)
 	return _find_perm_index(check_perm)
@@ -242,7 +242,7 @@ static func generate_colors(n: int) -> Array:
 		var lit_base: float = 45.0 + float(i % 2) * 10.0   # 45% or 55%
 		var sat: float = sat_base / 100.0
 		var lit: float = lit_base / 100.0
-		var color := _hsl_to_color(hue, sat, lit)
+		var color: Color = _hsl_to_color(hue, sat, lit)
 		result.append(color)
 
 	return result

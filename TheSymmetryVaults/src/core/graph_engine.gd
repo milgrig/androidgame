@@ -35,7 +35,7 @@ func has_edge(from_id: int, to_id: int) -> bool:
 	return not get_edge(from_id, to_id).is_empty()
 
 func get_edge_type(from_id: int, to_id: int) -> String:
-	var e := get_edge(from_id, to_id)
+	var e: Dictionary = get_edge(from_id, to_id)
 	if e.is_empty():
 		return ""
 	return e.get("type", "")
@@ -56,9 +56,9 @@ func is_automorphism(p: Permutation) -> bool:
 	# Check edges: every original edge must map to an edge of the same type
 	# For directed edges, direction must also be preserved
 	for edge in edges:
-		var mapped_from := p.apply(edge["from"])
-		var mapped_to := p.apply(edge["to"])
-		var mapped_edge := get_edge(mapped_from, mapped_to)
+		var mapped_from: int = p.apply(edge["from"])
+		var mapped_to: int = p.apply(edge["to"])
+		var mapped_edge: Dictionary = get_edge(mapped_from, mapped_to)
 		if mapped_edge.is_empty():
 			return false
 		if mapped_edge.get("type", "") != edge.get("type", ""):
@@ -76,7 +76,7 @@ func find_violations(p: Permutation) -> Dictionary:
 	##   "edge_violations": [{from, to, mapped_from, mapped_to, reason}],
 	##   "summary": String  # brief human-readable description
 	## }
-	var result := {
+	var result: Dictionary = {
 		"is_valid": true,
 		"color_violations": [],
 		"edge_violations": [],
@@ -90,8 +90,8 @@ func find_violations(p: Permutation) -> Dictionary:
 
 	# Check node colors
 	for i in range(node_count()):
-		var from_color := get_node_color(i)
-		var to_color := get_node_color(p.apply(i))
+		var from_color: String = get_node_color(i)
+		var to_color: String = get_node_color(p.apply(i))
 		if from_color != to_color:
 			result["is_valid"] = false
 			result["color_violations"].append({
@@ -103,9 +103,9 @@ func find_violations(p: Permutation) -> Dictionary:
 
 	# Check edges
 	for edge in edges:
-		var mapped_from := p.apply(edge["from"])
-		var mapped_to := p.apply(edge["to"])
-		var mapped_edge := get_edge(mapped_from, mapped_to)
+		var mapped_from: int = p.apply(edge["from"])
+		var mapped_to: int = p.apply(edge["to"])
+		var mapped_edge: Dictionary = get_edge(mapped_from, mapped_to)
 		if mapped_edge.is_empty():
 			result["is_valid"] = false
 			result["edge_violations"].append({
@@ -150,10 +150,10 @@ func find_violations(p: Permutation) -> Dictionary:
 func apply_permutation(p: Permutation) -> CrystalGraph:
 	## Returns a new graph with nodes permuted by p.
 	## Node at position i gets data from node p^-1(i).
-	var inv := p.inverse()
+	var inv: Permutation = p.inverse()
 	var new_nodes: Array[Dictionary] = []
 	for i in range(node_count()):
-		var src := inv.apply(i)
+		var src: int = inv.apply(i)
 		var new_node: Dictionary = nodes[src].duplicate()
 		new_node["id"] = i
 		# Keep position of target slot, change color/label
@@ -173,14 +173,14 @@ func apply_permutation(p: Permutation) -> CrystalGraph:
 func find_all_automorphisms() -> Array:
 	## Brute-force: generate all permutations of n elements, check each.
 	## Sufficient for game levels (max n ~ 5-6 for Act 1).
-	var n := node_count()
+	var n: int = node_count()
 	var result: Array = []  # Array[Permutation]
-	var perms := _generate_all_permutations(n)
+	var perms: Array = _generate_all_permutations(n)
 	for perm_arr in perms:
 		var typed: Array[int] = []
 		for v in perm_arr:
 			typed.append(v)
-		var p := Permutation.new(typed)
+		var p: Permutation = Permutation.new(typed)
 		if is_automorphism(p):
 			result.append(p)
 	return result
