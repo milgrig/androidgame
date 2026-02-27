@@ -1,0 +1,100 @@
+{
+  "meta": {
+    "id": "act1_level21",
+    "act": 1,
+    "level": 21,
+    "title": "Кватернионный куб",
+    "subtitle": "Восемь элементов, странная алгебра",
+    "group_name": "Q8",
+    "group_order": 8
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "red",    "position": [400, 200], "label": "+1"},
+      {"id": 1, "color": "red",    "position": [880, 200], "label": "-1"},
+      {"id": 2, "color": "blue",   "position": [400, 360], "label": "+i"},
+      {"id": 3, "color": "blue",   "position": [880, 360], "label": "-i"},
+      {"id": 4, "color": "green",  "position": [400, 520], "label": "+j"},
+      {"id": 5, "color": "green",  "position": [880, 520], "label": "-j"},
+      {"id": 6, "color": "yellow", "position": [640, 280], "label": "+k"},
+      {"id": 7, "color": "yellow", "position": [640, 440], "label": "-k"}
+    ],
+    "edges": [
+      {"from": 0, "to": 2, "type": "thick",    "weight": 1},
+      {"from": 0, "to": 4, "type": "thick",    "weight": 1},
+      {"from": 0, "to": 6, "type": "thick",    "weight": 1},
+      {"from": 1, "to": 3, "type": "thick",    "weight": 1},
+      {"from": 1, "to": 5, "type": "thick",    "weight": 1},
+      {"from": 1, "to": 7, "type": "thick",    "weight": 1},
+      {"from": 2, "to": 6, "type": "standard", "weight": 1},
+      {"from": 2, "to": 7, "type": "standard", "weight": 1},
+      {"from": 3, "to": 6, "type": "standard", "weight": 1},
+      {"from": 3, "to": 7, "type": "standard", "weight": 1},
+      {"from": 4, "to": 6, "type": "dashed",   "weight": 1},
+      {"from": 4, "to": 7, "type": "dashed",   "weight": 1},
+      {"from": 5, "to": 6, "type": "dashed",   "weight": 1},
+      {"from": 5, "to": 7, "type": "dashed",   "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "id",   "mapping": [0,1,2,3,4,5,6,7], "name": "Единица (+1)",      "description": "Тождественный элемент"},
+      {"id": "neg",  "mapping": [1,0,3,2,5,4,7,6], "name": "Минус единица (-1)", "description": "Инверсия всех знаков"},
+      {"id": "i",    "mapping": [2,3,1,0,7,6,4,5], "name": "Умножение на i",     "description": "i² = -1"},
+      {"id": "ni",   "mapping": [3,2,0,1,6,7,5,4], "name": "Умножение на -i",    "description": "-i² = -1"},
+      {"id": "j",    "mapping": [4,5,6,7,1,0,3,2], "name": "Умножение на j",     "description": "j² = -1"},
+      {"id": "nj",   "mapping": [5,4,7,6,0,1,2,3], "name": "Умножение на -j",    "description": "-j² = -1"},
+      {"id": "k",    "mapping": [6,7,4,5,2,3,1,0], "name": "Умножение на k",     "description": "k² = -1"},
+      {"id": "nk",   "mapping": [7,6,5,4,3,2,0,1], "name": "Умножение на -k",    "description": "-k² = -1"}
+    ],
+    "generators": ["i", "j"],
+    "cayley_table": {
+      "id":  {"id":"id",  "neg":"neg","i":"i",  "ni":"ni", "j":"j",  "nj":"nj", "k":"k",  "nk":"nk"},
+      "neg": {"id":"neg", "neg":"id", "i":"ni", "ni":"i",  "j":"nj", "nj":"j",  "k":"nk", "nk":"k"},
+      "i":   {"id":"i",   "neg":"ni", "i":"neg","ni":"id", "j":"k",  "nj":"nk", "k":"nj", "nk":"j"},
+      "ni":  {"id":"ni",  "neg":"i",  "i":"id", "ni":"neg","j":"nk", "nj":"k",  "k":"j",  "nk":"nj"},
+      "j":   {"id":"j",   "neg":"nj", "i":"nk", "ni":"k",  "j":"neg","nj":"id", "k":"i",  "nk":"ni"},
+      "nj":  {"id":"nj",  "neg":"j",  "i":"k",  "ni":"nk", "j":"id", "nj":"neg","k":"ni", "nk":"i"},
+      "k":   {"id":"k",   "neg":"nk", "i":"j",  "ni":"nj", "j":"ni", "nj":"i",  "k":"neg","nk":"id"},
+      "nk":  {"id":"nk",  "neg":"k",  "i":"nj", "ni":"j",  "j":"i",  "nj":"ni", "k":"id", "nk":"neg"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": true,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "glowing"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Это группа кватернионов. Странная структура: некоммутативна, но все подгруппы нормальны!"},
+    {"trigger": "after_first_valid", "text": "i² = j² = k² = -1. Это фундаментальное свойство кватернионов."},
+    {"trigger": "after_4_found", "text": "Каждый цвет образует циклическую подгруппу Z4. Все они нормальны!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Кватернионы: i² = j² = k² = ijk = -1. Некоммутативная группа порядка 8.",
+      "target_crystals": []
+    },
+    {
+      "text": "Четыре пары: {±1}, {±i}, {±j}, {±k}. Каждая пара связана инверсией.",
+      "target_crystals": []
+    },
+    {
+      "text": "ij = k, jk = i, ki = j. Но ji = -k! Порядок важен.",
+      "target_crystals": [0, 1, 2, 3, 4, 5, 6, 7]
+    }
+  ]
+}

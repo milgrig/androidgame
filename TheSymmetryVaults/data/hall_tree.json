@@ -10,17 +10,21 @@
       "order": 1,
       "gate": {
         "type": "threshold",
-        "required_halls": 8,
-        "total_halls": 12,
+        "required_halls": 12,
+        "total_halls": 24,
         "required_from_wing": null,
         "required_specific": [],
-        "message": "Open 8 halls in the First Vault to proceed"
+        "message": "Open 12 halls in the First Vault to proceed"
       },
       "halls": [
         "act1_level01", "act1_level02", "act1_level03",
         "act1_level04", "act1_level05", "act1_level06",
         "act1_level07", "act1_level08", "act1_level09",
-        "act1_level10", "act1_level11", "act1_level12"
+        "act1_level10", "act1_level11", "act1_level12",
+        "act1_level13", "act1_level14", "act1_level15",
+        "act1_level16", "act1_level17", "act1_level18",
+        "act1_level19", "act1_level20", "act1_level21",
+        "act1_level22", "act1_level23", "act1_level24"
       ],
       "start_halls": ["act1_level01"]
     },
@@ -32,11 +36,11 @@
       "order": 2,
       "gate": {
         "type": "threshold",
-        "required_halls": 8,
+        "required_halls": 12,
         "total_halls": 12,
         "required_from_wing": "wing_1",
         "required_specific": [],
-        "message": "Open 8 halls in the First Vault to enter the Inner Locks"
+        "message": "Open 12 halls in the First Vault to enter the Inner Locks"
       },
       "halls": [
         "act2_level13", "act2_level14", "act2_level15", "act2_level16"
@@ -72,6 +76,28 @@
 
     {"from": "act1_level05", "to": "act1_level12", "type": "path"},
     {"from": "act1_level09", "to": "act1_level12", "type": "path"},
+
+    {"from": "act1_level10", "to": "act1_level16", "type": "path"},
+    {"from": "act1_level11", "to": "act1_level17", "type": "path"},
+
+    {"from": "act1_level09", "to": "act1_level18", "type": "path"},
+    {"from": "act1_level12", "to": "act1_level13", "type": "path"},
+    {"from": "act1_level12", "to": "act1_level14", "type": "path"},
+
+    {"from": "act1_level16", "to": "act1_level19", "type": "path"},
+    {"from": "act1_level17", "to": "act1_level20", "type": "path"},
+    {"from": "act1_level18", "to": "act1_level19", "type": "path"},
+
+    {"from": "act1_level13", "to": "act1_level15", "type": "path"},
+    {"from": "act1_level14", "to": "act1_level15", "type": "path"},
+
+    {"from": "act1_level19", "to": "act1_level21", "type": "path"},
+    {"from": "act1_level20", "to": "act1_level22", "type": "path"},
+    {"from": "act1_level15", "to": "act1_level22", "type": "path"},
+
+    {"from": "act1_level21", "to": "act1_level23", "type": "path"},
+    {"from": "act1_level22", "to": "act1_level24", "type": "path"},
+    {"from": "act1_level23", "to": "act1_level24", "type": "path"},
 
     {"from": "act2_level13", "to": "act2_level14", "type": "path"},
     {"from": "act2_level13", "to": "act2_level15", "type": "path"},
@@ -117,6 +143,42 @@
       "discovered_when": "both_completed"
     },
 
+    {
+      "halls": ["act1_level09", "act1_level18"],
+      "type": "isomorphic",
+      "description": "S3 ≅ D3: the same group of 6 elements, different visual representation",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level10", "act1_level16"],
+      "type": "subgroup",
+      "description": "Z5 is a subgroup of Z7? No — but both are cyclic groups of prime order",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level19", "act1_level23"],
+      "type": "isomorphic",
+      "description": "D5 appears in both the pentagon and the Petersen graph!",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level11", "act1_level17"],
+      "type": "subgroup",
+      "description": "Z6 is NOT a subgroup of Z8, but both are cyclic groups",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level05", "act1_level24"],
+      "type": "subgroup",
+      "description": "D4 is a subgroup of D4 × Z2 (the first factor)",
+      "discovered_when": "both_completed"
+    },
+    {
+      "halls": ["act1_level13", "act1_level22"],
+      "type": "isomorphic",
+      "description": "Both have automorphism groups related to S4",
+      "discovered_when": "both_completed"
+    },
     {
       "halls": ["act1_level09", "act2_level13"],
       "type": "same_group_deeper",

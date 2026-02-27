@@ -35,6 +35,12 @@ func _ready() -> void:
 	enabled = true
 	position_smoothing_enabled = true
 	position_smoothing_speed = smooth_speed
+	# Default: camera looks at viewport center so world coords = screen coords.
+	# This keeps crystals positioned by build_positions_map() inside their zone.
+	var vp := get_viewport_rect().size
+	if vp != Vector2.ZERO:
+		position = vp / 2.0
+		_target_position = position
 
 
 func _process(delta: float) -> void:
@@ -94,8 +100,12 @@ func apply_shake(intensity: float, duration: float) -> void:
 	_shake_time = duration
 
 
-## Center the camera on a set of positions (e.g., all crystal positions)
-func center_on_points(points: Array[Vector2], margin: float = 100.0) -> void:
+## Center the camera on a set of positions (e.g., all crystal positions).
+## [param visible_area] — optional size of the zone where crystals are
+## displayed (e.g. crystal_rect.size). Falls back to full viewport if
+## Vector2.ZERO.
+func center_on_points(points: Array[Vector2], margin: float = 100.0,
+		visible_area: Vector2 = Vector2.ZERO) -> void:
 	if points.is_empty():
 		return
 
@@ -113,10 +123,10 @@ func center_on_points(points: Array[Vector2], margin: float = 100.0) -> void:
 	position = center
 	_target_position = center
 
-	# Calculate zoom to fit
-	var viewport_size = get_viewport_rect().size
-	var zoom_x = viewport_size.x / size.x if size.x > 0 else 1.0
-	var zoom_y = viewport_size.y / size.y if size.y > 0 else 1.0
+	# Calculate zoom to fit within visible_area (or full viewport)
+	var area_size := visible_area if visible_area != Vector2.ZERO else get_viewport_rect().size
+	var zoom_x = area_size.x / size.x if size.x > 0 else 1.0
+	var zoom_y = area_size.y / size.y if size.y > 0 else 1.0
 	var fit_zoom = min(zoom_x, zoom_y)
 	fit_zoom = clampf(fit_zoom, min_zoom, max_zoom)
 

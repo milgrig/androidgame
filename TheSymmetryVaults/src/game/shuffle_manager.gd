@@ -81,11 +81,18 @@ func apply_permutation(auto_perm: Permutation) -> void:
 	current_arrangement = new_arrangement
 
 
-## Build a positions map from node data and viewport.
+## Build a positions map from node data, fitting into the target area.
 ## Returns Dictionary: node_id (int) -> Vector2 world position.
-static func build_positions_map(nodes_data: Array, viewport_size: Vector2) -> Dictionary:
-	var center_offset = viewport_size / 2.0
-	var positions_map: Dictionary = {}
+## [param target_size] is the area where crystals should be placed
+## (e.g. crystal_rect.size for split-screen layout).
+static func build_positions_map(nodes_data: Array, target_size: Vector2) -> Dictionary:
+	if nodes_data.is_empty():
+		return {}
+
+	# 1. Parse raw positions from JSON
+	var raw_positions: Dictionary = {}  # node_id -> Vector2
+	var min_pos := Vector2(INF, INF)
+	var max_pos := Vector2(-INF, -INF)
 	for node_data in nodes_data:
 		var node_id: int = int(node_data.get("id", 0))
 		var pos_arr = node_data.get("position", [0, 0])
@@ -94,10 +101,39 @@ static func build_positions_map(nodes_data: Array, viewport_size: Vector2) -> Di
 			pos = Vector2(pos_arr[0], pos_arr[1])
 		else:
 			pos = Vector2.ZERO
-		# Scale positions: if they're normalized (-1 to 1 range), scale up
-		if abs(pos.x) <= 2.0 and abs(pos.y) <= 2.0:
-			pos = pos * 200.0 + center_offset
-		positions_map[node_id] = pos
+		raw_positions[node_id] = pos
+		min_pos.x = min(min_pos.x, pos.x)
+		min_pos.y = min(min_pos.y, pos.y)
+		max_pos.x = max(max_pos.x, pos.x)
+		max_pos.y = max(max_pos.y, pos.y)
+
+	# 2. Compute scale to fit into target_size with padding
+	var padding := 60.0  # margin inside the crystal zone
+	var usable := target_size - Vector2(padding * 2, padding * 2)
+	if usable.x < 10.0: usable.x = 10.0
+	if usable.y < 10.0: usable.y = 10.0
+
+	var range_x := max_pos.x - min_pos.x
+	var range_y := max_pos.y - min_pos.y
+	if range_x < 1.0: range_x = 1.0
+	if range_y < 1.0: range_y = 1.0
+
+	var scale_factor: float = min(usable.x / range_x, usable.y / range_y)
+
+	# 3. Center offset: place the scaled graph centered within target_size
+	var scaled_range := Vector2(range_x * scale_factor, range_y * scale_factor)
+	var offset := (target_size - scaled_range) / 2.0
+
+	# 4. Map all positions
+	var positions_map: Dictionary = {}
+	for node_id in raw_positions:
+		var raw: Vector2 = raw_positions[node_id]
+		var mapped := Vector2(
+			(raw.x - min_pos.x) * scale_factor + offset.x,
+			(raw.y - min_pos.y) * scale_factor + offset.y
+		)
+		positions_map[node_id] = mapped
+
 	return positions_map
 
 

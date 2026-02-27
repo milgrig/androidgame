@@ -1,0 +1,507 @@
+[
+  {
+    "level": 13,
+    "title": "Тетраэдральный зал",
+    "claimed_group": "S4",
+    "claimed_order": 24,
+    "issues": [
+      "Group order mismatch: computed 1, claimed 24",
+      "Claimed automorphism 'perm_1' = [0, 1, 3, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_2' = [0, 2, 1, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_3' = [0, 2, 3, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_4' = [0, 3, 1, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_5' = [0, 3, 2, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_6' = [1, 0, 2, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_7' = [1, 0, 3, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_8' = [1, 2, 0, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_9' = [1, 2, 3, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_10' = [1, 3, 0, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_11' = [1, 3, 2, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_12' = [2, 0, 1, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_13' = [2, 0, 3, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_14' = [2, 1, 0, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_15' = [2, 1, 3, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_16' = [2, 3, 0, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_17' = [2, 3, 1, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_18' = [3, 0, 1, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_19' = [3, 0, 2, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_20' = [3, 1, 0, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_21' = [3, 1, 2, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_22' = [3, 2, 0, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'perm_23' = [3, 2, 1, 0] is NOT a valid automorphism!",
+      "Claimed 23 automorphisms that are NOT valid"
+    ],
+    "warnings": [
+      "No generators specified"
+    ],
+    "skipped_checks": [],
+    "computed_order": 1,
+    "subgroup_analysis": {
+      "order": 24,
+      "divisors": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        8,
+        12,
+        24
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        8,
+        12,
+        24
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        4,
+        12,
+        24
+      ]
+    },
+    "status": "FAIL"
+  },
+  {
+    "level": 14,
+    "title": "Радужный лабиринт",
+    "claimed_group": "D4",
+    "claimed_order": 8,
+    "issues": [
+      "Group order mismatch: computed 1, claimed 8",
+      "Claimed automorphism 'r1' = [1, 2, 3, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'r2' = [2, 3, 0, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'r3' = [3, 0, 1, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 's0' = [0, 3, 2, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 's1' = [1, 0, 3, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 's2' = [2, 1, 0, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 's3' = [3, 2, 1, 0] is NOT a valid automorphism!",
+      "Claimed 7 automorphisms that are NOT valid"
+    ],
+    "warnings": [
+      "No generators specified"
+    ],
+    "skipped_checks": [],
+    "computed_order": 1,
+    "subgroup_analysis": {
+      "order": 8,
+      "divisors": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    "status": "FAIL"
+  },
+  {
+    "level": 15,
+    "title": "Зал четных перестановок",
+    "claimed_group": "A4",
+    "claimed_order": 12,
+    "issues": [
+      "Group order mismatch: computed 1, claimed 12",
+      "Claimed automorphism 'even_perm_1' = [0, 2, 3, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_2' = [0, 3, 1, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_3' = [1, 0, 3, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_4' = [1, 2, 0, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_5' = [1, 3, 2, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_6' = [2, 0, 1, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_7' = [2, 1, 3, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_8' = [2, 3, 0, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_9' = [3, 0, 2, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_10' = [3, 1, 0, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'even_perm_11' = [3, 2, 1, 0] is NOT a valid automorphism!",
+      "Claimed 11 automorphisms that are NOT valid"
+    ],
+    "warnings": [
+      "No generators specified"
+    ],
+    "skipped_checks": [],
+    "computed_order": 1,
+    "subgroup_analysis": {
+      "order": 12,
+      "divisors": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        12
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        12
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        4,
+        12
+      ]
+    },
+    "status": "FAIL"
+  },
+  {
+    "level": 16,
+    "title": "Семиугольный зал",
+    "claimed_group": "Z7",
+    "claimed_order": 7,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 7,
+    "generators_claimed": [
+      "r1"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 7,
+      "divisors": [
+        1,
+        7
+      ],
+      "potential_subgroups": [
+        1,
+        7
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        7
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 17,
+    "title": "Восьмиугольная башня",
+    "claimed_group": "Z8",
+    "claimed_order": 8,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 8,
+    "generators_claimed": [
+      "r1"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 8,
+      "divisors": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 18,
+    "title": "Треугольное зеркало",
+    "claimed_group": "D3",
+    "claimed_order": 6,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 6,
+    "generators_claimed": [
+      "r1",
+      "s0"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 6,
+      "divisors": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        3,
+        6
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        3,
+        6
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 19,
+    "title": "Пентагональная крепость",
+    "claimed_group": "D5",
+    "claimed_order": 10,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 10,
+    "generators_claimed": [
+      "r1",
+      "s0"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 10,
+      "divisors": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        5,
+        10
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 20,
+    "title": "Шестигранный храм",
+    "claimed_group": "D6",
+    "claimed_order": 12,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 12,
+    "generators_claimed": [
+      "r1",
+      "s0"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 12,
+      "divisors": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        12
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        12
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        6,
+        12
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 21,
+    "title": "Кватернионный куб",
+    "claimed_group": "Q8",
+    "claimed_order": 8,
+    "issues": [
+      "Group order mismatch: computed 2, claimed 8",
+      "Claimed automorphism 'i' = [2, 3, 1, 0, 7, 6, 4, 5] is NOT a valid automorphism!",
+      "Claimed automorphism 'ni' = [3, 2, 0, 1, 6, 7, 5, 4] is NOT a valid automorphism!",
+      "Claimed automorphism 'j' = [4, 5, 6, 7, 1, 0, 3, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'nj' = [5, 4, 7, 6, 0, 1, 2, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'k' = [6, 7, 4, 5, 2, 3, 1, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'nk' = [7, 6, 5, 4, 3, 2, 0, 1] is NOT a valid automorphism!",
+      "Claimed 6 automorphisms that are NOT valid",
+      "Closure violated: composition not in group",
+      "Inverse missing for element"
+    ],
+    "warnings": [
+      "Generators produce 8 elements, but group has 8 elements"
+    ],
+    "skipped_checks": [],
+    "computed_order": 2,
+    "generators_claimed": [
+      "i",
+      "j"
+    ],
+    "generators_valid": false,
+    "subgroup_analysis": {
+      "order": 8,
+      "divisors": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        2,
+        4,
+        8
+      ]
+    },
+    "status": "FAIL"
+  },
+  {
+    "level": 22,
+    "title": "Кубический граф",
+    "claimed_group": "Aut(Cube_graph)",
+    "claimed_order": 8,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 8,
+    "generators_claimed": [
+      "r90",
+      "s_bc"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 8,
+      "divisors": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "potential_subgroups": [],
+      "normal_subgroups_check": null
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 23,
+    "title": "Граф Петерсена",
+    "claimed_group": "D5",
+    "claimed_order": 10,
+    "issues": [],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 10,
+    "generators_claimed": [
+      "r1",
+      "s0"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 10,
+      "divisors": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "potential_subgroups": [
+        1,
+        2,
+        5,
+        10
+      ],
+      "normal_subgroups_check": null,
+      "expected_normal": [
+        1,
+        5,
+        10
+      ]
+    },
+    "status": "PASS"
+  },
+  {
+    "level": 24,
+    "title": "Призматический зал",
+    "claimed_group": "D4 × Z2",
+    "claimed_order": 16,
+    "issues": [
+      "Group order mismatch: computed 8, claimed 16",
+      "Claimed automorphism 'e_flip' = [4, 5, 6, 7, 0, 1, 2, 3] is NOT a valid automorphism!",
+      "Claimed automorphism 'r1_flip' = [5, 6, 7, 4, 1, 2, 3, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'r2_flip' = [6, 7, 4, 5, 2, 3, 0, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'r3_flip' = [7, 4, 5, 6, 3, 0, 1, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'sh_flip' = [5, 4, 7, 6, 1, 0, 3, 2] is NOT a valid automorphism!",
+      "Claimed automorphism 'sv_flip' = [7, 6, 5, 4, 3, 2, 1, 0] is NOT a valid automorphism!",
+      "Claimed automorphism 'sd_flip' = [4, 7, 6, 5, 0, 3, 2, 1] is NOT a valid automorphism!",
+      "Claimed automorphism 'sa_flip' = [6, 5, 4, 7, 2, 1, 0, 3] is NOT a valid automorphism!",
+      "Claimed 8 automorphisms that are NOT valid"
+    ],
+    "warnings": [],
+    "skipped_checks": [],
+    "computed_order": 8,
+    "generators_claimed": [
+      "r1_id",
+      "sh_id",
+      "e_flip"
+    ],
+    "generators_valid": true,
+    "subgroup_analysis": {
+      "order": 16,
+      "divisors": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ],
+      "potential_subgroups": "product structure",
+      "normal_subgroups_check": null,
+      "expected_normal": "multiple from product"
+    },
+    "status": "FAIL"
+  }
+]

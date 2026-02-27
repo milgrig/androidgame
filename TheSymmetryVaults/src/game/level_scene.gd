@@ -1,51 +1,43 @@
 ## LevelScene — Main level orchestrator.
-##
-## Delegates to:
-## - ShuffleManager: shuffling, initial positions, seed
-## - SwapManager: drag-and-drop, perform_swap, arrangement tracking
-## - ValidationManager: permutation validation, target matching, key ring
-##
-## This class handles: load, build, connect managers, HUD, UI events.
-
+## Delegates to: ShuffleManager, SwapManager, ValidationManager,
+## HudBuilder, LevelTextContent, InnerDoorManager.
+## Uses RoomState + RoomMapPanel + KeyBar for the split-screen room-map UI.
 class_name LevelScene
 extends Node2D
 
-# Preload required classes
 const EchoHintSystem = preload("res://src/game/echo_hint_system.gd")
 const TargetPreviewDraw = preload("res://src/visual/target_preview_draw.gd")
-const InnerDoorVisualScene = preload("res://src/visual/inner_door_visual.gd")
-const SubgroupSelectorScene = preload("res://src/ui/subgroup_selector.gd")
-const InnerDoorPanelScene = preload("res://src/game/inner_door_panel.gd")
-
-# --- Signals for game state integration ---
 signal swap_performed(permutation: Array)
 signal symmetry_found(symmetry_id: String, mapping: Array)
 signal level_completed(level_id: String)
 signal invalid_attempt(mapping: Array)
-
-# --- Managers ---
-var _shuffle_mgr: ShuffleManager = ShuffleManager.new()
-var _swap_mgr: SwapManager = SwapManager.new()
-var _validation_mgr: ValidationManager = ValidationManager.new()
-
-# --- Scene references ---
+var _shuffle_mgr := ShuffleManager.new()
+var _swap_mgr := SwapManager.new()
+var _validation_mgr := ValidationManager.new()
+var _door_mgr := InnerDoorManager.new()
+var _room_state := RoomState.new()
+var _layer_controller := LayerModeController.new()
+var _current_layer: int = 1
+var _room_map: RoomMapPanel = null
+var _key_bar: KeyBar = null
+var _crystal_rect := Rect2()
+var _map_rect := Rect2()
+# RoomBadge removed — current room is shown via KeyBar highlight
 var crystal_container: Node2D
 var edge_container: Node2D
 var feedback_fx: FeedbackFX
 var camera: CameraController
 var hud_layer: CanvasLayer
 var target_preview: Control
-
-# --- Level Data ---
 var level_data: Dictionary = {}
 var level_id: String = ""
-
-# --- Crystal Management ---
 var crystals: Dictionary = {}
 var edges: Array[EdgeRenderer] = []
-var crystal_positions: Dictionary = {}
-
-# --- Public state (proxied from managers for backward compat) ---
+var agent_mode: bool = false:
+	set(v):
+		agent_mode = v
+		if _swap_mgr:
+			_swap_mgr.agent_mode = v
 var current_arrangement: Array[int]:
 	get: return _shuffle_mgr.current_arrangement
 	set(v): _shuffle_mgr.current_arrangement = v
@@ -61,34 +53,6 @@ var target_perm_descriptions: Dictionary:
 	get: return _validation_mgr.target_perm_descriptions
 var total_symmetries: int:
 	get: return _validation_mgr.total_symmetries
-
-# --- Agent Mode ---
-var agent_mode: bool = false
-
-# --- Tutorial / Onboarding State ---
-var _instruction_panel_visible: bool = false
-var _first_symmetry_celebrated: bool = false
-var _swap_count: int:
-	get: return _swap_mgr.swap_count
-	set(v): _swap_mgr.swap_count = v
-
-# --- Cayley / Combine Keys ---
-var _show_cayley_button: bool = false
-var _combine_mode: bool = false
-var _combine_first_index: int = -1
-
-# --- Generators Hint ---
-var _show_generators_hint: bool = false
-
-# --- Repeat Key (proxied) ---
-var _active_repeat_key_index: int:
-	get: return _swap_mgr.active_repeat_key_index
-	set(v): _swap_mgr.active_repeat_key_index = v
-var _repeat_animating: bool:
-	get: return _swap_mgr.repeat_animating
-	set(v): _swap_mgr.repeat_animating = v
-
-# --- Shuffled Start (proxied) ---
 var _shuffle_seed: int:
 	get: return _shuffle_mgr.shuffle_seed
 var _initial_arrangement: Array[int]:
@@ -98,1280 +62,532 @@ var _identity_arrangement: Array[int]:
 var _identity_found: bool:
 	get: return _validation_mgr.identity_found
 	set(v): _validation_mgr.identity_found = v
-
-# --- First-key-is-identity rebasing (proxied) ---
-var _first_key_relabeled: bool:
-	get: return _validation_mgr.first_key_relabeled
-	set(v): _validation_mgr.first_key_relabeled = v
-var _rebase_inverse: Permutation:
-	get: return _validation_mgr.rebase_inverse
-	set(v): _validation_mgr.rebase_inverse = v
-
-# --- Inner Doors (Act 2) ---
-var _inner_door_panel = null
-var _subgroup_selector = null
-var _inner_door_visuals: Array = []
-var _first_door_ever_opened: bool = false
-
-# --- Echo Hint System ---
+var _swap_count: int:
+	get: return _swap_mgr.swap_count
+	set(v): _swap_mgr.swap_count = v
+var _inner_door_panel:
+	get: return _door_mgr.panel
+var _instruction_panel_visible := false
+var _first_symmetry_celebrated := false
+var _show_generators_hint := false
 var echo_hint_system = null
-
-# --- Preloaded scenes ---
 var crystal_scene = preload("res://src/visual/crystal_node.tscn")
 var edge_scene = preload("res://src/visual/edge_renderer.tscn")
-
 
 func _ready() -> void:
 	_setup_scene_structure()
 	if level_data.is_empty():
-		if GameManager.current_hall_id != "":
-			var hall_path := GameManager.get_level_path(GameManager.current_hall_id)
-			if hall_path != "":
-				load_level_from_file(hall_path)
-			else:
-				push_warning("LevelScene: No level file for hall '%s'" % GameManager.current_hall_id)
-				load_level_from_file("res://data/levels/act1/level_01.json")
-		else:
-			var saved_id := "act%d_level%02d" % [GameManager.current_act, GameManager.current_level]
-			var saved_path := GameManager.get_level_path(saved_id)
-			if saved_path != "":
-				load_level_from_file(saved_path)
-			else:
-				load_level_from_file("res://data/levels/act1/level_01.json")
-
+		var p := ""
+		if GameManager.current_hall_id != "": p = GameManager.get_level_path(GameManager.current_hall_id)
+		if p == "":
+			p = GameManager.get_level_path("act%d_level%02d" % [GameManager.current_act, GameManager.current_level])
+		if p == "": p = "res://data/levels/act1/level_01.json"
+		load_level_from_file(p)
 
 func _setup_scene_structure() -> void:
-	edge_container = Node2D.new()
-	edge_container.name = "EdgeContainer"
-	add_child(edge_container)
-	crystal_container = Node2D.new()
-	crystal_container.name = "CrystalContainer"
-	add_child(crystal_container)
-	feedback_fx = FeedbackFX.new()
-	feedback_fx.name = "FeedbackFX"
-	add_child(feedback_fx)
-	camera = CameraController.new()
-	camera.name = "Camera"
-	add_child(camera)
+	edge_container = Node2D.new(); edge_container.name = "EdgeContainer"; add_child(edge_container)
+	crystal_container = Node2D.new(); crystal_container.name = "CrystalContainer"; add_child(crystal_container)
+	feedback_fx = FeedbackFX.new(); feedback_fx.name = "FeedbackFX"; add_child(feedback_fx)
+	camera = CameraController.new(); camera.name = "Camera"; add_child(camera)
 	feedback_fx.set_camera_controller(camera)
-	hud_layer = CanvasLayer.new()
-	hud_layer.name = "HUDLayer"
-	hud_layer.layer = 10
-	add_child(hud_layer)
-	_setup_hud()
-
-
-func _setup_hud() -> void:
-	_add_label("LevelNumberLabel", "", 12, Color(0.55, 0.6, 0.7, 0.8), Vector2(20, 8), Vector2(300, 18))
-	_add_label("TitleLabel", "", 24, Color(0.8, 0.85, 0.95, 0.9), Vector2(20, 26))
-	_add_label("SubtitleLabel", "", 14, Color(0.6, 0.65, 0.75, 0.7), Vector2(20, 56))
-	_setup_target_preview_container()
-	_add_label("CounterLabel", "Ключи: 0 / 0", 18, Color(0.7, 0.8, 0.9, 0.85), Vector2(1020, 15), Vector2(240, 30), HORIZONTAL_ALIGNMENT_RIGHT)
-	_add_label("KeyRingLabel", "", 13, Color(0.6, 0.75, 0.6, 0.8), Vector2(880, 45), Vector2(400, 20), HORIZONTAL_ALIGNMENT_LEFT, true)
-	_add_label("HintLabel", "", 15, Color(0.7, 0.7, 0.5, 0.0), Vector2(340, 670), Vector2(600, 40), HORIZONTAL_ALIGNMENT_CENTER)
-	_setup_action_buttons()
-	_add_label("StatusLabel", "", 13, Color(0.65, 0.7, 0.8, 0.7), Vector2(20, 590), Vector2(400, 25))
-	_add_label("ViolationLabel", "", 14, Color(1.0, 0.4, 0.35, 0.0), Vector2(290, 640), Vector2(700, 30), HORIZONTAL_ALIGNMENT_CENTER)
-	_setup_instruction_panel()
-	_setup_help_button()
-	_add_label("ResetHintLabel", "", 11, Color(0.6, 0.65, 0.8, 0.0), Vector2(20, 662), Vector2(120, 20))
-	_add_label("CheckHintLabel", "", 11, Color(0.6, 0.65, 0.8, 0.0), Vector2(150, 662), Vector2(190, 20))
-	_setup_key_buttons_container()
-	_add_label("CombineLabel", "", 14, Color(0.8, 0.7, 1.0, 0.0), Vector2(290, 590), Vector2(700, 25), HORIZONTAL_ALIGNMENT_CENTER)
-	_setup_generators_panel()
-	_setup_complete_summary_panel()
-
-
-# --- HUD Helper: create label ---
-func _add_label(lname: String, text: String, font_size: int, color: Color,
-		pos: Vector2, sz: Vector2 = Vector2.ZERO, align: int = -1,
-		ignore_mouse: bool = false) -> Label:
-	var label = Label.new()
-	label.name = lname
-	label.text = text
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", color)
-	label.position = pos
-	if sz != Vector2.ZERO:
-		label.size = sz
-	if align >= 0:
-		label.horizontal_alignment = align
-	if ignore_mouse:
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hud_layer.add_child(label)
-	return label
-
-
-func _setup_target_preview_container() -> void:
-	target_preview = Control.new()
-	target_preview.name = "TargetPreview"
-	target_preview.position = Vector2(20, 80)
-	target_preview.size = Vector2(150, 150)
-	target_preview.custom_minimum_size = Vector2(150, 150)
-	target_preview.visible = false
-	target_preview.clip_contents = false
-	target_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hud_layer.add_child(target_preview)
-	var target_bg = Panel.new()
-	target_bg.name = "TargetBG"
-	target_bg.position = Vector2.ZERO
-	target_bg.size = Vector2(150, 150)
-	target_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var target_style = StyleBoxFlat.new()
-	target_style.bg_color = Color(0.04, 0.04, 0.08, 0.85)
-	for prop in ["corner_radius_top_left", "corner_radius_top_right", "corner_radius_bottom_left", "corner_radius_bottom_right"]:
-		target_style.set(prop, 8)
-	target_style.border_color = Color(0.75, 0.65, 0.2, 0.7)
-	for prop in ["border_width_left", "border_width_right", "border_width_top", "border_width_bottom"]:
-		target_style.set(prop, 2)
-	target_bg.add_theme_stylebox_override("panel", target_style)
-	target_preview.add_child(target_bg)
-	var target_title_label = Label.new()
-	target_title_label.name = "TargetTitle"
-	target_title_label.text = "Цель"
-	target_title_label.add_theme_font_size_override("font_size", 11)
-	target_title_label.add_theme_color_override("font_color", Color(0.75, 0.65, 0.2, 0.9))
-	target_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	target_title_label.position = Vector2(0, 2)
-	target_title_label.size = Vector2(150, 16)
-	target_title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	target_preview.add_child(target_title_label)
-
-
-func _setup_action_buttons() -> void:
-	var reset_btn = Button.new()
-	reset_btn.name = "ResetButton"
-	reset_btn.text = "СБРОС"
-	reset_btn.add_theme_font_size_override("font_size", 14)
-	reset_btn.position = Vector2(20, 620)
-	reset_btn.size = Vector2(120, 40)
-	reset_btn.pressed.connect(_on_reset_pressed)
-	hud_layer.add_child(reset_btn)
-	var check_btn = Button.new()
-	check_btn.name = "CheckButton"
-	check_btn.text = "ПРОВЕРИТЬ УЗОР"
-	check_btn.add_theme_font_size_override("font_size", 14)
-	check_btn.position = Vector2(150, 620)
-	check_btn.size = Vector2(190, 40)
-	check_btn.tooltip_text = "Проверить, открывает ли текущее расположение кристаллов замок.\nСоберите картинку-цель и проверьте!"
-	check_btn.pressed.connect(_on_check_pressed)
-	hud_layer.add_child(check_btn)
-
-
-func _make_stylebox(bg: Color, corner: int, border_color: Color, border_width: int) -> StyleBoxFlat:
-	var style = StyleBoxFlat.new()
-	style.bg_color = bg
-	for prop in ["corner_radius_top_left", "corner_radius_top_right", "corner_radius_bottom_left", "corner_radius_bottom_right"]:
-		style.set(prop, corner)
-	style.border_color = border_color
-	for prop in ["border_width_left", "border_width_right", "border_width_top", "border_width_bottom"]:
-		style.set(prop, border_width)
-	return style
-
-
-func _setup_instruction_panel() -> void:
-	var instr_panel = Panel.new()
-	instr_panel.name = "InstructionPanel"
-	instr_panel.visible = false
-	instr_panel.position = Vector2(190, 130)
-	instr_panel.size = Vector2(900, 370)
-	instr_panel.add_theme_stylebox_override("panel", _make_stylebox(Color(0.06, 0.06, 0.12, 0.94), 14, Color(0.35, 0.45, 0.75, 0.6), 2))
-	hud_layer.add_child(instr_panel)
-	var il = func(n: String, fs: int, c: Color, p: Vector2, s: Vector2, ha: int = HORIZONTAL_ALIGNMENT_CENTER, wrap: bool = false) -> Label:
-		var l = Label.new(); l.name = n; l.text = ""; l.add_theme_font_size_override("font_size", fs)
-		l.add_theme_color_override("font_color", c); l.horizontal_alignment = ha
-		l.position = p; l.size = s
-		if wrap: l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		instr_panel.add_child(l); return l
-	il.call("InstrTitle", 22, Color(0.85, 0.9, 1.0, 1.0), Vector2(20, 18), Vector2(860, 30))
-	il.call("InstrGoal", 17, Color(0.4, 0.9, 0.5, 1.0), Vector2(40, 58), Vector2(820, 28))
-	il.call("InstrBody", 15, Color(0.72, 0.77, 0.88, 0.95), Vector2(50, 98), Vector2(800, 150), HORIZONTAL_ALIGNMENT_CENTER, true)
-	il.call("InstrNewMechanic", 15, Color(1.0, 0.85, 0.3, 0.9), Vector2(50, 265), Vector2(800, 30))
-	var dismiss = il.call("InstrDismiss", 13, Color(0.55, 0.65, 0.5, 0.75), Vector2(20, 320), Vector2(860, 25))
-	dismiss.text = "Нажмите в любом месте, чтобы начать"
-
-
-func _setup_help_button() -> void:
-	var help_btn = Button.new()
-	help_btn.name = "HelpButton"
-	help_btn.text = "?"
-	help_btn.add_theme_font_size_override("font_size", 18)
-	help_btn.position = Vector2(1235, 15)
-	help_btn.size = Vector2(35, 35)
-	help_btn.add_theme_stylebox_override("normal", _make_stylebox(Color(0.15, 0.18, 0.28, 0.8), 16, Color(0.4, 0.5, 0.7, 0.5), 1))
-	help_btn.pressed.connect(_show_instruction_panel)
-	hud_layer.add_child(help_btn)
-
-
-func _setup_key_buttons_container() -> void:
-	var key_buttons_container = VBoxContainer.new()
-	key_buttons_container.name = "KeyButtonsContainer"
-	key_buttons_container.position = Vector2(880, 65)
-	key_buttons_container.size = Vector2(380, 280)
-	key_buttons_container.visible = false
-	key_buttons_container.mouse_filter = Control.MOUSE_FILTER_STOP
-	hud_layer.add_child(key_buttons_container)
-
-
-func _setup_generators_panel() -> void:
-	var gen_panel = Panel.new()
-	gen_panel.name = "GeneratorsPanel"
-	gen_panel.visible = false
-	gen_panel.position = Vector2(340, 140)
-	gen_panel.size = Vector2(600, 120)
-	gen_panel.add_theme_stylebox_override("panel", _make_stylebox(Color(0.06, 0.08, 0.16, 0.92), 10, Color(0.5, 0.7, 0.4, 0.6), 2))
-	hud_layer.add_child(gen_panel)
-	var gt = Label.new(); gt.name = "GenTitle"; gt.text = "Генераторы"
-	gt.add_theme_font_size_override("font_size", 18)
-	gt.add_theme_color_override("font_color", Color(0.5, 0.9, 0.4, 1.0))
-	gt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	gt.position = Vector2(20, 12); gt.size = Vector2(560, 28)
-	gen_panel.add_child(gt)
-	var gb = Label.new(); gb.name = "GenBody"; gb.text = ""
-	gb.add_theme_font_size_override("font_size", 14)
-	gb.add_theme_color_override("font_color", Color(0.75, 0.82, 0.9, 0.95))
-	gb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	gb.position = Vector2(20, 45); gb.size = Vector2(560, 60)
-	gb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	gen_panel.add_child(gb)
-
-
-func _setup_complete_summary_panel() -> void:
-	var panel = Panel.new()
-	panel.name = "CompleteSummaryPanel"
-	panel.visible = false
-	panel.position = Vector2(240, 60)
-	panel.size = Vector2(800, 560)
-	panel.add_theme_stylebox_override("panel", _make_stylebox(Color(0.05, 0.07, 0.13, 0.95), 14, Color(0.3, 0.9, 0.4, 0.6), 2))
-	hud_layer.add_child(panel)
-	var al = func(n: String, fs: int, c: Color, p: Vector2, s: Vector2, ha: int = HORIZONTAL_ALIGNMENT_CENTER, wrap: bool = false):
-		var l = Label.new(); l.name = n; l.text = ""
-		l.add_theme_font_size_override("font_size", fs)
-		l.add_theme_color_override("font_color", c)
-		l.horizontal_alignment = ha; l.position = p; l.size = s
-		if wrap: l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		panel.add_child(l)
-	al.call("SummaryTitle", 24, Color(0.3, 1.0, 0.5, 1.0), Vector2(20, 16), Vector2(760, 35))
-	al.call("SummaryLevelInfo", 16, Color(0.7, 0.75, 0.85, 0.9), Vector2(20, 55), Vector2(760, 25))
-	al.call("SummaryGroupInfo", 15, Color(0.8, 0.75, 0.5, 0.9), Vector2(20, 82), Vector2(760, 25))
-	var div = Panel.new(); div.name = "SummaryDivider"; div.position = Vector2(80, 115); div.size = Vector2(640, 2)
-	var ds = StyleBoxFlat.new(); ds.bg_color = Color(0.3, 0.4, 0.6, 0.4); div.add_theme_stylebox_override("panel", ds)
-	panel.add_child(div)
-	al.call("SummaryKeysTitle", 14, Color(0.6, 0.7, 0.8, 0.8), Vector2(20, 125), Vector2(760, 22))
-	var skl = Label.new(); skl.name = "SummaryKeysList"; skl.text = ""
-	skl.add_theme_font_size_override("font_size", 14)
-	skl.add_theme_color_override("font_color", Color(0.72, 0.8, 0.68, 0.95))
-	skl.position = Vector2(60, 152); skl.size = Vector2(680, 240)
-	skl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART; panel.add_child(skl)
-	al.call("SummaryLearnedNote", 13, Color(0.6, 0.65, 0.8, 0.8), Vector2(40, 400), Vector2(720, 45), HORIZONTAL_ALIGNMENT_CENTER, true)
-	al.call("SummaryGenInfo", 13, Color(0.5, 0.9, 0.4, 0.85), Vector2(40, 448), Vector2(720, 40), HORIZONTAL_ALIGNMENT_CENTER, true)
-	var sum_next_btn = Button.new()
-	sum_next_btn.name = "SummaryNextButton"
-	sum_next_btn.text = "ВЕРНУТЬСЯ НА КАРТУ" if GameManager.hall_tree != null else "СЛЕДУЮЩИЙ УРОВЕНЬ  >"
-	sum_next_btn.add_theme_font_size_override("font_size", 20)
-	sum_next_btn.position = Vector2(200, 495); sum_next_btn.size = Vector2(400, 50)
-	sum_next_btn.visible = false
-	sum_next_btn.pressed.connect(_on_next_level_pressed)
-	panel.add_child(sum_next_btn)
-
-
-# --- Level Loading ---
+	hud_layer = CanvasLayer.new(); hud_layer.name = "HUDLayer"; hud_layer.layer = 10; add_child(hud_layer)
+	# Build split-screen HUD (crystals left, map right, keys bottom)
+	var vp_size := get_viewport_rect().size
+	if vp_size == Vector2.ZERO:
+		vp_size = Vector2(1280, 720)
+	var hud_info := HudBuilder.build_split_hud(hud_layer, vp_size, {
+		"on_reset": _on_reset_pressed,
+		"on_check": _on_check_pressed,
+		"on_help": _show_instruction_panel,
+		"on_next_level": _on_next_level_pressed,
+	})
+	_crystal_rect = hud_info["crystal_rect"]
+	target_preview = hud_info["target_preview"]
+	_map_rect = hud_info["map_rect"]
+	# Offset crystal & edge containers so they render inside the crystal zone
+	crystal_container.position = _crystal_rect.position
+	edge_container.position = _crystal_rect.position
+	# Create RoomMapPanel in the right zone (with padding inside frame)
+	var map_rect: Rect2 = _map_rect
+	var map_pad := 6  # padding inside the map frame
+	_room_map = RoomMapPanel.new()
+	_room_map.name = "RoomMapPanel"
+	_room_map.position = Vector2(map_rect.position.x + map_pad, map_rect.position.y + 18)  # 18px below frame title
+	add_child(_room_map)
+	# Create KeyBar in the bottom-left zone
+	var key_bar_rect: Rect2 = hud_info["key_bar_rect"]
+	_key_bar = KeyBar.new()
+	_key_bar.name = "KeyBar"
+	# Position inside the key bar frame with small inset
+	_key_bar.position = Vector2(key_bar_rect.position.x + 4, key_bar_rect.position.y + 16)
+	_key_bar.size = Vector2(key_bar_rect.size.x - 8, key_bar_rect.size.y - 20)
+	hud_layer.add_child(_key_bar)
+	# Connect KeyBar signals
+	_key_bar.key_pressed.connect(_on_key_bar_key_pressed)
+	_key_bar.key_hovered.connect(_on_key_bar_key_hovered)
+	# Connect RoomMapPanel signals
+	_room_map.room_clicked.connect(_on_room_map_clicked)
+	_room_map.room_hovered.connect(_on_room_map_hovered)
 
 func load_level_from_file(file_path: String) -> void:
-	if not FileAccess.file_exists(file_path):
-		push_error("LevelScene: Level file not found: %s" % file_path)
-		return
-	var file = FileAccess.open(file_path, FileAccess.READ)
-	var json_text = file.get_as_text()
-	file.close()
-	var json = JSON.new()
-	var error = json.parse(json_text)
-	if error != OK:
-		push_error("LevelScene: Failed to parse JSON: %s" % json.get_error_message())
-		return
-	level_data = json.data
-	_build_level()
-
+	if not FileAccess.file_exists(file_path): push_error("LevelScene: not found: %s" % file_path); return
+	var f = FileAccess.open(file_path, FileAccess.READ); var t = f.get_as_text(); f.close()
+	var j = JSON.new()
+	if j.parse(t) != OK: push_error("LevelScene: JSON error: %s" % j.get_error_message()); return
+	level_data = j.data; _build_level()
 
 func load_level_from_data(data: Dictionary) -> void:
-	level_data = data
-	_build_level()
-
+	level_data = data; _build_level()
 
 func _build_level() -> void:
 	_clear_level()
-	if level_data.is_empty():
-		return
-
-	var meta = level_data.get("meta", {})
-	level_id = meta.get("id", "unknown")
-
-	# Update HUD labels
-	var lnl = hud_layer.get_node_or_null("LevelNumberLabel")
-	if lnl: lnl.text = "Акт %d  ·  Уровень %d" % [meta.get("act", 1), meta.get("level", 1)]
-	var tl = hud_layer.get_node_or_null("TitleLabel")
-	if tl: tl.text = meta.get("title", "Без названия")
-	var sl = hud_layer.get_node_or_null("SubtitleLabel")
-	if sl: sl.text = meta.get("subtitle", "")
-
-	var graph_data = level_data.get("graph", {})
-	var nodes_data = graph_data.get("nodes", [])
-	var edges_data = graph_data.get("edges", [])
-
-	# Initialize managers
-	_validation_mgr.setup(level_data)
-	_shuffle_mgr.setup(level_id, nodes_data)
-
-	_update_counter()
-
-	# Build position map and create crystals
-	var viewport_size = get_viewport_rect().size
-	var positions_map := ShuffleManager.build_positions_map(nodes_data, viewport_size)
-
+	if level_data.is_empty(): return
+	var meta = level_data.get("meta", {}); level_id = meta.get("id", "unknown")
+	_set_hud_text("LevelNumberLabel", "Акт %d  ·  Уровень %d" % [meta.get("act", 1), meta.get("level", 1)])
+	_set_hud_text("TitleLabel", meta.get("title", "Без названия"))
+	_set_hud_text("SubtitleLabel", meta.get("subtitle", ""))
+	var gd = level_data.get("graph", {}); var nd = gd.get("nodes", []); var ed = gd.get("edges", [])
+	_validation_mgr.setup(level_data); _shuffle_mgr.setup(level_id, nd)
+	# Initialize RoomState from level data (with rebase if available)
+	_room_state.setup(level_data, _validation_mgr.rebase_inverse)
+	# Crystal positions use crystal_rect (left half), not full viewport
+	var crystal_size := _crystal_rect.size
+	if crystal_size == Vector2.ZERO:
+		crystal_size = get_viewport_rect().size
+	var pm := ShuffleManager.build_positions_map(nd, crystal_size)
 	for i in range(_shuffle_mgr.current_arrangement.size()):
-		var crystal_id: int = _shuffle_mgr.current_arrangement[i]
-		var node_data: Dictionary = {}
-		for nd in nodes_data:
-			if nd.get("id", -1) == crystal_id:
-				node_data = nd
-				break
-		var crystal = crystal_scene.instantiate() as CrystalNode
-		crystal.crystal_id = crystal_id
-		crystal.set_crystal_color(node_data.get("color", "blue"))
-		crystal.set_label(node_data.get("label", ""))
-		var slot_id: int = _shuffle_mgr.identity_arrangement[i]
-		var pos: Vector2 = positions_map.get(slot_id, Vector2.ZERO)
-		crystal.position = pos
-		crystal.set_home_position(pos)
-		crystal.crystal_dropped_on.connect(_on_crystal_dropped)
-		crystal.drag_started.connect(_on_crystal_drag_started)
-		crystal.drag_cancelled.connect(_on_crystal_drag_cancelled)
-		crystal_container.add_child(crystal)
-		crystals[crystal_id] = crystal
-
-	_setup_target_preview(nodes_data, edges_data)
-
-	for edge_data in edges_data:
+		var cid: int = _shuffle_mgr.current_arrangement[i]
+		var ndata: Dictionary = {}
+		for n in nd:
+			if n.get("id", -1) == cid: ndata = n; break
+		var c = crystal_scene.instantiate() as CrystalNode
+		c.crystal_id = cid; c.set_crystal_color(ndata.get("color", "blue")); c.set_label(ndata.get("label", ""))
+		var pos: Vector2 = pm.get(_shuffle_mgr.identity_arrangement[i], Vector2.ZERO)
+		c.position = pos; c.set_home_position(pos)
+		c.crystal_dropped_on.connect(_on_crystal_dropped)
+		c.drag_started.connect(_on_crystal_drag_started)
+		c.drag_cancelled.connect(_on_crystal_drag_cancelled)
+		crystal_container.add_child(c); crystals[cid] = c
+	target_preview = HudBuilder.setup_target_preview(target_preview, hud_layer, nd, ed, TargetPreviewDraw)
+	for e in ed:
 		var edge = edge_scene.instantiate() as EdgeRenderer
-		var from_id: int = edge_data.get("from", 0)
-		var to_id: int = edge_data.get("to", 0)
-		edge.from_node_id = from_id
-		edge.to_node_id = to_id
-		edge.set_edge_type(edge_data.get("type", "standard"))
-		edge.weight = edge_data.get("weight", 1)
-		edge.directed = edge_data.get("directed", false)
-		if from_id in crystals and to_id in crystals:
-			edge.bind_crystals(crystals[from_id], crystals[to_id])
-		edge_container.add_child(edge)
-		edges.append(edge)
-
-	var positions: Array[Vector2] = []
-	for crystal in crystals.values():
-		positions.append(crystal.position)
-	if not positions.is_empty():
-		camera.center_on_points(positions, 150.0)
-
-	# Setup SwapManager
+		var fid: int = e.get("from", 0); var tid: int = e.get("to", 0)
+		edge.from_node_id = fid; edge.to_node_id = tid
+		edge.set_edge_type(e.get("type", "standard")); edge.weight = e.get("weight", 1); edge.directed = e.get("directed", false)
+		if fid in crystals and tid in crystals: edge.bind_crystals(crystals[fid], crystals[tid])
+		edge_container.add_child(edge); edges.append(edge)
+	# Crystal positions are already computed to fit inside crystal_rect
+	# by build_positions_map(). No camera centering needed — crystals
+	# render directly in world coords matching the crystal zone.
 	_swap_mgr.setup(self, crystals, edges, feedback_fx, hud_layer, _shuffle_mgr, level_data, agent_mode)
-
-	# Read mechanics flags
-	var mechanics = level_data.get("mechanics", {})
-	_show_cayley_button = mechanics.get("show_cayley_button", false)
-	_show_generators_hint = mechanics.get("show_generators_hint", false)
-	_combine_mode = false
-	_combine_first_index = -1
-
-	# Hide panels from previous level
-	for panel_name in ["RepeatButton", "CombineButton", "GeneratorsPanel", "CompleteSummaryPanel"]:
-		var node = hud_layer.get_node_or_null(panel_name)
+	var mech = level_data.get("mechanics", {})
+	_show_generators_hint = mech.get("show_generators_hint", false)
+	# Setup RoomMapPanel with room state data (use map frame inner size)
+	if _room_map:
+		var map_pad := 6
+		var map_inner_w: float = _map_rect.size.x - map_pad * 2
+		var map_inner_h: float = _map_rect.size.y - 18 - map_pad  # 18 for frame title
+		var map_sz := Vector2(map_inner_w, map_inner_h)
+		_room_map.home_visible = false  # Home hidden until first correct permutation
+		_room_map.setup(_room_state, map_sz)
+	# Setup KeyBar with room state (Home hidden until first correct permutation)
+	if _key_bar:
+		_key_bar.home_visible = false
+		_key_bar.rebuild(_room_state)
+	for pn in ["CompleteSummaryPanel"]:
+		var node = hud_layer.get_node_or_null(pn)
 		if node: node.visible = false
-
-	_update_status_label()
-	_setup_echo_hints()
-	_start_hint_timer()
-
-	_first_symmetry_celebrated = false
-	_swap_mgr.swap_count = 0
+	_update_counter(); _update_status_label(); _setup_echo_hints()
+	_first_symmetry_celebrated = false; _swap_mgr.swap_count = 0
 	if not agent_mode:
 		_show_instruction_panel()
-		var act: int = meta.get("act", 0)
-		if act == 1:
-			for crystal in crystals.values():
-				if crystal is CrystalNode:
-					crystal.set_idle_pulse(true)
-			_show_button_hints()
-
-	# Inner Doors (Act 2)
-	var inner_doors_data: Array = mechanics.get("inner_doors", [])
-	var subgroups_list: Array = level_data.get("subgroups", [])
-	if inner_doors_data.size() > 0 and inner_doors_data[0] is Dictionary:
-		_setup_inner_doors(inner_doors_data, subgroups_list)
-
-
-# --- Inner Doors (Act 2) ---
-
-func _setup_inner_doors(doors_data: Array, subgroups_list: Array) -> void:
-	_inner_door_panel = InnerDoorPanelScene.new()
-	_inner_door_panel.name = "InnerDoorPanel"
-	_inner_door_panel.visible = false
-	_inner_door_panel.setup(doors_data, subgroups_list, key_ring, self)
-	_inner_door_panel.door_opened.connect(_on_inner_door_opened)
-	_inner_door_panel.door_attempt_failed.connect(_on_inner_door_failed)
-	hud_layer.add_child(_inner_door_panel)
-	_subgroup_selector = SubgroupSelectorScene.new()
-	_subgroup_selector.name = "SubgroupSelector"
-	_subgroup_selector.position = Vector2(880, 360)
-	_subgroup_selector.size = Vector2(360, 340)
-	_subgroup_selector.setup(doors_data, subgroups_list, key_ring, self)
-	_subgroup_selector.door_open_requested.connect(_on_selector_door_open)
-	_subgroup_selector.subgroup_validated.connect(_on_subgroup_validated)
-	hud_layer.add_child(_subgroup_selector)
-	_inner_door_visuals.clear()
-	var graph_data: Dictionary = level_data.get("graph", {})
-	var nodes_array: Array = graph_data.get("nodes", [])
-	for door in doors_data:
-		var door_visual: Node2D = InnerDoorVisualScene.new()
-		var door_id: String = door.get("id", "")
-		var visual_hint: String = door.get("visual_hint", "")
-		var req_sg: String = door.get("required_subgroup", "")
-		var sg_order: int = 0
-		for sg in subgroups_list:
-			if sg.get("name", "") == req_sg:
-				sg_order = sg.get("order", 0)
-				break
-		var centroid := Vector2.ZERO
-		if nodes_array.size() > 0:
-			for node_data in nodes_array:
-				var pos_arr: Array = node_data.get("position", [0, 0])
-				centroid += Vector2(pos_arr[0], pos_arr[1])
-			centroid /= float(nodes_array.size())
-			centroid += Vector2(0, 60)
-		door_visual.setup(door_id, visual_hint, sg_order, centroid)
-		door_visual.door_clicked.connect(_on_door_visual_clicked)
-		edge_container.add_child(door_visual)
-		_inner_door_visuals.append(door_visual)
-	_first_door_ever_opened = GameManager.get_save_flag("first_inner_door_opened", false)
-
-
-func _on_selector_door_open(door_id: String, _selected_indices: Array) -> void:
-	_on_inner_door_opened(door_id)
-
-func _on_subgroup_validated(is_valid: bool, _selected_indices: Array) -> void:
-	if is_valid:
-		for c in crystals.values():
-			if c is CrystalNode: c.play_flash()
-	else:
-		for dv in _inner_door_visuals:
-			if dv.state == InnerDoorVisualScene.DoorState.LOCKED:
-				dv.play_failure_animation()
-
-func _on_door_visual_clicked(door_id: String) -> void:
-	if _subgroup_selector:
-		var tween := create_tween()
-		tween.tween_property(_subgroup_selector, "modulate", Color(1.3, 1.2, 0.8, 1.0), 0.15)
-		tween.tween_property(_subgroup_selector, "modulate", Color(1, 1, 1, 1), 0.4)
-
-func _on_inner_door_opened(door_id: String) -> void:
-	for dv in _inner_door_visuals:
-		if dv.door_id == door_id: dv.play_unlock_animation()
-	if _subgroup_selector: _subgroup_selector.refresh_doors()
-	feedback_fx.play_valid_feedback(crystals.values(), edges)
-	if not _first_door_ever_opened:
-		_first_door_ever_opened = true
-		GameManager.set_save_flag("first_inner_door_opened", true)
-		_play_moment_of_understanding(door_id)
-	else:
-		var hint_label = hud_layer.get_node_or_null("HintLabel")
-		if hint_label:
-			hint_label.text = "Внутренняя дверь открыта!"
-			hint_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4, 0.9))
-			hint_label.visible = true
-			var tween := create_tween()
-			tween.tween_interval(3.0)
-			tween.tween_callback(_fade_hint_label.bind(hint_label))
-	_update_counter()
-	if _inner_door_panel and _inner_door_panel.is_all_doors_opened() and key_ring and key_ring.is_complete():
-		_on_level_complete()
-
-func _on_inner_door_failed(door_id: String, reason: Dictionary) -> void:
-	for c in crystals.values():
-		if c is CrystalNode: c.play_dim()
-	for dv in _inner_door_visuals:
-		if dv.door_id == door_id: dv.play_failure_animation()
-
-func _play_moment_of_understanding(door_id: String) -> void:
-	var door_pos := Vector2.ZERO
-	for dv in _inner_door_visuals:
-		if dv.door_id == door_id: door_pos = dv.position; break
-	if camera: camera.move_to(door_pos, 0.8)
-	var insight_panel := Panel.new()
-	insight_panel.name = "MomentOfUnderstandingPanel"
-	insight_panel.position = Vector2(240, 500); insight_panel.size = Vector2(800, 120)
-	insight_panel.modulate = Color(1, 1, 1, 0)
-	insight_panel.add_theme_stylebox_override("panel", _make_stylebox(Color(0.05, 0.04, 0.1, 0.95), 12, Color(0.85, 0.75, 0.3, 0.8), 2))
-	var il = func(t: String, fs: int, c: Color, p: Vector2, s: Vector2):
-		var l = Label.new(); l.text = t; l.add_theme_font_size_override("font_size", fs)
-		l.add_theme_color_override("font_color", c); l.position = p; l.size = s
-		insight_panel.add_child(l)
-	il.call("✨", 28, Color.WHITE, Vector2(20, 12), Vector2(40, 40))
-	il.call("Вы нашли подгруппу!", 20, Color(1.0, 0.9, 0.4, 1.0), Vector2(70, 14), Vector2(700, 30))
-	il.call("Эти ключи замкнуты — любая комбинация двух из них даёт третий.", 15, Color(0.8, 0.82, 0.9, 0.95), Vector2(70, 52), Vector2(700, 26))
-	il.call("Это фундаментальная идея алгебры: часть структуры сама образует структуру.", 13, Color(0.65, 0.7, 0.8, 0.8), Vector2(70, 82), Vector2(700, 22))
-	hud_layer.add_child(insight_panel)
-	var tween := create_tween()
-	tween.tween_property(insight_panel, "modulate", Color(1, 1, 1, 1), 0.6).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_interval(5.0)
-	tween.tween_property(insight_panel, "modulate", Color(1, 1, 1, 0), 0.8)
-	tween.tween_callback(_free_if_valid.bind(insight_panel))
-
-
-func _is_level_complete() -> bool:
-	if not _validation_mgr.is_keys_complete():
-		return false
-	if _inner_door_panel != null:
-		return _inner_door_panel.is_all_doors_opened()
-	return true
-
+		if meta.get("act", 0) == 1:
+			for c in crystals.values():
+				if c is CrystalNode: c.set_idle_pulse(true)
+	var idd: Array = mech.get("inner_doors", []); var sgl: Array = level_data.get("subgroups", [])
+	if idd.size() > 0 and idd[0] is Dictionary:
+		_door_mgr.setup(idd, sgl, key_ring, self, hud_layer, edge_container, level_data,
+			_on_inner_door_opened, _on_inner_door_failed,
+			_on_selector_door_opened, _on_selector_validated)
+	# Layer-specific setup (Layer 2+ modes)
+	_current_layer = GameManager.current_layer
+	if _current_layer > 1:
+		_layer_controller.setup(_current_layer, level_data, self)
+		_layer_controller.layer_completed.connect(_on_layer_completed)
 
 func _clear_level() -> void:
-	if _inner_door_panel: _inner_door_panel.queue_free(); _inner_door_panel = null
-	if _subgroup_selector: _subgroup_selector.queue_free(); _subgroup_selector = null
-	for dv in _inner_door_visuals:
-		if is_instance_valid(dv): dv.queue_free()
-	_inner_door_visuals.clear()
+	_layer_controller.cleanup()
+	_door_mgr.cleanup()
 	if echo_hint_system: echo_hint_system.cleanup(); echo_hint_system.queue_free(); echo_hint_system = null
-	for crystal in crystals.values(): crystal.queue_free()
+	for c in crystals.values(): c.queue_free()
 	crystals.clear()
-	for edge in edges: edge.queue_free()
+	for e in edges: e.queue_free()
 	edges.clear()
-	_shuffle_mgr.clear()
-	_validation_mgr.clear()
-	_swap_mgr.clear()
-	var key_container = hud_layer.get_node_or_null("KeyButtonsContainer") if hud_layer else null
-	if key_container:
-		for child in key_container.get_children(): child.queue_free()
-		key_container.visible = false
+	_shuffle_mgr.clear(); _validation_mgr.clear(); _swap_mgr.clear()
+	_room_state.clear()
 
+func _set_hud_text(n: String, t: String) -> void:
+	var l = hud_layer.get_node_or_null(n)
+	if l: l.text = t
+func _on_inner_door_opened(sg_name: String) -> void:
+	_door_mgr.on_door_opened(sg_name, self, feedback_fx, crystals, edges, hud_layer, camera)
+	_update_counter()
+	if _is_level_complete(): _on_level_complete()
+func _on_inner_door_failed(_door_id: String, _reason: Dictionary) -> void:
+	_door_mgr.on_door_failed(_door_id, crystals)
+func _is_level_complete() -> bool:
+	# Layer 2+: delegate to layer controller
+	if _current_layer > 1:
+		return _layer_controller.is_layer_complete()
+	var mech = level_data.get("mechanics", {})
+	var wc: String = mech.get("win_condition", "all_keys")
+	if wc == "inner_doors_only":
+		# Act 2+: level completes when all inner doors (subgroups) are found
+		return _door_mgr.panel != null and _door_mgr.is_all_doors_opened()
+	# Default (Act 1): all keys + all doors
+	if not _validation_mgr.is_keys_complete(): return false
+	return _door_mgr.panel == null or _door_mgr.is_all_doors_opened()
 
-# --- Drag and Drop Handling ---
-
-func _on_crystal_drag_started(crystal_id: int) -> void:
-	_dismiss_instruction_panel()
-	_notify_echo_activity()
-	for id in crystals:
-		if id != crystal_id:
-			crystals[id].play_glow()
-
-func _on_crystal_drag_cancelled(_crystal_id: int) -> void:
+func _on_crystal_drag_cancelled(_cid: int) -> void:
 	pass
+func _on_selector_door_opened(did: String, _si) -> void:
+	_on_inner_door_opened(did)
+func _on_selector_validated(valid: bool, _si) -> void:
+	_door_mgr.on_subgroup_validated(valid, crystals)
+func _on_echo_hint_shown(_l, _t) -> void:
+	pass
+func _on_echo_perfect_seal_lost() -> void:
+	pass
+func _on_crystal_drag_started(cid: int) -> void:
+	_dismiss_instruction_panel(); _notify_echo_activity()
+	for id in crystals:
+		if id != cid: crystals[id].play_glow()
+func _on_crystal_dropped(fid: int, tid: int) -> void:
+	if fid == tid or not (fid in crystals and tid in crystals): return
+	_perform_swap(crystals[fid], crystals[tid])
+func _perform_swap(ca: CrystalNode, cb: CrystalNode) -> void:
+	var perm := _swap_mgr.perform_swap(ca, cb); _notify_echo_activity()
+	swap_performed.emit(_shuffle_mgr.current_arrangement.duplicate()); _validate_permutation(perm)
 
-func _on_crystal_dropped(from_id: int, to_id: int) -> void:
-	if from_id == to_id: return
-	if not (from_id in crystals and to_id in crystals): return
-	_perform_swap(crystals[from_id], crystals[to_id])
-
-func _perform_swap(crystal_a: CrystalNode, crystal_b: CrystalNode) -> void:
-	var perm := _swap_mgr.perform_swap(crystal_a, crystal_b)
-	_notify_echo_activity()
-	swap_performed.emit(_shuffle_mgr.current_arrangement.duplicate())
-	_validate_permutation(perm)
-
-
-func _validate_permutation(perm: Permutation, show_invalid_feedback: bool = false) -> void:
-	var result := _validation_mgr.validate_permutation(perm)
-
-	if result.get("match", false):
-		if result.get("is_new", false):
-			var sym_id: String = result["sym_id"]
-			symmetry_found.emit(sym_id, perm.mapping)
+# --- Validation ---
+func _validate_permutation(perm: Permutation, show_invalid: bool = false) -> void:
+	var r := _validation_mgr.validate_permutation(perm)
+	if r.get("match", false):
+		if r.get("is_new", false):
+			symmetry_found.emit(r["sym_id"], perm.mapping)
 			feedback_fx.play_valid_feedback(crystals.values(), edges)
 			_swap_mgr.set_active_repeat_key_latest(key_ring)
-			_update_counter()
-			_update_keyring_display()
-			_update_status_label()
-			if result.get("check_perm", perm).is_identity():
-				_update_target_preview_border()
-			if not _first_symmetry_celebrated:
-				_first_symmetry_celebrated = true
-				_show_first_symmetry_message(sym_id)
+			# Reveal Home on the map and KeyBar after first correct permutation found
+			if _room_map and not _room_map.home_visible:
+				_room_map.home_visible = true
+				_room_map.queue_redraw()
+			if _key_bar and not _key_bar.home_visible:
+				_key_bar.reveal_home(_room_state)
+			# Discover the corresponding room in RoomState
+			var room_idx := _room_state.find_room_for_perm(perm, _validation_mgr.rebase_inverse)
+			if room_idx >= 0:
+				_room_state.discover_room(room_idx)
+				_room_state.set_current_room(room_idx)
+				if _room_map: _room_map.queue_redraw()
+				if _key_bar: _key_bar.update_state(_room_state)
+			_update_counter(); _update_status_label()
+			if r.get("check_perm", perm).is_identity(): HudBuilder.update_target_preview_border(target_preview, true)
+			if not _first_symmetry_celebrated: _first_symmetry_celebrated = true; _show_first_symmetry_message(r["sym_id"])
 			_check_triggered_hints()
-			if _inner_door_panel: _inner_door_panel.refresh_keys()
-			if _subgroup_selector: _subgroup_selector.refresh_keys()
-			if _is_level_complete():
-				_on_level_complete()
+			if _door_mgr.panel: _door_mgr.panel.refresh_keys()
+			if _door_mgr.selector: _door_mgr.selector.refresh_keys()
+			if _is_level_complete(): _on_level_complete()
 		else:
 			for c in crystals.values():
 				if c is CrystalNode: c.play_glow()
 			_update_status_label()
 		return
+	invalid_attempt.emit(perm.mapping); _update_status_label()
+	if show_invalid and crystal_graph:
+		var v := crystal_graph.find_violations(perm)
+		feedback_fx.play_violation_feedback(v, crystals, edges, crystals.values())
+		var vl = hud_layer.get_node_or_null("ViolationLabel")
+		if vl and v.get("summary", "") != "":
+			vl.text = v["summary"]; var tw = create_tween()
+			tw.tween_property(vl, "theme_override_colors/font_color", Color(1.0, 0.4, 0.35, 0.9), 0.25)
+			tw.tween_interval(1.8); tw.tween_property(vl, "theme_override_colors/font_color", Color(1.0, 0.4, 0.35, 0.0), 0.6)
+	elif show_invalid: feedback_fx.play_invalid_feedback(crystals.values(), edges)
 
-	# No match
-	invalid_attempt.emit(perm.mapping)
-	_update_status_label()
-	if show_invalid_feedback:
-		if crystal_graph:
-			var violations := crystal_graph.find_violations(perm)
-			feedback_fx.play_violation_feedback(violations, crystals, edges, crystals.values())
-			_show_violation_tooltip(violations.get("summary", ""))
-		else:
-			feedback_fx.play_invalid_feedback(crystals.values(), edges)
-
-
-func _reset_arrangement() -> void:
-	_swap_mgr.reset_arrangement()
-
-func _apply_arrangement_to_crystals() -> void:
-	_swap_mgr.apply_arrangement_to_crystals()
-
-
-# --- Button Handlers ---
-
+func _reset_arrangement() -> void: _swap_mgr.reset_arrangement()
 func _on_reset_pressed() -> void:
-	_reset_arrangement()
-	_update_status_label()
-	_notify_echo_activity()
-
+	_reset_arrangement(); _update_status_label(); _notify_echo_activity()
+	# Reset room state to Home
+	_room_state.set_current_room(0)
+	if _room_map: _room_map.queue_redraw()
+	if _key_bar: _key_bar.update_state(_room_state)
 func _on_check_pressed() -> void:
+	_notify_echo_activity(); _validate_permutation(Permutation.from_array(_shuffle_mgr.current_arrangement), true)
+
+# --- Key Bar handlers ---
+
+## Handle key press from KeyBar. key_idx is a RoomState index (0..group_order-1).
+func _on_key_bar_key_pressed(key_idx: int) -> void:
 	_notify_echo_activity()
-	var perm := Permutation.from_array(_shuffle_mgr.current_arrangement)
-	_validate_permutation(perm, true)
-
-func _on_combine_pressed() -> void:
-	_notify_echo_activity()
-	if _combine_mode: _exit_combine_mode(); return
-	if key_ring == null or key_ring.count() < 2: return
-	_combine_mode = true; _combine_first_index = -1
-	_update_keyring_display_combine()
-	var combine_label = hud_layer.get_node_or_null("CombineLabel")
-	if combine_label:
-		combine_label.text = "Выберите первый ключ (нажмите на номер в связке)..."
-		var tween = create_tween()
-		tween.tween_property(combine_label, "theme_override_colors/font_color", Color(0.8, 0.7, 1.0, 0.9), 0.25)
-	var combine_btn = hud_layer.get_node_or_null("CombineButton")
-	if combine_btn: combine_btn.text = "ОТМЕНА"
-
-func _on_combine_key_selected(index: int) -> void:
-	if not _combine_mode or key_ring == null: return
-	if _combine_first_index < 0:
-		_combine_first_index = index
-		var combine_label = hud_layer.get_node_or_null("CombineLabel")
-		if combine_label:
-			combine_label.text = "Первый: %s. Теперь выберите второй ключ..." % _get_key_display_name(index)
-		_update_keyring_display_combine()
+	_dismiss_instruction_panel()
+	if _room_state.group_order == 0: return
+	if key_idx < 0 or key_idx >= _room_state.group_order: return
+	# Get the permutation for this key (already rebased in RoomState)
+	var key_perm: Permutation = _room_state.get_room_perm(key_idx)
+	if key_perm == null: return
+	# Identity key — just glow, no movement
+	if key_perm.is_identity():
+		for crystal in crystals.values():
+			if crystal is CrystalNode: crystal.play_glow()
+		return
+	# Record transition in room state
+	var from_room: int = _room_state.current_room
+	var to_room: int = _room_state.apply_key(key_idx)
+	# Add fading edge on the map
+	if _room_map: _room_map.add_fading_edge(from_room, to_room, key_idx)
+	# Apply the permutation to the crystal arrangement
+	# We need to undo the rebase: the permutation stored in room_state is rebased,
+	# but swap_mgr.apply_repeat_key expects to compose with rebase_inverse.
+	# Since room_state perms ARE already rebased, we can use them directly as auto_perm.
+	var auto_perm: Permutation = key_perm
+	var n := _shuffle_mgr.current_arrangement.size()
+	if n == 0: return
+	var new_arr: Array[int] = []; new_arr.resize(n)
+	for i in range(n): new_arr[i] = _shuffle_mgr.current_arrangement[auto_perm.apply(i)]
+	var nd = level_data.get("graph", {}).get("nodes", [])
+	var pm := ShuffleManager.build_positions_map(nd, _crystal_rect.size if _crystal_rect.size != Vector2.ZERO else get_viewport_rect().size)
+	if agent_mode:
+		# Instant mode for agent
+		_shuffle_mgr.current_arrangement = new_arr
+		_swap_mgr.apply_arrangement_to_crystals()
+		var result_perm := Permutation.from_array(_shuffle_mgr.current_arrangement)
+		_validate_permutation(result_perm)
 	else:
-		var first_name := _get_key_display_name(_combine_first_index)
-		var second_name := _get_key_display_name(index)
-		var result_perm: Permutation = key_ring.compose_keys(_combine_first_index, index)
-		_exit_combine_mode()
-		for sym_id in target_perms:
-			if target_perms[sym_id].equals(result_perm):
-				if key_ring.add_key(result_perm):
-					var result_name: String = target_perm_names.get(sym_id, result_perm.to_cycle_notation())
-					symmetry_found.emit(sym_id, result_perm.mapping)
-					feedback_fx.play_valid_feedback(crystals.values(), edges)
-					_swap_mgr.set_active_repeat_key_latest(key_ring)
-					_update_counter(); _update_keyring_display(); _update_status_label()
-					_show_combine_result_message(first_name, second_name, result_name, true)
-					_check_triggered_hints()
-					if _inner_door_panel: _inner_door_panel.refresh_keys()
-					if _is_level_complete(): _on_level_complete()
-				else:
-					var result_name: String = target_perm_names.get(sym_id, result_perm.to_cycle_notation())
-					_show_combine_result_message(first_name, second_name, result_name, false)
-				return
-		_show_combine_result_message(first_name, second_name, result_perm.to_cycle_notation(), false)
+		# Animated mode for human player
+		_swap_mgr.repeat_animating = true
+		_swap_mgr._repeat_anim_start_ms = Time.get_ticks_msec()
+		var gc := Vector2.ZERO
+		for pos in pm.values(): gc += pos
+		if pm.size() > 0: gc /= float(pm.size())
+		# Phase 1: slight scale up
+		var prep = create_tween().set_parallel(true)
+		for crystal in crystals.values():
+			if crystal is CrystalNode:
+				prep.tween_property(crystal, "scale", Vector2(1.08, 1.08), 0.2).set_ease(Tween.EASE_OUT)
+		# Phase 2: move crystals
+		var chain := create_tween(); chain.tween_interval(0.22)
+		chain.tween_callback(_key_apply_phase2.bind(n, auto_perm, pm, gc, new_arr))
+	# Discover the destination room if new
+	_room_state.discover_room(to_room)
+	if _room_map: _room_map.queue_redraw()
+	if _key_bar: _key_bar.update_state(_room_state)
+	_update_counter()
 
-func _exit_combine_mode() -> void:
-	_combine_mode = false; _combine_first_index = -1
-	_update_keyring_display()
-	var combine_label = hud_layer.get_node_or_null("CombineLabel")
-	if combine_label:
-		var tween = create_tween()
-		tween.tween_property(combine_label, "theme_override_colors/font_color", Color(0.8, 0.7, 1.0, 0.0), 0.3)
-	var combine_btn = hud_layer.get_node_or_null("CombineButton")
-	if combine_btn: combine_btn.text = "СКОМБИНИРОВАТЬ"
-
-
-func _get_key_display_name(index: int) -> String:
-	return _validation_mgr.get_key_display_name(index)
-
-
-func _update_keyring_display_combine() -> void:
-	var kr_label = hud_layer.get_node_or_null("KeyRingLabel")
-	if kr_label == null or key_ring == null: return
-	kr_label.text = "Нажмите на ключ для выбора:"
-	_rebuild_key_buttons(true)
-
-func _show_combine_result_message(first: String, second: String, result: String, is_new: bool) -> void:
-	var hint_label = hud_layer.get_node_or_null("HintLabel")
-	if hint_label == null: return
-	hint_label.text = ("%s + %s = %s (новый ключ найден!)" if is_new else "%s + %s = %s (уже найден)") % [first, second, result]
-	var color := Color(0.3, 1.0, 0.5, 0.95) if is_new else Color(0.7, 0.7, 0.5, 0.85)
-	var tween = create_tween()
-	tween.tween_property(hint_label, "theme_override_colors/font_color", color, 0.3)
-	tween.tween_interval(3.0)
-	tween.tween_property(hint_label, "theme_override_colors/font_color", Color(0.5, 0.8, 0.5, 0.5), 1.0)
-
-
-func _update_status_label() -> void:
-	var status = hud_layer.get_node_or_null("StatusLabel")
-	if status == null: return
-	var perm := Permutation.from_array(_shuffle_mgr.current_arrangement)
-	if perm.is_identity():
-		var identity_discovered := key_ring != null and key_ring.contains(perm) if key_ring else false
-		if identity_discovered:
-			status.text = "Совпадает с целью! (ключ найден)"
-			status.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4, 0.9))
+## Phase 2 of key application animation: move crystals along arcs.
+func _key_apply_phase2(n: int, active_perm: Permutation, pm: Dictionary,
+		gc: Vector2, new_arr: Array[int]) -> void:
+	var max_delay := 0.0
+	for i in range(n):
+		var si: int = active_perm.apply(i)
+		if si == i or si >= n: continue
+		var cid: int = _shuffle_mgr.current_arrangement[si]
+		if cid not in crystals or i not in pm: continue
+		var crystal: CrystalNode = crystals[cid]
+		var from_pos: Vector2 = crystal.position; var to_pos: Vector2 = pm[i]
+		var mid: Vector2 = (from_pos + to_pos) / 2.0; var to_c: Vector2 = gc - mid
+		if to_c.length() > 0:
+			_swap_mgr._animate_arc(crystal, from_pos, mid + to_c.normalized() * 40.0, to_pos, 0.5, max_delay)
 		else:
-			status.text = "Совпадает с целью — нажмите ПРОВЕРИТЬ УЗОР!"
-			status.add_theme_color_override("font_color", Color(0.8, 0.8, 0.5, 0.85))
-	else:
-		var is_valid := false
-		for sym_id in target_perms:
-			if target_perms[sym_id].equals(perm): is_valid = true; break
-		if is_valid:
-			status.text = "Текущее: допустимое расположение"
-			status.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4, 0.9))
+			var tw := create_tween()
+			if max_delay > 0: tw.tween_interval(max_delay)
+			tw.tween_property(crystal, "position", to_pos, 0.5).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+		max_delay += 0.03
+	var wait := create_tween(); wait.tween_interval(0.5 + max_delay + 0.05)
+	wait.tween_callback(_key_apply_phase3.bind(n, new_arr, pm))
+
+## Phase 3 of key application animation: landing bounce + state update + validation.
+func _key_apply_phase3(n: int, new_arr: Array[int], pm: Dictionary) -> void:
+	_shuffle_mgr.current_arrangement = new_arr
+	for i in range(n):
+		var cid: int = _shuffle_mgr.current_arrangement[i]
+		if cid in crystals and i in pm: crystals[cid].set_home_position(pm[i])
+	for crystal in crystals.values():
+		if crystal is CrystalNode:
+			var b := create_tween()
+			b.tween_property(crystal, "scale", Vector2(0.95, 0.95), 0.1).set_ease(Tween.EASE_IN)
+			b.tween_property(crystal, "scale", Vector2(1.0, 1.0), 0.1).set_ease(Tween.EASE_OUT)
+			feedback_fx._spawn_burst(crystal.position, crystal._glow_color, 3)
+	var ft := create_tween(); ft.tween_interval(0.25)
+	ft.tween_callback(_key_apply_finalize)
+
+## Final step of key application: validate and unlock animation.
+func _key_apply_finalize() -> void:
+	var p := Permutation.from_array(_shuffle_mgr.current_arrangement)
+	_validate_permutation(p); _update_status_label()
+	_swap_mgr.repeat_animating = false
+
+## Handle key hover from KeyBar. key_idx == -1 means hover ended.
+func _on_key_bar_key_hovered(key_idx: int) -> void:
+	if _room_map:
+		if key_idx < 0:
+			_room_map.clear_hover_key()
 		else:
-			status.text = "Расположите кристаллы как на картинке-цели"
-			status.add_theme_color_override("font_color", Color(0.8, 0.7, 0.5, 0.7))
+			_room_map.set_hover_key(key_idx)
 
+## Handle room click from RoomMapPanel.
+func _on_room_map_clicked(_room_idx: int) -> void:
+	pass  # Room badge removed — current room shown via KeyBar highlight
 
-# --- Win Condition ---
+## Handle room hover from RoomMapPanel.
+func _on_room_map_hovered(_room_idx: int) -> void:
+	pass  # Room badge removed
 
-func _on_level_complete() -> void:
-	if echo_hint_system: echo_hint_system.notify_level_completed()
-	for crystal in crystals.values(): crystal.set_draggable(false)
-	for btn_name in ["ResetButton", "CheckButton", "RepeatButton", "CombineButton"]:
-		var btn = hud_layer.get_node_or_null(btn_name)
-		if btn: btn.disabled = true
-	feedback_fx.play_completion_feedback(crystals.values(), edges)
-	if _combine_mode: _exit_combine_mode()
-	if _inner_door_panel: _inner_door_panel.visible = false
-	if _subgroup_selector: _subgroup_selector.visible = false
+func _on_layer_completed(layer: int, hall_id: String) -> void:
+	# Layer 2+ completion — handled by LayerModeController internally
+	# (summary panel, save progress, etc.)
 	level_completed.emit(level_id)
-	GameManager.complete_level(level_id)
-	var meta = level_data.get("meta", {})
-	get_tree().create_timer(1.2).timeout.connect(_show_complete_summary.bind(meta))
-
-func _show_generators_panel() -> void:
-	var gen_panel = hud_layer.get_node_or_null("GeneratorsPanel")
-	if gen_panel == null: return
-	var symmetries_data = level_data.get("symmetries", {})
-	var generator_ids: Array = symmetries_data.get("generators", [])
-	if generator_ids.is_empty(): return
-	var gen_names: Array = []
-	for gen_id in generator_ids:
-		gen_names.append(target_perm_names.get(gen_id, gen_id))
-	var gen_body = gen_panel.get_node_or_null("GenBody")
-	if gen_body:
-		var names_str := ", ".join(gen_names)
-		if generator_ids.size() == 1:
-			gen_body.text = "У этого зала один генератор: %s\nКаждый ключ можно получить, комбинируя его с самим собой." % names_str
-		else:
-			gen_body.text = "Генераторы этого зала: %s\nКаждый ключ можно получить, комбинируя эти %d ключа." % [names_str, generator_ids.size()]
-	gen_panel.visible = true
-	gen_panel.modulate = Color(1, 1, 1, 0)
-	create_tween().tween_property(gen_panel, "modulate", Color(1, 1, 1, 1), 0.5)
-
-func _on_next_level_pressed() -> void:
-	if GameManager.hall_tree != null: GameManager.return_to_map(); return
-	var next_path: String = GameManager.get_next_level_path(level_id)
-	if next_path != "":
-		load_level_from_file(next_path)
-	else:
-		var summary = hud_layer.get_node_or_null("CompleteSummaryPanel")
-		if summary:
-			var learned = summary.get_node_or_null("SummaryLearnedNote")
-			if learned:
-				learned.text = "Поздравляем! Вы прошли все доступные уровни!"
-				learned.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 1.0))
-			var next_btn = summary.get_node_or_null("SummaryNextButton")
-			if next_btn: next_btn.visible = false
-
-
-func _show_complete_summary(meta: Dictionary) -> void:
-	var panel = hud_layer.get_node_or_null("CompleteSummaryPanel")
-	if panel == null: return
-	var st = panel.get_node_or_null("SummaryTitle")
-	if st: st.text = "Зал открыт!"
-	var sli = panel.get_node_or_null("SummaryLevelInfo")
-	if sli: sli.text = "Уровень %d — %s" % [meta.get("level", 0), meta.get("title", "")]
-	var sg = panel.get_node_or_null("SummaryGroupInfo")
-	if sg: sg.text = _format_group_name(meta.get("group_name", ""), meta.get("group_order", 0))
-	var sk = panel.get_node_or_null("SummaryKeysList")
-	if sk: sk.text = _validation_mgr.build_summary_keys_text()
-	var sln = panel.get_node_or_null("SummaryLearnedNote")
-	if sln: sln.text = _get_learned_note(meta)
-	var sgi = panel.get_node_or_null("SummaryGenInfo")
-	if sgi:
-		if _show_generators_hint: sgi.text = _get_generators_text(); sgi.visible = true
-		else: sgi.text = ""; sgi.visible = false
-	# Echo hint seal status
-	var sum_seal = panel.get_node_or_null("SummarySealInfo")
-	if sum_seal == null:
-		sum_seal = Label.new(); sum_seal.name = "SummarySealInfo"
-		sum_seal.add_theme_font_size_override("font_size", 14)
-		sum_seal.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sum_seal.position = Vector2(50, 465); sum_seal.size = Vector2(700, 25)
-		panel.add_child(sum_seal)
-	if echo_hint_system and echo_hint_system.used_solution_hint():
-		sum_seal.text = "Эхо-видение использовано — Печать совершенства потеряна"
-		sum_seal.add_theme_color_override("font_color", Color(0.8, 0.5, 0.3, 0.8))
-	else:
-		sum_seal.text = "Печать совершенства получена"
-		sum_seal.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.8))
-	sum_seal.visible = true
-	var next_btn = panel.get_node_or_null("SummaryNextButton")
-	if next_btn:
-		if GameManager.hall_tree != null:
-			next_btn.text = "ВЕРНУТЬСЯ НА КАРТУ"; next_btn.visible = true
-		else:
-			next_btn.visible = GameManager.get_next_level_path(level_id) != ""
-	panel.visible = true; panel.modulate = Color(1, 1, 1, 0)
-	create_tween().tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.5)
-
-
-func _build_summary_keys_text() -> String:
-	return _validation_mgr.build_summary_keys_text()
-
-func _format_group_name(group_name: String, group_order: int) -> String:
-	match group_name:
-		"Z2": return "2 ключа — один обмен и обратно"
-		"Z3": return "3 ключа — цикл кристаллов"
-		"Z4": return "4 ключа — четыре поворота квадрата"
-		"Z5": return "5 ключей — пятишаговый цикл"
-		"Z6": return "6 ключей — шестишаговый цикл"
-		"D4": return "8 ключей — повороты и отражения квадрата"
-		"V4": return "4 ключа — каждое действие отменяет само себя"
-		"S3": return "6 ключей — все перестановки трёх пар"
-		_: return "%d ключей" % group_order
-
-func _get_learned_note(meta: Dictionary) -> String:
-	var group_name: String = meta.get("group_name", "")
-	var level_num: int = meta.get("level", 0)
-	match group_name:
-		"Z2":
-			if level_num == 3: return "Цвета ограничивают, какие кристаллы можно менять местами."
-			if level_num == 7: return "Кривой путь тоже может скрывать закономерность!"
-			if level_num == 8: return "Два одинаковых скопления можно полностью поменять местами."
-			return "Один обмен — сделай дважды, и всё вернётся."
-		"Z3": return "Три поворота образуют цикл: каждый ведёт к следующему."
-		"Z4": return "Стрелки задают направление — можно только вращать, но не отражать."
-		"D4":
-			if level_num == 12: return "Понадобились два разных вида ходов (поворот И отражение), чтобы получить все 8 расстановок."
-			return "Без стрелок появляются отражения — число ключей удваивается!"
-		"V4": return "Каждое действие здесь отменяет само себя: сделай дважды — вернёшься."
-		"S3": return "Шесть способов переставить три пары — порядок ходов важен!"
-		"Z5": return "Одного хода достаточно, чтобы породить все остальные — просто повторяйте."
-		"Z6": return "Не каждый ход может породить все остальные — некоторые слишком малы."
-		_: return ""
-
-func _get_generators_text() -> String:
-	var symmetries_data = level_data.get("symmetries", {})
-	var generator_ids: Array = symmetries_data.get("generators", [])
-	if generator_ids.is_empty(): return ""
-	var gen_names: Array = []
-	for gen_id in generator_ids:
-		gen_names.append(target_perm_names.get(gen_id, gen_id))
-	var names_str := ", ".join(gen_names)
-	if generator_ids.size() == 1:
-		return "Мастер-ключ: %s — повторяя его, можно получить все остальные ключи." % names_str
-	else:
-		return "Мастер-ключи: %s — комбинируя эти %d хода, можно получить все остальные." % [names_str, generator_ids.size()]
-
-
-func _get_instruction_text(meta: Dictionary, mechanics: Dictionary) -> Dictionary:
-	var level_num: int = meta.get("level", 1)
-	var has_cayley: bool = mechanics.get("show_cayley_button", false)
-	var has_generators: bool = mechanics.get("show_generators_hint", false)
-	var body: String = "Кристаллы перемешаны! Расположите их как на картинке-цели в углу.\n"
-	body += "Перетащите один кристалл на другой, чтобы поменять их местами.\n"
-	body += "Когда соберёте — нажмите ПРОВЕРИТЬ УЗОР. Но это лишь первый ключ..."
-	var new_mechanic: String = ""
-	match level_num:
-		1: body += "\n\nПодсказка: соберите кристаллы как на маленькой картинке слева вверху, затем нажмите ПРОВЕРИТЬ УЗОР."
-		2: new_mechanic = "НОВОЕ: Стрелки на нитях! Допустимое расположение должно сохранять направления стрелок."
-		3: new_mechanic = "НОВОЕ: Разные цвета! Кристаллы могут оказаться только там, где подходит цвет."
-		4: body += "\n\nПомните: стрелки должны указывать в ту же сторону после обмена."
-		5: new_mechanic = "НОВОЕ: Кнопка СКОМБИНИРОВАТЬ! Найдя 2+ ключа, комбинируйте их для открытия новых."
-		7: body += "\n\nЭтот граф выглядит неправильным — но присмотритесь к цветам."
-		8: body += "\n\nДва отдельных скопления. Одинаковы ли они изнутри?"
-		9: body += "\n\nТолстые связи объединяют кристаллы в пары. Можно ли поменять целые пары?"
-		10: new_mechanic = "НОВОЕ: После решения вы увидите, какие ключи — мастер-ключи, минимальный набор, порождающий все остальные."
-		_:
-			if has_cayley and level_num > 5:
-				body += "\n\nИспользуйте СКОМБИНИРОВАТЬ, чтобы создать новые расстановки из уже найденных."
-			if has_generators and level_num > 10:
-				body += "\n\nИщите мастер-ключи — минимум ходов, порождающих всё остальное."
-	return {"body": body, "new_mechanic": new_mechanic}
-
-
-# --- HUD Updates ---
 
 func _update_counter() -> void:
-	var counter = hud_layer.get_node_or_null("CounterLabel")
-	if counter:
-		var found_count := key_ring.count() if key_ring else 0
-		var counter_text := "Ключи: %d / %d" % [found_count, total_symmetries]
-		if _inner_door_panel:
-			counter_text += " | Двери: %d / %d" % [_inner_door_panel.get_opened_count(), _inner_door_panel.get_total_count()]
-		counter.text = counter_text
-	var repeat_btn = hud_layer.get_node_or_null("RepeatButton")
-	if repeat_btn:
-		var should_show := key_ring != null and key_ring.count() >= 1
-		repeat_btn.visible = should_show
-		if should_show: _update_repeat_button_text()
-	var combine_btn = hud_layer.get_node_or_null("CombineButton")
-	if combine_btn:
-		combine_btn.visible = _show_cayley_button and key_ring != null and key_ring.count() >= 2
+	# Layer 2: counter is managed by LayerModeController
+	if _current_layer > 1:
+		return
+	var cl = hud_layer.get_node_or_null("CounterLabel")
+	if cl:
+		var disc := _room_state.discovered_count() if _room_state.group_order > 0 else (key_ring.count() if key_ring else 0)
+		var total := _room_state.group_order if _room_state.group_order > 0 else total_symmetries
+		var t := "Комнаты: %d / %d" % [disc, total]
+		if _door_mgr.panel: t += " | Подгруппы: %d / %d" % [_door_mgr.panel.get_opened_count(), _door_mgr.panel.get_total_count()]
+		cl.text = t
 
-func _update_keyring_display() -> void:
-	var kr_label = hud_layer.get_node_or_null("KeyRingLabel")
-	if kr_label == null or key_ring == null: return
-	kr_label.text = "Найденные ключи:"
-	_rebuild_key_buttons(false)
-
-func _show_violation_tooltip(text: String) -> void:
-	var viol_label = hud_layer.get_node_or_null("ViolationLabel")
-	if viol_label == null or text == "": return
-	var tween = create_tween()
-	viol_label.text = text
-	tween.tween_property(viol_label, "theme_override_colors/font_color", Color(1.0, 0.4, 0.35, 0.9), 0.25)
-	tween.tween_interval(1.8)
-	tween.tween_property(viol_label, "theme_override_colors/font_color", Color(1.0, 0.4, 0.35, 0.0), 0.6)
-
-
-# --- Tutorial / Onboarding ---
-
+func _update_status_label() -> void:
+	var s = hud_layer.get_node_or_null("StatusLabel")
+	if s == null: return
+	var info := _validation_mgr.get_status_info(_shuffle_mgr.current_arrangement)
+	s.text = info["text"]; s.add_theme_color_override("font_color", info["color"])
+func _on_level_complete() -> void:
+	if echo_hint_system: echo_hint_system.notify_level_completed()
+	for c in crystals.values(): c.set_draggable(false)
+	feedback_fx.play_completion_feedback(crystals.values(), edges)
+	if _door_mgr.panel: _door_mgr.panel.visible = false
+	if _door_mgr.selector: _door_mgr.selector.visible = false
+	level_completed.emit(level_id); GameManager.complete_level(level_id)
+	get_tree().create_timer(1.2).timeout.connect(_show_complete_summary.bind(level_data.get("meta", {})))
+func _show_complete_summary(meta: Dictionary) -> void:
+	HudBuilder.show_complete_summary(hud_layer, meta, _show_generators_hint, level_data,
+		level_id, target_perm_names, _validation_mgr.build_summary_keys_text(), echo_hint_system, self)
+func _on_next_level_pressed() -> void:
+	if GameManager.hall_tree != null: GameManager.return_to_map(); return
+	var np := GameManager.get_next_level_path(level_id)
+	if np != "": load_level_from_file(np)
 func _show_instruction_panel() -> void:
-	var panel = hud_layer.get_node_or_null("InstructionPanel")
-	if panel == null: return
-	var meta = level_data.get("meta", {})
-	var mechanics = level_data.get("mechanics", {})
-	var it = panel.get_node_or_null("InstrTitle")
-	if it: it.text = "Уровень %d — %s" % [meta.get("level", 1), meta.get("title", "")]
-	var ig = panel.get_node_or_null("InstrGoal")
-	if ig: ig.text = "Найдите все %d ключей, чтобы открыть этот зал" % meta.get("group_order", 1)
-	var texts := _get_instruction_text(meta, mechanics)
-	var ib = panel.get_node_or_null("InstrBody")
-	if ib: ib.text = texts["body"]
-	var inew = panel.get_node_or_null("InstrNewMechanic")
-	if inew: inew.text = texts["new_mechanic"]; inew.visible = texts["new_mechanic"] != ""
-	panel.visible = true; panel.modulate = Color(1, 1, 1, 1)
+	if _current_layer > 1:
+		# Layer 2: show layer-specific instruction
+		_show_layer_2_instruction_panel()
+		return
+	HudBuilder.show_instruction_panel(hud_layer, level_data)
 	_instruction_panel_visible = true
-	for crystal in crystals.values():
-		if crystal is CrystalNode: crystal.set_draggable(false)
+	for c in crystals.values():
+		if c is CrystalNode: c.set_draggable(false)
 
+func _show_layer_2_instruction_panel() -> void:
+	var p = hud_layer.get_node_or_null("InstructionPanel")
+	if p == null: return
+	var _s := func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
+	var meta := level_data.get("meta", {})
+	var layer_config := level_data.get("layers", {}).get("layer_2", {})
+	_s.call("InstrTitle", "Слой 2 — %s" % meta.get("title", ""))
+	_s.call("InstrGoal", layer_config.get("title", "Обратные ключи"))
+	_s.call("InstrBody", layer_config.get("instruction", "Для каждого ключа найдите обратный — тот, который отменяет его действие.\n\nВыберите ключ слева, затем нажмите на подходящий обратный ключ снизу."))
+	var inm = p.get_node_or_null("InstrNewMechanic")
+	if inm: inm.text = layer_config.get("subtitle", "Каждое действие можно отменить"); inm.visible = true
+	# Apply green theme to instruction panel
+	var title = p.get_node_or_null("InstrTitle")
+	if title: title.add_theme_color_override("font_color", Color(0.3, 1.0, 0.5, 1.0))
+	var goal = p.get_node_or_null("InstrGoal")
+	if goal: goal.add_theme_color_override("font_color", Color(0.2, 0.85, 0.4, 1.0))
+	p.visible = true; p.modulate = Color(1, 1, 1, 1)
+	_instruction_panel_visible = true
 func _dismiss_instruction_panel() -> void:
 	if not _instruction_panel_visible: return
-	var panel = hud_layer.get_node_or_null("InstructionPanel")
-	if panel:
-		var tween = create_tween()
-		tween.tween_property(panel, "modulate", Color(1, 1, 1, 0), 0.3)
-		tween.tween_callback(_hide_node.bind(panel))
+	HudBuilder.dismiss_instruction_panel(hud_layer, self)
 	_instruction_panel_visible = false
-	for crystal in crystals.values():
-		if crystal is CrystalNode: crystal.set_draggable(true)
-
+	for c in crystals.values():
+		if c is CrystalNode: c.set_draggable(true)
 func _input(event: InputEvent) -> void:
-	if _instruction_panel_visible:
-		if event is InputEventMouseButton and event.pressed:
-			_dismiss_instruction_panel()
-			get_viewport().set_input_as_handled()
-			return
-
-
-# --- Key Buttons ---
-
-func _rebuild_key_buttons(combine_mode_active: bool) -> void:
-	var container = hud_layer.get_node_or_null("KeyButtonsContainer")
-	if container == null or key_ring == null: return
-	for child in container.get_children(): child.queue_free()
-	if key_ring.count() == 0: container.visible = false; return
-	container.visible = true
-	for i in range(key_ring.count()):
-		var display_name := _get_key_display_name(i)
-		var row = HBoxContainer.new()
-		row.name = "KeyRow_%d" % i
-		row.custom_minimum_size = Vector2(380, 28)
-		var label = Label.new()
-		label.text = "[%d] %s" % [i + 1, display_name]
-		label.add_theme_font_size_override("font_size", 12)
-		label.add_theme_color_override("font_color", Color(0.6, 0.75, 0.6, 0.9))
-		label.custom_minimum_size = Vector2(220, 24)
-		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_child(label)
-		var repeat_btn = Button.new()
-		repeat_btn.name = "RepeatBtn_%d" % i
-		repeat_btn.text = "▶ Повторить"
-		repeat_btn.add_theme_font_size_override("font_size", 11)
-		repeat_btn.custom_minimum_size = Vector2(120, 24)
-		var cb_index := i
-		repeat_btn.pressed.connect(_on_repeat_key_clicked.bind(cb_index))
-		repeat_btn.add_theme_stylebox_override("normal", _make_stylebox(Color(0.12, 0.18, 0.28, 0.6), 4, Color.TRANSPARENT, 0))
-		repeat_btn.add_theme_stylebox_override("hover", _make_stylebox(Color(0.18, 0.28, 0.42, 0.7), 4, Color.TRANSPARENT, 0))
-		repeat_btn.add_theme_color_override("font_color", Color(0.4, 1.0, 0.5, 0.9))
-		row.add_child(repeat_btn)
-		container.add_child(row)
-
-
-func _on_key_button_clicked(index: int) -> void:
-	if _combine_mode: return
-	_swap_mgr.active_repeat_key_index = index
-	_update_repeat_button_text()
-	_rebuild_key_buttons(false)
-	_notify_echo_activity()
-
-
-# --- Repeat Key ---
-
-func _update_repeat_button_text() -> void:
-	var repeat_btn = hud_layer.get_node_or_null("RepeatButton")
-	if repeat_btn == null: return
-	if _swap_mgr.active_repeat_key_index < 0 or key_ring == null or _swap_mgr.active_repeat_key_index >= key_ring.count():
-		repeat_btn.text = "ПОВТОРИТЬ"; return
-	var name := _get_key_display_name(_swap_mgr.active_repeat_key_index)
-	if name.length() > 14: name = name.substr(0, 12) + ".."
-	repeat_btn.text = "ПОВТОРИТЬ: %s" % name
-
-func _on_repeat_key_clicked(key_index: int) -> void:
-	_notify_echo_activity()
-	if _swap_mgr.repeat_animating: return
-	if key_ring == null or key_index < 0 or key_index >= key_ring.count(): return
-	_swap_mgr.active_repeat_key_index = key_index
-	_apply_repeat_key(key_index)
-
-func _on_repeat_pressed() -> void:
-	_notify_echo_activity()
-	if _swap_mgr.repeat_animating: return
-	if key_ring == null or _swap_mgr.active_repeat_key_index < 0 or _swap_mgr.active_repeat_key_index >= key_ring.count(): return
-	_apply_repeat_key(_swap_mgr.active_repeat_key_index)
-
-func _apply_repeat_key(key_index: int) -> void:
-	_swap_mgr.apply_repeat_key(key_index, key_ring, _validation_mgr.rebase_inverse,
-		Callable(self, "_on_repeat_validate"))
-
-func _on_repeat_validate(perm: Permutation) -> void:
-	_validate_permutation(perm)
-	_update_status_label()
-
-func _set_active_repeat_key_latest() -> void:
-	_swap_mgr.set_active_repeat_key_latest(key_ring)
-
-
+	if _instruction_panel_visible and event is InputEventMouseButton and event.pressed:
+		_dismiss_instruction_panel(); get_viewport().set_input_as_handled()
 func _show_first_symmetry_message(sym_id: String) -> void:
-	var hint_label = hud_layer.get_node_or_null("HintLabel")
-	if hint_label == null: return
-	var sym_name: String = target_perm_names.get(sym_id, "ключ")
-	var found_count := key_ring.count() if key_ring else 0
-	var remaining := total_symmetries - found_count
-	var msg: String
-	if key_ring and key_ring.count() == 1:
-		msg = "Тождество найдено — первый ключ! Осталось: %d. А есть ли ДРУГИЕ правильные расположения?" % remaining
-	elif sym_name == "Тождество" or sym_id == "e":
-		msg = "Вы собрали картинку-цель — первый ключ найден! Осталось: %d. А есть ли ДРУГИЕ правильные расположения?" % remaining
-	else:
-		msg = "Новый ключ: «%s»! Это тоже допустимое расположение. Осталось найти: %d." % [sym_name, remaining]
-	hint_label.text = msg
-	var tween = create_tween()
-	tween.tween_property(hint_label, "theme_override_colors/font_color", Color(0.3, 1.0, 0.5, 0.95), 0.3)
-	tween.tween_interval(3.5)
-	tween.tween_property(hint_label, "theme_override_colors/font_color", Color(0.5, 0.8, 0.5, 0.5), 1.0)
+	var rem := total_symmetries - (key_ring.count() if key_ring else 0)
+	var sn: String = target_perm_names.get(sym_id, "ключ")
+	if key_ring and key_ring.count() == 1: _show_hint_msg("Тождество найдено — первый ключ! Осталось: %d. А есть ли ДРУГИЕ правильные расположения?" % rem, Color(0.3, 1.0, 0.5, 0.95))
+	elif sn == "Тождество" or sym_id == "e": _show_hint_msg("Вы собрали картинку-цель — первый ключ найден! Осталось: %d." % rem, Color(0.3, 1.0, 0.5, 0.95))
+	else: _show_hint_msg("Новый ключ: «%s»! Осталось найти: %d." % [sn, rem], Color(0.3, 1.0, 0.5, 0.95))
+func _show_hint_msg(text: String, color: Color) -> void:
+	var hl = hud_layer.get_node_or_null("HintLabel")
+	if hl == null: return
+	hl.text = text; var tw = create_tween()
+	tw.tween_property(hl, "theme_override_colors/font_color", color, 0.3)
+	tw.tween_interval(3.0); tw.tween_property(hl, "theme_override_colors/font_color", Color(0.5, 0.8, 0.5, 0.5), 1.0)
 
-
-func _show_button_hints() -> void:
-	var reset_hint = hud_layer.get_node_or_null("ResetHintLabel")
-	if reset_hint:
-		reset_hint.text = "Вернуть к началу"
-		create_tween().tween_property(reset_hint, "theme_override_colors/font_color", Color(0.6, 0.65, 0.8, 0.7), 1.5)
-	var check_hint = hud_layer.get_node_or_null("CheckHintLabel")
-	if check_hint:
-		check_hint.text = "Проверить расстановку"
-		create_tween().tween_property(check_hint, "theme_override_colors/font_color", Color(0.6, 0.65, 0.8, 0.7), 1.5)
-
-
-# --- Echo Hint System ---
+# --- Old repeat key support (used by Agent API via SwapManager) ---
+func _on_repeat_key_clicked(ki: int) -> void:
+	_notify_echo_activity()
+	_swap_mgr.check_repeat_timeout()
+	if _swap_mgr.repeat_animating or key_ring == null or ki < 0 or ki >= key_ring.count(): return
+	_swap_mgr.active_repeat_key_index = ki
+	_swap_mgr.apply_repeat_key(ki, key_ring, _validation_mgr.rebase_inverse, Callable(self, "_on_repeat_validate"))
+func _on_repeat_validate(perm: Permutation) -> void: _validate_permutation(perm); _update_status_label()
 
 func _setup_echo_hints() -> void:
 	if echo_hint_system: echo_hint_system.cleanup(); echo_hint_system.queue_free(); echo_hint_system = null
-	echo_hint_system = EchoHintSystem.new()
-	echo_hint_system.name = "EchoHintSystem"
-	add_child(echo_hint_system)
+	echo_hint_system = EchoHintSystem.new(); echo_hint_system.name = "EchoHintSystem"; add_child(echo_hint_system)
 	echo_hint_system.setup(level_data, hud_layer, crystals)
 	echo_hint_system.hint_shown.connect(_on_echo_hint_shown)
-	echo_hint_system.perfect_seal_lost.connect(_on_perfect_seal_lost)
-
-func _on_echo_hint_shown(level: int, text: String) -> void:
-	pass
-
-func _on_perfect_seal_lost() -> void:
-	pass
-
+	echo_hint_system.perfect_seal_lost.connect(_on_echo_perfect_seal_lost)
 func _notify_echo_activity() -> void:
 	if echo_hint_system: echo_hint_system.notify_player_action()
-
-
-# --- Legacy Hints ---
-
-var _hint_timer: Timer = null
-
-func _start_hint_timer() -> void:
-	pass
-
 func _check_triggered_hints() -> void:
 	if key_ring == null: return
-	var hints = level_data.get("hints", [])
-	var found_count := key_ring.count()
-	for hint in hints:
-		var trigger: String = hint.get("trigger", "")
-		var text: String = hint.get("text", "")
-		if text.is_empty(): continue
-		if trigger == "after_first_valid" and found_count == 1:
-			get_tree().create_timer(4.5).timeout.connect(_show_hint.bind(text))
-		elif trigger.begins_with("after_") and trigger.ends_with("_found"):
-			var num_str := trigger.trim_prefix("after_").trim_suffix("_found")
-			if num_str.is_valid_int():
-				if found_count == int(num_str): _show_hint(text)
-
+	var fc := key_ring.count()
+	for h in level_data.get("hints", []):
+		var tr: String = h.get("trigger", ""); var tx: String = h.get("text", "")
+		if tx.is_empty(): continue
+		if tr == "after_first_valid" and fc == 1: get_tree().create_timer(4.5).timeout.connect(_show_hint.bind(tx))
+		elif tr.begins_with("after_") and tr.ends_with("_found"):
+			var ns := tr.trim_prefix("after_").trim_suffix("_found")
+			if ns.is_valid_int() and fc == int(ns): _show_hint(tx)
 func _show_hint(text: String) -> void:
-	var hint_label = hud_layer.get_node_or_null("HintLabel")
-	if hint_label:
-		hint_label.text = text
-		create_tween().tween_property(hint_label, "theme_override_colors/font_color", Color(0.7, 0.7, 0.5, 0.8), 1.0)
+	var hl = hud_layer.get_node_or_null("HintLabel")
+	if hl: hl.text = text; create_tween().tween_property(hl, "theme_override_colors/font_color", Color(0.7, 0.7, 0.5, 0.8), 1.0)
 
-
-# --- Public API ---
-
-func get_current_permutation() -> Permutation:
-	return Permutation.from_array(_shuffle_mgr.current_arrangement)
-
-func get_key_ring() -> KeyRing:
-	return key_ring
-
-func get_crystal_graph() -> CrystalGraph:
-	return crystal_graph
-
-func get_crystals() -> Dictionary:
-	return crystals
-
-func get_edges() -> Array[EdgeRenderer]:
-	return edges
-
-func get_feedback_fx() -> FeedbackFX:
-	return feedback_fx
-
-
-# --- Agent API ---
+# --- Agent API (preserved unchanged) ---
 
 func perform_swap_by_id(from_id: int, to_id: int) -> Dictionary:
-	if from_id == to_id:
-		return {"result": "no_op", "reason": "same_crystal"}
-	if not (from_id in crystals and to_id in crystals):
-		return {"result": "error", "reason": "invalid_crystal_id", "available_ids": crystals.keys()}
-	var crystal_a = crystals[from_id]
-	var crystal_b = crystals[to_id]
-	if not crystal_a.draggable or not crystal_b.draggable:
-		return {"result": "error", "reason": "crystal_not_draggable"}
-	_perform_swap(crystal_a, crystal_b)
-	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement)}
-
+	if from_id == to_id: return {"result": "no_op", "reason": "same_crystal"}
+	if not (from_id in crystals and to_id in crystals): return {"result": "error", "reason": "invalid_crystal_id", "available_ids": crystals.keys()}
+	var ca = crystals[from_id]; var cb = crystals[to_id]
+	if not ca.draggable or not cb.draggable: return {"result": "error", "reason": "crystal_not_draggable"}
+	_perform_swap(ca, cb); return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement)}
 func submit_permutation(mapping: Array) -> Dictionary:
 	var n := crystal_graph.node_count() if crystal_graph else 0
-	if mapping.size() != n:
-		return {"result": "error", "reason": "wrong_size", "expected": n, "got": mapping.size()}
+	if mapping.size() != n: return {"result": "error", "reason": "wrong_size", "expected": n, "got": mapping.size()}
 	var perm := Permutation.from_array(mapping)
-	if not perm.is_valid():
-		return {"result": "error", "reason": "invalid_permutation"}
-	_shuffle_mgr.set_arrangement(mapping)
-	_swap_mgr.apply_arrangement_to_crystals()
-	_validate_permutation(perm, true)
+	if not perm.is_valid(): return {"result": "error", "reason": "invalid_permutation"}
+	_shuffle_mgr.set_arrangement(mapping); _swap_mgr.apply_arrangement_to_crystals(); _validate_permutation(perm, true)
 	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement)}
-
 func agent_reset() -> Dictionary:
-	_reset_arrangement()
-	_update_status_label()
-	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement)}
-
+	_reset_arrangement(); _update_status_label(); return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement)}
 func agent_check_current() -> Dictionary:
-	var perm := Permutation.from_array(_shuffle_mgr.current_arrangement)
-	_validate_permutation(perm, true)
-	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement),
-			"is_automorphism": crystal_graph.is_automorphism(perm) if crystal_graph else false}
-
+	var perm := Permutation.from_array(_shuffle_mgr.current_arrangement); _validate_permutation(perm, true)
+	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement), "is_automorphism": crystal_graph.is_automorphism(perm) if crystal_graph else false}
 func agent_repeat_key(key_index: int) -> Dictionary:
 	if key_ring == null or key_index < 0 or key_index >= key_ring.count():
-		return {"result": "error", "reason": "invalid_key_index",
-				"available_range": [0, key_ring.count() - 1] if key_ring else []}
+		return {"result": "error", "reason": "invalid_key_index", "available_range": [0, key_ring.count() - 1] if key_ring else []}
 	_swap_mgr.active_repeat_key_index = key_index
-	_apply_repeat_key(key_index)
-	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement),
-			"key_index": key_index, "key_name": _get_key_display_name(key_index)}
-
-
-# --- Utility callbacks for tweens ---
-
-func _hide_node(node: Node) -> void:
-	if is_instance_valid(node): node.visible = false
-
-func _free_if_valid(node: Node) -> void:
-	if is_instance_valid(node): node.queue_free()
-
-func _fade_hint_label(label: Label) -> void:
-	if is_instance_valid(label): label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.5, 0.0))
-
-
-# --- Target Preview ---
-
-func _setup_target_preview(nodes_data: Array, edges_data: Array) -> void:
-	if target_preview == null:
-		push_warning("LevelScene: target_preview is null — recreating")
-		target_preview = Control.new()
-		target_preview.name = "TargetPreview"
-		target_preview.position = Vector2(20, 80)
-		target_preview.size = Vector2(150, 150)
-		target_preview.custom_minimum_size = Vector2(150, 150)
-		target_preview.clip_contents = false
-		target_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hud_layer.add_child(target_preview)
-		var bg = Panel.new(); bg.name = "TargetBG"
-		bg.position = Vector2.ZERO; bg.size = Vector2(150, 150)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.add_theme_stylebox_override("panel", _make_stylebox(Color(0.04, 0.04, 0.08, 0.85), 8, Color(0.75, 0.65, 0.2, 0.7), 2))
-		target_preview.add_child(bg)
-		var tl = Label.new(); tl.name = "TargetTitle"; tl.text = "Цель"
-		tl.add_theme_font_size_override("font_size", 11)
-		tl.add_theme_color_override("font_color", Color(0.75, 0.65, 0.2, 0.9))
-		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tl.position = Vector2(0, 2); tl.size = Vector2(150, 16)
-		tl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		target_preview.add_child(tl)
-	var old_draw = target_preview.get_node_or_null("TargetGraphDraw")
-	if old_draw: target_preview.remove_child(old_draw); old_draw.queue_free()
-	target_preview.visible = true
-	var draw_node = TargetPreviewDraw.new()
-	draw_node.name = "TargetGraphDraw"
-	draw_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	draw_node.position = Vector2(5, 18); draw_node.size = Vector2(140, 127)
-	draw_node.custom_minimum_size = Vector2(140, 127)
-	target_preview.add_child(draw_node)
-	draw_node.setup(nodes_data, edges_data, Vector2(140, 127))
-	_update_target_preview_border()
-
-func _update_target_preview_border() -> void:
-	if target_preview == null: return
-	var target_bg = target_preview.get_node_or_null("TargetBG")
-	if target_bg == null: return
-	var style: StyleBoxFlat = target_bg.get_theme_stylebox("panel") as StyleBoxFlat
-	if style == null: return
-	var new_style := style.duplicate() as StyleBoxFlat
-	new_style.border_color = Color(0.3, 0.9, 0.4, 0.7) if _identity_found else Color(0.75, 0.65, 0.2, 0.7)
-	target_bg.add_theme_stylebox_override("panel", new_style)
-	var title_label = target_preview.get_node_or_null("TargetTitle")
-	if title_label:
-		if _identity_found:
-			title_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.9))
-			title_label.text = "Цель ✓"
-		else:
-			title_label.add_theme_color_override("font_color", Color(0.75, 0.65, 0.2, 0.9))
-			title_label.text = "Цель"
+	# Force instant mode for agent calls — ensures arrangement is updated
+	# synchronously before we return the result.
+	var was_agent := _swap_mgr.agent_mode
+	_swap_mgr.agent_mode = true
+	_swap_mgr.repeat_animating = false
+	_swap_mgr.apply_repeat_key(key_index, key_ring, _validation_mgr.rebase_inverse, Callable(self, "_on_repeat_validate"))
+	_swap_mgr.agent_mode = was_agent
+	return {"result": "ok", "arrangement": Array(_shuffle_mgr.current_arrangement), "key_index": key_index, "key_name": _validation_mgr.get_key_display_name(key_index)}

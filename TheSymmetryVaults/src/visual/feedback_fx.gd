@@ -32,6 +32,10 @@ var _camera_controller = null  # Reference to CameraController if available
 const MAX_PARTICLES := 100
 
 
+## Emit feedback_completed signal (replaces lambda in timer.timeout.connect).
+func _emit_feedback(feedback_type: String) -> void:
+	feedback_completed.emit(feedback_type)
+
 func _ready() -> void:
 	# Draw above everything
 	z_index = 50
@@ -95,7 +99,7 @@ func play_valid_feedback(crystals: Array, edges: Array) -> void:
 
 	# Emit completion signal after delay
 	var timer = get_tree().create_timer(0.5)
-	timer.timeout.connect(func(): feedback_completed.emit("valid"))
+	timer.timeout.connect(_emit_feedback.bind("valid"))
 
 
 ## Play invalid attempt feedback — dims all crystals and edges, red screen flash
@@ -119,7 +123,7 @@ func play_invalid_feedback(crystals: Array, edges: Array) -> void:
 		_camera_controller.apply_shake(4.0, 0.3)
 
 	var timer = get_tree().create_timer(0.6)
-	timer.timeout.connect(func(): feedback_completed.emit("invalid"))
+	timer.timeout.connect(_emit_feedback.bind("invalid"))
 
 
 ## Play violation feedback — highlights specific edges/crystals that break structure.
@@ -174,7 +178,7 @@ func play_violation_feedback(violations: Dictionary, crystals_dict: Dictionary,
 			_spawn_burst(crystals_dict[node_id].position, Color(1.0, 0.2, 0.15, 0.7), 4)
 
 	var timer = get_tree().create_timer(0.8)
-	timer.timeout.connect(func(): feedback_completed.emit("violation"))
+	timer.timeout.connect(_emit_feedback.bind("violation"))
 
 
 ## Play level completion celebration
@@ -201,7 +205,7 @@ func play_completion_feedback(crystals: Array, edges: Array) -> void:
 		_camera_controller.apply_shake(3.0, 0.4)
 
 	var timer = get_tree().create_timer(1.0)
-	timer.timeout.connect(func(): feedback_completed.emit("completion"))
+	timer.timeout.connect(_emit_feedback.bind("completion"))
 
 
 ## Play feedback for a specific crystal pair swap

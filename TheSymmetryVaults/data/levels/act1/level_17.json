@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "id": "act1_level17",
+    "act": 1,
+    "level": 17,
+    "title": "Восьмиугольная башня",
+    "subtitle": "Степени двойки скрывают подгруппы",
+    "group_name": "Z8",
+    "group_order": 8
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "orange", "position": [640, 120], "label": "A"},
+      {"id": 1, "color": "orange", "position": [810, 190], "label": "B"},
+      {"id": 2, "color": "orange", "position": [880, 360], "label": "C"},
+      {"id": 3, "color": "orange", "position": [810, 530], "label": "D"},
+      {"id": 4, "color": "orange", "position": [640, 600], "label": "E"},
+      {"id": 5, "color": "orange", "position": [470, 530], "label": "F"},
+      {"id": 6, "color": "orange", "position": [400, 360], "label": "G"},
+      {"id": 7, "color": "orange", "position": [470, 190], "label": "H"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "directed", "weight": 1},
+      {"from": 1, "to": 2, "type": "directed", "weight": 1},
+      {"from": 2, "to": 3, "type": "directed", "weight": 1},
+      {"from": 3, "to": 4, "type": "directed", "weight": 1},
+      {"from": 4, "to": 5, "type": "directed", "weight": 1},
+      {"from": 5, "to": 6, "type": "directed", "weight": 1},
+      {"from": 6, "to": 7, "type": "directed", "weight": 1},
+      {"from": 7, "to": 0, "type": "directed", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2,3,4,5,6,7], "name": "Тождество",       "description": "Всё остаётся на месте"},
+      {"id": "r1", "mapping": [1,2,3,4,5,6,7,0], "name": "Поворот на 45°",  "description": "Один шаг по часовой (порядок 8)"},
+      {"id": "r2", "mapping": [2,3,4,5,6,7,0,1], "name": "Поворот на 90°",  "description": "Два шага по часовой (порядок 4)"},
+      {"id": "r3", "mapping": [3,4,5,6,7,0,1,2], "name": "Поворот на 135°", "description": "Три шага по часовой (порядок 8)"},
+      {"id": "r4", "mapping": [4,5,6,7,0,1,2,3], "name": "Поворот на 180°", "description": "Четыре шага по часовой (порядок 2)"},
+      {"id": "r5", "mapping": [5,6,7,0,1,2,3,4], "name": "Поворот на 225°", "description": "Пять шагов по часовой (порядок 8)"},
+      {"id": "r6", "mapping": [6,7,0,1,2,3,4,5], "name": "Поворот на 270°", "description": "Шесть шагов по часовой (порядок 4)"},
+      {"id": "r7", "mapping": [7,0,1,2,3,4,5,6], "name": "Поворот на 315°", "description": "Семь шагов по часовой (порядок 8)"}
+    ],
+    "generators": ["r1"],
+    "cayley_table": {
+      "e":  {"e":"e",  "r1":"r1","r2":"r2","r3":"r3","r4":"r4","r5":"r5","r6":"r6","r7":"r7"},
+      "r1": {"e":"r1", "r1":"r2","r2":"r3","r3":"r4","r4":"r5","r5":"r6","r6":"r7","r7":"e"},
+      "r2": {"e":"r2", "r1":"r3","r2":"r4","r3":"r5","r4":"r6","r5":"r7","r6":"e", "r7":"r1"},
+      "r3": {"e":"r3", "r1":"r4","r2":"r5","r3":"r6","r4":"r7","r5":"e", "r6":"r1","r7":"r2"},
+      "r4": {"e":"r4", "r1":"r5","r2":"r6","r3":"r7","r4":"e", "r5":"r1","r6":"r2","r7":"r3"},
+      "r5": {"e":"r5", "r1":"r6","r2":"r7","r3":"e", "r4":"r1","r5":"r2","r6":"r3","r7":"r4"},
+      "r6": {"e":"r6", "r1":"r7","r2":"e", "r3":"r1","r4":"r2","r5":"r3","r6":"r4","r7":"r5"},
+      "r7": {"e":"r7", "r1":"e", "r2":"r1","r3":"r2","r4":"r3","r5":"r4","r6":"r5","r7":"r6"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": true,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "directed_thread"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Восьмиугольник. 8 = 2³ — степень двойки. Это означает много подгрупп!"},
+    {"trigger": "after_first_valid", "text": "Обратите внимание: r4 (поворот на 180°) имеет порядок 2, а r2 (90°) — порядок 4."},
+    {"trigger": "after_4_found", "text": "Некоторые ключи порождают только часть группы. r2 порождает подгруппу порядка 4."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Восьмиугольник, восемь — это 2³. Попробуйте найти поворот на 180° и на 90°.",
+      "target_crystals": []
+    },
+    {
+      "text": "Один генератор r1 (поворот на 45°) порождает все 8 ключей. Но r2 порождает только 4!",
+      "target_crystals": []
+    },
+    {
+      "text": "Комбинируйте поворот на 45° с собой 7 раз. Это циклическая группа Z8.",
+      "target_crystals": [0, 1, 2, 3, 4, 5, 6, 7]
+    }
+  ]
+}

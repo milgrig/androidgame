@@ -43,6 +43,16 @@ var _level_states: Dictionary = {}
 var _use_injected_state: bool = false
 
 
+# --- Layer unlock thresholds (configurable) ---
+# Each layer N requires a certain number of layer N-1 completions globally.
+const LAYER_THRESHOLDS := {
+	2: {"required": 8, "from_layer": 1},
+	3: {"required": 8, "from_layer": 2},
+	4: {"required": 8, "from_layer": 3},
+	5: {"required": 6, "from_layer": 4},
+}
+
+
 # ------------------------------------------------------------------
 # Dependency injection (for testability)
 # ------------------------------------------------------------------
@@ -308,3 +318,106 @@ func _get_next_wing(wing: HallTreeData.WingData) -> HallTreeData.WingData:
 		if w.order == wing.order + 1:
 			return w
 	return null
+
+
+# ------------------------------------------------------------------
+# Layer progression (Layer 2+)
+# ------------------------------------------------------------------
+
+## Check if a layer is globally unlocked (enough prior-layer halls completed).
+## Layer 1 is always unlocked. Layer 2 requires 8 Layer-1-completed halls, etc.
+func is_layer_unlocked(layer: int) -> bool:
+	if layer <= 1:
+		return true
+	var threshold: Dictionary = LAYER_THRESHOLDS.get(layer, {})
+	if threshold.is_empty():
+		return false
+	var required: int = threshold.get("required", 0)
+	var from_layer: int = threshold.get("from_layer", layer - 1)
+	var completed := count_layer_completed_globally(from_layer)
+	return completed >= required
+
+
+## Get the layer completion status for a specific hall.
+## Returns: "locked", "available", "in_progress", "completed", or "perfect"
+func get_hall_layer_state(hall_id: String, layer: int) -> String:
+	if layer <= 0:
+		return "locked"
+
+	if layer == 1:
+		# Map HallState enum to string
+		var state := get_hall_state(hall_id)
+		match state:
+			HallState.LOCKED: return "locked"
+			HallState.AVAILABLE: return "available"
+			HallState.COMPLETED: return "completed"
+			HallState.PERFECT: return "perfect"
+		return "locked"
+
+	# Layer 2+: check global unlock + prior layer completion
+	if not is_layer_unlocked(layer):
+		return "locked"
+
+	var prior_state := get_hall_layer_state(hall_id, layer - 1)
+	if prior_state != "completed" and prior_state != "perfect":
+		return "locked"
+
+	# Check save data for this layer's progress
+	var layer_data := _get_layer_progress(hall_id, layer)
+	return layer_data.get("status", "available")
+
+
+## Count how many halls have completed a given layer (globally, across all wings).
+func count_layer_completed_globally(layer: int) -> int:
+	if hall_tree == null:
+		return 0
+	var count := 0
+	for wing in hall_tree.wings:
+		count += count_layer_completed(wing.id, layer)
+	return count
+
+
+## Count how many halls have completed a given layer within a specific wing.
+func count_layer_completed(wing_id: String, layer: int) -> int:
+	if hall_tree == null:
+		return 0
+	var wing := hall_tree.get_wing(wing_id)
+	if wing == null:
+		return 0
+	var count := 0
+	for hall_id in wing.halls:
+		if layer == 1:
+			if _is_completed(hall_id):
+				count += 1
+		else:
+			var lp := _get_layer_progress(hall_id, layer)
+			var status: String = lp.get("status", "")
+			if status == "completed" or status == "perfect":
+				count += 1
+	return count
+
+
+## Record layer completion for a hall.
+## progress should contain at minimum: {status: "completed", ...}
+func set_layer_progress(hall_id: String, layer: int, progress: Dictionary) -> void:
+	if _use_injected_state:
+		if not _level_states.has(hall_id):
+			_level_states[hall_id] = {}
+		if not _level_states[hall_id].has("layer_progress"):
+			_level_states[hall_id]["layer_progress"] = {}
+		_level_states[hall_id]["layer_progress"]["layer_%d" % layer] = progress
+	else:
+		if not GameManager.level_states.has(hall_id):
+			GameManager.level_states[hall_id] = {}
+		if not GameManager.level_states[hall_id].has("layer_progress"):
+			GameManager.level_states[hall_id]["layer_progress"] = {}
+		GameManager.level_states[hall_id]["layer_progress"]["layer_%d" % layer] = progress
+		GameManager.save_game()
+
+
+## Get the layer progress dictionary for a specific hall and layer.
+## Returns: {status: "locked"/"available"/"in_progress"/"completed"/"perfect", ...}
+func _get_layer_progress(hall_id: String, layer: int) -> Dictionary:
+	var state: Dictionary = _get_level_state(hall_id)
+	var lp: Dictionary = state.get("layer_progress", {})
+	return lp.get("layer_%d" % layer, {})

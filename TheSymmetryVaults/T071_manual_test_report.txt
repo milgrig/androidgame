@@ -1,0 +1,21 @@
+======================================================================
+T071: Room Map QA Test Report
+======================================================================
+
+[PASS] Godot client started
+[FAIL] Level level_01 loaded - Scene transition timed out after 31 frames
+[FAIL] Level level_04 loaded - Scene transition timed out after 31 frames
+[FAIL] Level level_05 loaded - Scene transition timed out after 31 frames
+[FAIL] Level level_09 loaded - Scene transition timed out after 31 frames
+[FAIL] Level level_10 loaded - Scene transition timed out after 31 frames
+[FAIL] Level level_11 loaded - Scene transition timed out after 31 frames
+[PASS] Can query scene tree
+[FAIL] Window resize test - Scene transition timed out after 31 frames
+[WARN] level_13 loads - Scene transition timed out after 31 frames
+[WARN] level_14 loads - Scene transition timed out after 31 frames
+[WARN] level_15 loads - Scene transition timed out after 31 frames
+[WARN] level_16 loads - Scene transition timed out after 31 frames
+
+======================================================================
+PASSED: 2, FAILED: 7, WARNINGS: 4
+======================================================================

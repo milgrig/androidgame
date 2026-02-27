@@ -1,0 +1,617 @@
+{
+  "children": [
+    {
+      "children": [
+        {
+          "class": "Node",
+          "name": "HallProgressionEngine",
+          "path": "/root/GameManager/HallProgressionEngine",
+          "script_class": "HallProgressionEngine"
+        }
+      ],
+      "class": "Node",
+      "name": "GameManager",
+      "path": "/root/GameManager",
+      "script_class": "game_manager"
+    },
+    {
+      "class": "Node",
+      "name": "AgentBridge",
+      "path": "/root/AgentBridge",
+      "script_class": "agent_bridge"
+    },
+    {
+      "children": [
+        {
+          "children": [
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level01_act1_level02",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level01_act1_level02",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level01_act1_level03",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level01_act1_level03",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level02_act1_level04",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level02_act1_level04",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level03_act1_level06",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level03_act1_level06",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level03_act1_level07",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level03_act1_level07",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level02_act1_level05",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level02_act1_level05",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level04_act1_level05",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level04_act1_level05",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level06_act1_level08",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level06_act1_level08",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level07_act1_level08",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level07_act1_level08",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level05_act1_level09",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level05_act1_level09",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level08_act1_level09",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level08_act1_level09",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level04_act1_level10",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level04_act1_level10",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level09_act1_level11",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level09_act1_level11",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level10_act1_level11",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level10_act1_level11",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level05_act1_level12",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level05_act1_level12",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act1_level09_act1_level12",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act1_level09_act1_level12",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act2_level13_act2_level14",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act2_level13_act2_level14",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act2_level13_act2_level15",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act2_level13_act2_level15",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act2_level14_act2_level16",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act2_level14_act2_level16",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Line2D",
+              "name": "Edge_act2_level15_act2_level16",
+              "path": "/root/MapScene/EdgeCanvas/Edge_act2_level15_act2_level16",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            }
+          ],
+          "class": "Node2D",
+          "name": "EdgeCanvas",
+          "path": "/root/MapScene/EdgeCanvas",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "children": [
+            {
+              "class": "Line2D",
+              "name": "Gate_wing_1_wing_2",
+              "path": "/root/MapScene/GateCanvas/Gate_wing_1_wing_2",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Label",
+              "name": "GateLabel_wing_2",
+              "path": "/root/MapScene/GateCanvas/GateLabel_wing_2",
+              "text": "Gate Open",
+              "visible": true
+            }
+          ],
+          "class": "Node2D",
+          "name": "GateCanvas",
+          "path": "/root/MapScene/GateCanvas",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "class": "Node2D",
+          "name": "ResonanceCanvas",
+          "path": "/root/MapScene/ResonanceCanvas",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "children": [
+            {
+              "class": "Label",
+              "name": "WingProgress_wing_1",
+              "path": "/root/MapScene/WingLabels/WingProgress_wing_1",
+              "text": "10 / 12 залов открыто",
+              "visible": true
+            },
+            {
+              "class": "Label",
+              "name": "WingProgress_wing_2",
+              "path": "/root/MapScene/WingLabels/WingProgress_wing_2",
+              "text": "0 / 4 залов открыто",
+              "visible": true
+            }
+          ],
+          "class": "Node2D",
+          "name": "WingLabels",
+          "path": "/root/MapScene/WingLabels",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "class": "Node2D",
+                  "name": "CrystalShape",
+                  "path": "/root/MapScene/HallNodes/HallNodeVisual/CrystalShape",
+                  "position": [
+                    0.0,
+                    0.0
+                  ],
+                  "rotation": 0.0,
+                  "scale": [
+                    0.99,
+                    0.99
+                  ],
+                  "visible": true
+                },
+                {
+                  "class": "Label",
+                  "name": "StateIcon",
+                  "path": "/root/MapScene/HallNodes/HallNodeVisual/StateIcon",
+                  "text": "⭐",
+                  "visible": true
+                },
+                {
+                  "class": "Label",
+                  "name": "HallLabel",
+                  "path": "/root/MapScene/HallNodes/HallNodeVisual/HallLabel",
+                  "text": "Треугольный зал",
+                  "visible": true
+                },
+                {
+                  "class": "Area2D",
+                  "name": "ClickArea",
+                  "path": "/root/MapScene/HallNodes/HallNodeVisual/ClickArea",
+                  "position": [
+                    0.0,
+                    0.0
+                  ],
+                  "rotation": 0.0,
+                  "scale": [
+                    1.0,
+                    1.0
+                  ],
+                  "visible": true
+                }
+              ],
+              "class": "Node2D",
+              "name": "HallNodeVisual",
+              "path": "/root/MapScene/HallNodes/HallNodeVisual",
+              "position": [
+                0.0,
+                100.0
+              ],
+              "rotation": 0.0,
+              "scale": [
+                1.0,
+                1.0
+              ],
+              "script_class": "HallNodeVisual",
+              "visible": true
+            }
+          ],
+          "class": "Node2D",
+          "name": "HallNodes",
+          "path": "/root/MapScene/HallNodes",
+          "position": [
+            0.0,
+            0.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "class": "Camera2D",
+          "name": "MapCamera",
+          "path": "/root/MapScene/MapCamera",
+          "position": [
+            240.0,
+            520.0
+          ],
+          "rotation": 0.0,
+          "scale": [
+            1.0,
+            1.0
+          ],
+          "visible": true
+        },
+        {
+          "children": [
+            {
+              "class": "ColorRect",
+              "name": "TitleBG",
+              "path": "/root/MapScene/HUDLayer/TitleBG",
+              "position": [
+                0.0,
+                0.0
+              ],
+              "size": [
+                1280.0,
+                55.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Label",
+              "name": "MapTitle",
+              "path": "/root/MapScene/HUDLayer/MapTitle",
+              "text": "Карта залов",
+              "visible": true
+            },
+            {
+              "actions": [
+                "press"
+              ],
+              "class": "Button",
+              "disabled": false,
+              "name": "BackButton",
+              "path": "/root/MapScene/HUDLayer/BackButton",
+              "text": "< Меню",
+              "visible": true
+            },
+            {
+              "class": "ColorRect",
+              "name": "BottomBG",
+              "path": "/root/MapScene/HUDLayer/BottomBG",
+              "position": [
+                0.0,
+                680.0
+              ],
+              "size": [
+                1280.0,
+                40.0
+              ],
+              "visible": true
+            },
+            {
+              "class": "Label",
+              "name": "OverallProgress",
+              "path": "/root/MapScene/HUDLayer/OverallProgress",
+              "text": "Общий прогресс: 10 / 16 залов",
+              "visible": true
+            },
+            {
+              "class": "VBoxContainer",
+              "name": "Legend",
+              "path": "/root/MapScene/HUDLayer/Legend",
+              "position": [
+                1080.0,
+                10.0
+              ],
+              "size": [
+                72.0,
+                70.0
+              ],
+              "visible": true
+            }
+          ],
+          "class": "CanvasLayer",
+          "layer": 10,
+          "name": "HUDLayer",
+          "path": "/root/MapScene/HUDLayer",
+          "visible": true
+        }
+      ],
+      "class": "Node2D",
+      "name": "MapScene",
+      "path": "/root/MapScene",
+      "position": [
+        0.0,
+        0.0
+      ],
+      "rotation": 0.0,
+      "scale": [
+        1.0,
+        1.0
+      ],
+      "script_class": "MapScene",
+      "visible": true
+    }
+  ],
+  "class": "Window",
+  "name": "root",
+  "path": "/root"
+}

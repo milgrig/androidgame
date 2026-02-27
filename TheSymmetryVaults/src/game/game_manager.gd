@@ -24,8 +24,9 @@ signal map_requested()
 # --- Player State ---
 var current_act: int = 1
 var current_level: int = 1
+var current_layer: int = 1  ## Active layer (1-5). Set before transitioning to LevelScene.
 var completed_levels: Array[String] = []
-var level_states: Dictionary = {}  # level_id -> {found_keys, time_spent, attempts}
+var level_states: Dictionary = {}  # level_id -> {found_keys, time_spent, attempts, layer_progress}
 var _save_flags: Dictionary = {}   # Persistent boolean flags (e.g. "first_inner_door_opened")
 
 # --- Settings ---
@@ -260,12 +261,32 @@ func _parse_level_id(level_id: String) -> Dictionary:
 	return {"act": int(act_str), "level": int(lvl_str)}
 
 
+## Get layer progress for a specific hall and layer number.
+## Returns: {status: "locked"/"available"/"in_progress"/"completed"/"perfect", ...}
+func get_layer_progress(hall_id: String, layer: int) -> Dictionary:
+	var state: Dictionary = level_states.get(hall_id, {})
+	var lp: Dictionary = state.get("layer_progress", {})
+	return lp.get("layer_%d" % layer, {"status": "locked"})
+
+
+## Set layer progress for a specific hall and layer number.
+## progress should be a dict like: {status: "completed", pairs_found: 2, total_pairs: 2}
+func set_layer_progress(hall_id: String, layer: int, progress: Dictionary) -> void:
+	if not level_states.has(hall_id):
+		level_states[hall_id] = {}
+	if not level_states[hall_id].has("layer_progress"):
+		level_states[hall_id]["layer_progress"] = {}
+	level_states[hall_id]["layer_progress"]["layer_%d" % layer] = progress
+	save_game()
+
+
 ## Save game state to disk
 func save_game() -> void:
 	var save_data = {
 		"player": {
 			"current_act": current_act,
 			"current_level": current_level,
+			"current_layer": current_layer,
 			"completed_levels": completed_levels,
 			"level_states": level_states,
 			"flags": _save_flags,
@@ -306,6 +327,7 @@ func load_game() -> void:
 		var player = data.get("player", {})
 		current_act = player.get("current_act", 1)
 		current_level = player.get("current_level", 1)
+		current_layer = player.get("current_layer", 1)
 		completed_levels.assign(player.get("completed_levels", []))
 		level_states = player.get("level_states", {})
 		_save_flags = player.get("flags", {})

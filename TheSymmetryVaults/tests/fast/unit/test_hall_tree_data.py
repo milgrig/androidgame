@@ -587,7 +587,7 @@ class TestHallTreeDataLoadFile(unittest.TestCase):
         tree.load_from_file(path)
         wing1 = tree.get_wing("wing_1")
         self.assertIsNotNone(wing1)
-        self.assertEqual(len(wing1.halls), 12)
+        self.assertEqual(len(wing1.halls), 24)
 
     def test_load_nonexistent_file(self):
         tree = HallTreeData()
@@ -617,7 +617,7 @@ class TestHallTreeDataLoadFile(unittest.TestCase):
         self.assertIn("act2_level16", wing2.halls)
 
     def test_load_real_file_wing2_gate(self):
-        """Verify Wing 2 gate requires 8 halls from Wing 1."""
+        """Verify Wing 2 gate requires 12 halls from Wing 1."""
         path = self._get_json_path()
         if not os.path.exists(path):
             self.skipTest(f"hall_tree.json not found at {path}")
@@ -627,7 +627,7 @@ class TestHallTreeDataLoadFile(unittest.TestCase):
         self.assertIsNotNone(wing2)
         self.assertIsNotNone(wing2.gate)
         self.assertEqual(wing2.gate.type, "threshold")
-        self.assertEqual(wing2.gate.required_halls, 8)
+        self.assertEqual(wing2.gate.required_halls, 12)
         self.assertEqual(wing2.gate.required_from_wing, "wing_1")
 
     def test_load_real_file_cross_wing_resonances(self):

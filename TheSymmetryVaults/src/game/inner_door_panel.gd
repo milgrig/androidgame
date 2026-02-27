@@ -1,16 +1,17 @@
 class_name InnerDoorPanel
 extends VBoxContainer
-## UI panel for the Inner Doors mechanic (Act 2, Levels 13-16).
-## Displays doors, allows key selection via checkboxes, validates subgroup closure.
-## Only visible when the level has inner_doors defined.
+## UI panel for the Subgroup Finding mechanic (Act 2, Levels 13-16).
+## Player selects keys and checks if they form a subgroup.
+## Found subgroups are tracked; win condition = all target subgroups found.
+## No doors, no locks — pure subgroup discovery.
 
-signal door_opened(door_id: String)
-signal door_attempt_failed(door_id: String, reason: Dictionary)
+signal subgroup_found(sg_name: String)
+signal subgroup_check_failed(reason: Dictionary)
 
 # ── State ──
-var doors_data: Array = []               # From level JSON mechanics.inner_doors[]
 var subgroups_data: Array = []            # From level JSON subgroups[]
-var door_states: Dictionary = {}          # door_id -> "locked" | "opened"
+var found_subgroups: Array = []           # Names of found subgroups (target ones)
+var _target_subgroups: Array = []         # Subgroup dicts where is_inner_door=true
 var selected_key_indices: Array = []      # Checked key indices
 
 # ── References ──
@@ -18,24 +19,26 @@ var key_ring: KeyRing = null
 var level_scene = null                    # LevelScene reference (untyped to avoid circular)
 
 # ── UI Elements ──
-var _door_labels: Dictionary = {}         # door_id -> Label
 var _key_checkboxes: Array = []           # Array[CheckBox]
-var _open_button: Button = null
+var _check_button: Button = null
 var _status_label: Label = null
 var _key_container: VBoxContainer = null
-var _doors_container: VBoxContainer = null
+var _progress_label: Label = null
+var _found_container: VBoxContainer = null
+var _found_labels: Dictionary = {}        # sg_name -> Label
 
 
 func setup(p_doors: Array, p_subgroups: Array, p_key_ring: KeyRing, p_level_scene) -> void:
-	doors_data = p_doors.duplicate()
 	subgroups_data = p_subgroups.duplicate()
 	key_ring = p_key_ring
 	level_scene = p_level_scene
 
-	# Initialize door states
-	door_states.clear()
-	for door in doors_data:
-		door_states[door.get("id", "")] = "locked"
+	# Build target subgroups list (is_inner_door = true)
+	_target_subgroups.clear()
+	found_subgroups.clear()
+	for sg in subgroups_data:
+		if sg.get("is_inner_door", false):
+			_target_subgroups.append(sg)
 
 	_build_ui()
 
@@ -43,17 +46,32 @@ func setup(p_doors: Array, p_subgroups: Array, p_key_ring: KeyRing, p_level_scen
 func _build_ui() -> void:
 	# Panel title
 	var title := Label.new()
-	title.name = "DoorPanelTitle"
-	title.text = "Внутренние двери"
+	title.name = "SubgroupPanelTitle"
+	title.text = "Поиск подгрупп"
 	title.add_theme_font_size_override("font_size", 15)
 	title.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4, 0.9))
 	add_child(title)
 
-	# Doors list
-	_doors_container = VBoxContainer.new()
-	_doors_container.name = "DoorsContainer"
-	add_child(_doors_container)
-	_rebuild_door_list()
+	# Progress counter
+	_progress_label = Label.new()
+	_progress_label.name = "ProgressLabel"
+	_progress_label.add_theme_font_size_override("font_size", 13)
+	_progress_label.add_theme_color_override("font_color", Color(0.7, 0.85, 0.9, 0.9))
+	add_child(_progress_label)
+	_update_progress_label()
+
+	# Found subgroups section
+	var found_title := Label.new()
+	found_title.name = "FoundSubgroupsTitle"
+	found_title.text = "Найденные подгруппы:"
+	found_title.add_theme_font_size_override("font_size", 12)
+	found_title.add_theme_color_override("font_color", Color(0.6, 0.7, 0.6, 0.8))
+	add_child(found_title)
+
+	_found_container = VBoxContainer.new()
+	_found_container.name = "FoundSubgroupsContainer"
+	add_child(_found_container)
+	_rebuild_found_list()
 
 	# Separator
 	var sep := HSeparator.new()
@@ -72,18 +90,18 @@ func _build_ui() -> void:
 	_key_container.name = "KeyCheckboxContainer"
 	add_child(_key_container)
 
-	# Open button
-	_open_button = Button.new()
-	_open_button.name = "OpenDoorButton"
-	_open_button.text = "ОТКРЫТЬ ДВЕРЬ"
-	_open_button.add_theme_font_size_override("font_size", 14)
-	_open_button.disabled = true
-	_open_button.pressed.connect(_on_open_pressed)
-	add_child(_open_button)
+	# Check button (replaces "ОТКРЫТЬ ДВЕРЬ")
+	_check_button = Button.new()
+	_check_button.name = "CheckSubgroupButton"
+	_check_button.text = "ПРОВЕРИТЬ НАБОР"
+	_check_button.add_theme_font_size_override("font_size", 14)
+	_check_button.disabled = true
+	_check_button.pressed.connect(_on_check_pressed)
+	add_child(_check_button)
 
 	# Status label
 	_status_label = Label.new()
-	_status_label.name = "DoorStatusLabel"
+	_status_label.name = "SubgroupStatusLabel"
 	_status_label.text = ""
 	_status_label.add_theme_font_size_override("font_size", 12)
 	_status_label.add_theme_color_override("font_color", Color(0.6, 0.65, 0.55, 0.8))
@@ -93,37 +111,37 @@ func _build_ui() -> void:
 	_rebuild_key_checkboxes()
 
 
-func _rebuild_door_list() -> void:
-	# Clear existing
-	for child in _doors_container.get_children():
+func _rebuild_found_list() -> void:
+	if _found_container == null:
+		return
+	for child in _found_container.get_children():
 		child.queue_free()
-	_door_labels.clear()
+	_found_labels.clear()
 
-	for door in doors_data:
-		var door_id: String = door.get("id", "")
-		var req_sg_name: String = door.get("required_subgroup", "")
-
-		# Find the subgroup info
-		var sg_order: int = 0
-		for sg in subgroups_data:
-			if sg.get("name", "") == req_sg_name:
-				sg_order = sg.get("order", 0)
-				break
+	for sg in _target_subgroups:
+		var sg_name: String = sg.get("name", "")
+		var sg_display: String = sg.get("description", sg_name)
+		var elements: Array = sg.get("elements", [])
+		var is_found: bool = sg_name in found_subgroups
 
 		var label := Label.new()
-		label.name = "Door_" + door_id
-		var state_icon: String = "🔒" if door_states.get(door_id, "locked") == "locked" else "✅"
-		var hint: String = door.get("visual_hint", "")
-		if hint.length() > 40:
-			hint = hint.left(37) + "..."
-		label.text = "%s %s (порядок %d)" % [state_icon, hint, sg_order]
-		label.add_theme_font_size_override("font_size", 12)
-		if door_states.get(door_id, "locked") == "opened":
+		label.name = "SG_" + sg_name
+		var elements_str := "{%s}" % ", ".join(elements)
+		if is_found:
+			label.text = "✅ %s — %s" % [sg_display, elements_str]
 			label.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4, 0.9))
 		else:
-			label.add_theme_color_override("font_color", Color(0.75, 0.7, 0.6, 0.85))
-		_doors_container.add_child(label)
-		_door_labels[door_id] = label
+			label.text = "⬜ %s (порядок %d)" % [sg_display, sg.get("order", 0)]
+			label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 0.7))
+		label.add_theme_font_size_override("font_size", 11)
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD
+		_found_container.add_child(label)
+		_found_labels[sg_name] = label
+
+
+func _update_progress_label() -> void:
+	if _progress_label:
+		_progress_label.text = "Подгруппы: %d / %d" % [found_subgroups.size(), _target_subgroups.size()]
 
 
 func refresh_keys() -> void:
@@ -146,19 +164,15 @@ func _rebuild_key_checkboxes() -> void:
 	for i in range(key_ring.count()):
 		var cb := CheckBox.new()
 		cb.name = "KeyCB_%d" % i
-		# Get display name from level scene
-		var display_name: String = ""
-		if level_scene and level_scene.has_method("_get_key_display_name"):
-			display_name = level_scene._get_key_display_name(i)
-		else:
-			display_name = "Ключ %d" % i
+		# Get display name via ValidationManager
+		var display_name: String = _get_key_display_name(i)
 		cb.text = display_name
 		cb.add_theme_font_size_override("font_size", 12)
 		cb.toggled.connect(_on_key_toggled.bind(i))
 		_key_container.add_child(cb)
 		_key_checkboxes.append(cb)
 
-	_update_open_button_state()
+	_update_check_button_state()
 
 
 func _on_key_toggled(pressed: bool, index: int) -> void:
@@ -167,23 +181,18 @@ func _on_key_toggled(pressed: bool, index: int) -> void:
 			selected_key_indices.append(index)
 	else:
 		selected_key_indices.erase(index)
-	_update_open_button_state()
+	_update_check_button_state()
 
 
-func _update_open_button_state() -> void:
-	if _open_button == null:
+func _update_check_button_state() -> void:
+	if _check_button == null:
 		return
-	# Enable open button only if at least 1 key is selected and there are locked doors
-	var has_locked := false
-	for door_id in door_states:
-		if door_states[door_id] == "locked":
-			has_locked = true
-			break
-	_open_button.disabled = selected_key_indices.is_empty() or not has_locked
-	_open_button.text = "ОТКРЫТЬ ДВЕРЬ (%d ключей)" % selected_key_indices.size() if not selected_key_indices.is_empty() else "ОТКРЫТЬ ДВЕРЬ"
+	var has_unfound := found_subgroups.size() < _target_subgroups.size()
+	_check_button.disabled = selected_key_indices.is_empty() or not has_unfound
+	_check_button.text = "ПРОВЕРИТЬ НАБОР (%d ключей)" % selected_key_indices.size() if not selected_key_indices.is_empty() else "ПРОВЕРИТЬ НАБОР"
 
 
-func _on_open_pressed() -> void:
+func _on_check_pressed() -> void:
 	if key_ring == null or selected_key_indices.is_empty():
 		return
 
@@ -193,48 +202,53 @@ func _on_open_pressed() -> void:
 	if not result["is_subgroup"]:
 		# NOT a subgroup — diagnostic feedback
 		var reason := _build_failure_reason(result)
-		# Try all doors and emit failure for the first locked one
-		for door in doors_data:
-			var door_id: String = door.get("id", "")
-			if door_states.get(door_id, "locked") == "locked":
-				door_attempt_failed.emit(door_id, reason)
-				break
+		subgroup_check_failed.emit(reason)
 		_show_failure_feedback(reason)
 		return
 
-	# IS a subgroup — check which door(s) it matches
-	var matched_door: Dictionary = {}
-	for door in doors_data:
-		var door_id: String = door.get("id", "")
-		if door_states.get(door_id, "locked") != "locked":
-			continue  # Already opened
+	# IS a subgroup — check which target subgroup it matches
+	var matched_sg: Dictionary = _find_matching_target_subgroup()
 
-		var req_sg_name: String = door.get("required_subgroup", "")
-		if _matches_target_subgroup(req_sg_name):
-			matched_door = door
-			break
-
-	if not matched_door.is_empty():
-		# Correct subgroup found for a door!
-		var door_id: String = matched_door.get("id", "")
-		door_states[door_id] = "opened"
-		door_opened.emit(door_id)
-		_show_success_feedback(matched_door)
-		_rebuild_door_list()
-		_update_open_button_state()
-	else:
-		# Valid subgroup but doesn't match any locked door
-		_status_label.text = "Это подгруппа, но не подходит ни к одной закрытой двери."
+	if matched_sg.is_empty():
+		# Valid subgroup but not a target one
+		_status_label.text = "Это подгруппа, но не из тех, что нужно найти."
 		_status_label.add_theme_color_override("font_color", Color(0.9, 0.8, 0.3, 0.9))
-		# Clear after delay
 		var tween := create_tween()
 		tween.tween_interval(3.0)
 		tween.tween_callback(_clear_status_label)
+		return
+
+	var sg_name: String = matched_sg.get("name", "")
+
+	# Check if already found
+	if sg_name in found_subgroups:
+		_status_label.text = "Этот набор уже найден!"
+		_status_label.add_theme_color_override("font_color", Color(0.9, 0.7, 0.3, 0.9))
+		var tween := create_tween()
+		tween.tween_interval(2.0)
+		tween.tween_callback(_clear_status_label)
+		return
+
+	# New subgroup found!
+	found_subgroups.append(sg_name)
+	subgroup_found.emit(sg_name)
+	_show_success_feedback(matched_sg)
+	_rebuild_found_list()
+	_update_progress_label()
+	_update_check_button_state()
+
+
+func _find_matching_target_subgroup() -> Dictionary:
+	## Check if the selected keys match any target subgroup.
+	for sg in _target_subgroups:
+		var sg_name: String = sg.get("name", "")
+		if _matches_target_subgroup(sg_name):
+			return sg
+	return {}
 
 
 func _matches_target_subgroup(sg_name: String) -> bool:
 	## Check if the selected keys match the target subgroup elements.
-	# Find the subgroup definition
 	var target_sg: Dictionary = {}
 	for sg in subgroups_data:
 		if sg.get("name", "") == sg_name:
@@ -254,12 +268,13 @@ func _matches_target_subgroup(sg_name: String) -> bool:
 
 	# Build the set of selected rebased permutations
 	var selected_rebased: Array = []  # Array[Permutation]
+	var rebase_inv: Permutation = level_scene._validation_mgr.rebase_inverse if level_scene and level_scene._validation_mgr else null
 	for idx in selected_key_indices:
 		if idx >= 0 and idx < key_ring.count():
 			var perm: Permutation = key_ring.get_key(idx)
 			var rebased: Permutation = perm
-			if level_scene._rebase_inverse != null:
-				rebased = perm.compose(level_scene._rebase_inverse)
+			if rebase_inv != null:
+				rebased = perm.compose(rebase_inv)
 			selected_rebased.append(rebased)
 
 	# Check that each target element is in the selected set
@@ -279,7 +294,6 @@ func _matches_target_subgroup(sg_name: String) -> bool:
 
 func _build_failure_reason(result: Dictionary) -> Dictionary:
 	var reasons: Array = result.get("reasons", [])
-	var missing_elements: Array = result.get("missing_elements", [])
 
 	if reasons.has("missing_identity"):
 		return {"reason": "no_identity",
@@ -303,7 +317,6 @@ func _get_closure_example() -> String:
 	if key_ring == null or selected_key_indices.size() < 2:
 		return "Комбинация двух ключей даёт ключ вне набора!"
 
-	# Try to find a concrete example
 	for i in selected_key_indices:
 		for j in selected_key_indices:
 			if i >= key_ring.count() or j >= key_ring.count():
@@ -312,7 +325,6 @@ func _get_closure_example() -> String:
 			var key_b: Permutation = key_ring.get_key(j)
 			var product: Permutation = key_a.compose(key_b)
 
-			# Check if product is in selected subset
 			var found_in_subset := false
 			for k in selected_key_indices:
 				if k >= key_ring.count():
@@ -323,10 +335,8 @@ func _get_closure_example() -> String:
 					break
 
 			if not found_in_subset:
-				# Found an example! Get display names
 				var name_a := _get_key_display_name(i)
 				var name_b := _get_key_display_name(j)
-				# Try to find the product in all keys
 				var product_name := "результат"
 				for p in range(key_ring.count()):
 					if key_ring.get_key(p).equals(product):
@@ -342,14 +352,12 @@ func _get_inverse_example() -> String:
 	if key_ring == null or selected_key_indices.is_empty():
 		return ""
 
-	# Find a key without inverse
 	for i in selected_key_indices:
 		if i >= key_ring.count():
 			continue
 		var key: Permutation = key_ring.get_key(i)
 		var inv: Permutation = key.inverse()
 
-		# Check if inverse is in selected subset
 		var found_inv := false
 		for j in selected_key_indices:
 			if j >= key_ring.count():
@@ -361,7 +369,6 @@ func _get_inverse_example() -> String:
 
 		if not found_inv and not key.is_identity():
 			var key_name := _get_key_display_name(i)
-			# Try to find inverse in all keys
 			var inv_name := "обратный ключ"
 			for p in range(key_ring.count()):
 				if key_ring.get_key(p).equals(inv):
@@ -373,9 +380,9 @@ func _get_inverse_example() -> String:
 
 
 func _get_key_display_name(index: int) -> String:
-	## Get display name for a key by index (uses level_scene method if available)
-	if level_scene and level_scene.has_method("_get_key_display_name"):
-		return level_scene._get_key_display_name(index)
+	## Get display name for a key by index (delegates to ValidationManager)
+	if level_scene and level_scene._validation_mgr:
+		return level_scene._validation_mgr.get_key_display_name(index)
 	return "Ключ %d" % (index + 1)
 
 
@@ -383,45 +390,46 @@ func _show_failure_feedback(reason: Dictionary) -> void:
 	if _status_label:
 		_status_label.text = reason.get("message", "Не подгруппа")
 		_status_label.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3, 0.9))
-		# Clear after delay
 		var tween := create_tween()
 		tween.tween_interval(4.0)
 		tween.tween_callback(_reset_status_label)
 
 
-func _show_success_feedback(door_data: Dictionary) -> void:
-	var msg: String = door_data.get("unlock_message", "Дверь открыта!")
+func _show_success_feedback(sg_data: Dictionary) -> void:
+	var sg_name: String = sg_data.get("name", "")
+	var sg_desc: String = sg_data.get("description", sg_name)
+	var elements: Array = sg_data.get("elements", [])
+	var elements_str := "{%s}" % ", ".join(elements)
+	var msg := "Подгруппа найдена: %s — %s" % [sg_desc, elements_str]
 	if _status_label:
 		_status_label.text = msg
 		_status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4, 0.9))
 
 
 func is_all_doors_opened() -> bool:
-	for door_id in door_states:
-		if door_states[door_id] != "opened":
-			return false
-	return true
+	## Backward compat: all target subgroups found = level complete.
+	return found_subgroups.size() >= _target_subgroups.size()
 
 
 func get_opened_count() -> int:
-	var count := 0
-	for door_id in door_states:
-		if door_states[door_id] == "opened":
-			count += 1
-	return count
+	return found_subgroups.size()
 
 
 func get_total_count() -> int:
-	return doors_data.size()
+	return _target_subgroups.size()
 
 
 func get_state() -> Dictionary:
 	## Serializable state for Agent Bridge / save system.
+	var target_names: Array = []
+	for sg in _target_subgroups:
+		target_names.append(sg.get("name", ""))
 	return {
-		"doors": door_states.duplicate(),
+		"found_subgroups": found_subgroups.duplicate(),
+		"target_subgroups": target_names,
 		"selected_keys": selected_key_indices.duplicate(),
-		"all_opened": is_all_doors_opened(),
-		"opened_count": get_opened_count(),
+		"all_found": is_all_doors_opened(),
+		"found_count": get_opened_count(),
 		"total_count": get_total_count(),
 	}
 
@@ -448,4 +456,4 @@ func set_selected_keys(indices: Array) -> void:
 	for i in range(_key_checkboxes.size()):
 		if i < _key_checkboxes.size():
 			_key_checkboxes[i].set_pressed_no_signal(i in selected_key_indices)
-	_update_open_button_state()
+	_update_check_button_state()

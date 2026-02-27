@@ -142,12 +142,9 @@ func compose_and_validate(index_a: int, index_b: int) -> Dictionary:
 	return validate_permutation(result_perm)
 
 
-## Get display name for a key by index.
-func get_key_display_name(index: int) -> String:
-	if key_ring == null or index < 0 or index >= key_ring.count():
-		return "?"
-	var perm: Permutation = key_ring.get_key(index)
-	# Rebase for display
+## Unified display-name lookup: ALWAYS rebases perm before comparing to targets.
+## Use this for ANY place that needs to resolve a permutation to a human-readable name.
+func lookup_display_name(perm: Permutation) -> String:
 	var display_perm := perm
 	if rebase_inverse != null:
 		display_perm = perm.compose(rebase_inverse)
@@ -155,6 +152,26 @@ func get_key_display_name(index: int) -> String:
 		if target_perms[sym_id].equals(display_perm):
 			return target_perm_names.get(sym_id, display_perm.to_cycle_notation())
 	return display_perm.to_cycle_notation()
+
+
+## Check if a permutation matches any target (after rebasing).
+## Returns the matched sym_id or "" if no match.
+func lookup_sym_id(perm: Permutation) -> String:
+	var display_perm := perm
+	if rebase_inverse != null:
+		display_perm = perm.compose(rebase_inverse)
+	for sym_id in target_perms:
+		if target_perms[sym_id].equals(display_perm):
+			return sym_id
+	return ""
+
+
+## Get display name for a key by index (delegates to lookup_display_name).
+func get_key_display_name(index: int) -> String:
+	if key_ring == null or index < 0 or index >= key_ring.count():
+		return "?"
+	var perm: Permutation = key_ring.get_key(index)
+	return lookup_display_name(perm)
 
 
 ## Rebase the group around the first found key.
@@ -172,20 +189,30 @@ func _relabel_first_key_as_identity(first_sym_id: String) -> void:
 	rebase_inverse = first_perm.inverse()
 
 
+## Get status label text and color based on current arrangement.
+func get_status_info(current_arrangement: Array[int]) -> Dictionary:
+	var perm := Permutation.from_array(current_arrangement)
+	var check_perm := perm
+	if rebase_inverse != null: check_perm = perm.compose(rebase_inverse)
+	if check_perm.is_identity():
+		var found := key_ring != null and key_ring.contains(perm) if key_ring else false
+		return {"text": "Совпадает с целью! (ключ найден)" if found else "Совпадает с целью — нажмите ПРОВЕРИТЬ УЗОР!",
+			"color": Color(0.4, 0.9, 0.4, 0.9) if found else Color(0.8, 0.8, 0.5, 0.85)}
+	var msid := lookup_sym_id(perm)
+	return {"text": "Текущее: допустимое расположение" if msid != "" else "Расположите кристаллы как на картинке-цели",
+		"color": Color(0.4, 0.9, 0.4, 0.9) if msid != "" else Color(0.8, 0.7, 0.5, 0.7)}
+
 ## Build summary text listing all discovered keys with names and descriptions.
+## Uses lookup_display_name() so rebasing is always applied consistently.
 func build_summary_keys_text() -> String:
 	if key_ring == null:
 		return ""
 	var text := ""
 	for i in range(key_ring.count()):
 		var perm: Permutation = key_ring.get_key(i)
-		var display_name := perm.to_cycle_notation()
-		var description := ""
-		for sym_id in target_perms:
-			if target_perms[sym_id].equals(perm):
-				display_name = target_perm_names.get(sym_id, display_name)
-				description = target_perm_descriptions.get(sym_id, "")
-				break
+		var display_name := lookup_display_name(perm)
+		var sym_id := lookup_sym_id(perm)
+		var description: String = target_perm_descriptions.get(sym_id, "") if sym_id != "" else ""
 		if description != "":
 			text += "  %s  —  %s\n" % [display_name, description]
 		else:

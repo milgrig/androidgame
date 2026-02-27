@@ -232,14 +232,14 @@ func _connect_level_signals() -> void:
 	# Connect inner door panel signals (Act 2)
 	if _level_scene._inner_door_panel != null and is_instance_valid(_level_scene._inner_door_panel):
 		var panel = _level_scene._inner_door_panel
-		if panel.has_signal("door_opened"):
-			var cb := func(door_id): _push_event("door_opened", {"door_id": door_id})
-			_signal_callbacks["door_opened"] = cb
-			panel.door_opened.connect(cb)
-		if panel.has_signal("door_attempt_failed"):
-			var cb := func(door_id, reason): _push_event("door_attempt_failed", {"door_id": door_id, "reason": reason})
-			_signal_callbacks["door_attempt_failed"] = cb
-			panel.door_attempt_failed.connect(cb)
+		if panel.has_signal("subgroup_found"):
+			var cb := func(sg_name): _push_event("subgroup_found", {"subgroup_name": sg_name, "subgroups": panel.get_state()})
+			_signal_callbacks["subgroup_found"] = cb
+			panel.subgroup_found.connect(cb)
+		if panel.has_signal("subgroup_check_failed"):
+			var cb := func(reason): _push_event("subgroup_check_failed", {"reason": reason})
+			_signal_callbacks["subgroup_check_failed"] = cb
+			panel.subgroup_check_failed.connect(cb)
 
 	# Enable agent_mode on the level scene
 	if "agent_mode" in _level_scene:
@@ -381,8 +381,8 @@ func _dispatch(cmd: String, args: Dictionary, cmd_id: int) -> String:
 			return _cmd_navigate(args, cmd_id)
 		"select_keys":
 			return _cmd_select_keys(args, cmd_id)
-		"try_open_door":
-			return _cmd_try_open_door(args, cmd_id)
+		"try_open_door", "check_subgroup":
+			return _cmd_check_subgroup(args, cmd_id)
 		"quit":
 			return _cmd_quit(cmd_id)
 		_:
@@ -437,10 +437,20 @@ func _cmd_get_state(cmd_id: int) -> String:
 	for edge in _level_scene.edges:
 		edges_data.append(AgentProtocol.serialize_edge(edge))
 
-	# KeyRing
+	# KeyRing — always provide a well-formed dict even when key_ring is null
 	var keyring_data := {}
 	if _level_scene.key_ring:
 		keyring_data = AgentProtocol.serialize_keyring(_level_scene.key_ring)
+	else:
+		keyring_data = {
+			"found": [],
+			"found_count": 0,
+			"total": _level_scene.total_symmetries,
+			"complete": false,
+			"has_identity": false,
+			"is_closed": false,
+			"has_inverses": false,
+		}
 
 	# Graph
 	var graph_data := {}
@@ -478,11 +488,18 @@ func _cmd_get_state(cmd_id: int) -> String:
 		"identity_found": _level_scene._identity_found,
 	}
 
-	# Inner doors state (Act 2 levels)
+	# Inner doors / subgroups state (Act 2 levels)
 	if _level_scene._inner_door_panel != null:
 		state["inner_doors"] = _level_scene._inner_door_panel.get_state()
 	else:
-		state["inner_doors"] = null
+		state["inner_doors"] = {
+			"found_subgroups": [],
+			"target_subgroups": [],
+			"selected_keys": [],
+			"all_found": false,
+			"found_count": 0,
+			"total_count": 0,
+		}
 
 	return AgentProtocol.success(state, [], cmd_id)
 
@@ -940,13 +957,14 @@ func _cmd_select_keys(args: Dictionary, cmd_id: int) -> String:
 	return AgentProtocol.success({
 		"selected": true,
 		"indices": Array(indices),
-		"inner_doors": _level_scene._inner_door_panel.get_state(),
+		"subgroups": _level_scene._inner_door_panel.get_state(),
 	}, [], cmd_id)
 
 
-func _cmd_try_open_door(args: Dictionary, cmd_id: int) -> String:
-	## Try to open an inner door with the currently selected keys.
-	## Equivalent to pressing the "ОТКРЫТЬ ДВЕРЬ" button on the inner door panel.
+func _cmd_check_subgroup(args: Dictionary, cmd_id: int) -> String:
+	## Check if the selected keys form a valid subgroup (Act 2 levels).
+	## Equivalent to pressing the "ПРОВЕРИТЬ НАБОР" button.
+	## Also accepts 'try_open_door' as alias for backward compatibility.
 	if not _level_scene or not is_instance_valid(_level_scene):
 		return AgentProtocol.error("No level loaded", "NO_LEVEL", cmd_id)
 
@@ -968,12 +986,12 @@ func _cmd_try_open_door(args: Dictionary, cmd_id: int) -> String:
 			"No keys selected. Use select_keys first or pass 'indices' argument.",
 			"NO_SELECTION", cmd_id)
 
-	# Simulate pressing the open button
-	panel._on_open_pressed()
+	# Simulate pressing the check button
+	panel._on_check_pressed()
 
 	return AgentProtocol.success({
 		"attempted": true,
-		"inner_doors": panel.get_state(),
+		"subgroups": panel.get_state(),
 	}, [], cmd_id)
 
 

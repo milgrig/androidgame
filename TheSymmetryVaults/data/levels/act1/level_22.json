@@ -1,0 +1,89 @@
+{
+  "meta": {
+    "id": "act1_level22",
+    "act": 1,
+    "level": 22,
+    "title": "Кубический граф",
+    "subtitle": "Восемь вершин, двенадцать ребер, скрытые симметрии",
+    "group_name": "Aut(Cube_graph)",
+    "group_order": 8
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "white", "position": [480, 180], "label": "A"},
+      {"id": 1, "color": "white", "position": [800, 180], "label": "B"},
+      {"id": 2, "color": "white", "position": [480, 380], "label": "C"},
+      {"id": 3, "color": "white", "position": [800, 380], "label": "D"},
+      {"id": 4, "color": "gray",  "position": [560, 260], "label": "E"},
+      {"id": 5, "color": "gray",  "position": [720, 260], "label": "F"},
+      {"id": 6, "color": "gray",  "position": [560, 460], "label": "G"},
+      {"id": 7, "color": "gray",  "position": [720, 460], "label": "H"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 0, "to": 2, "type": "standard", "weight": 1},
+      {"from": 0, "to": 4, "type": "thick",    "weight": 1},
+      {"from": 1, "to": 3, "type": "standard", "weight": 1},
+      {"from": 1, "to": 5, "type": "thick",    "weight": 1},
+      {"from": 2, "to": 3, "type": "standard", "weight": 1},
+      {"from": 2, "to": 6, "type": "thick",    "weight": 1},
+      {"from": 3, "to": 7, "type": "thick",    "weight": 1},
+      {"from": 4, "to": 5, "type": "dashed",   "weight": 1},
+      {"from": 4, "to": 6, "type": "dashed",   "weight": 1},
+      {"from": 5, "to": 7, "type": "dashed",   "weight": 1},
+      {"from": 6, "to": 7, "type": "dashed",   "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",    "mapping": [0,1,2,3,4,5,6,7], "name": "Тождество",                       "description": "Всё остаётся на месте"},
+      {"id": "s_bc", "mapping": [0,2,1,3,4,6,5,7], "name": "Отражение B<->C",                 "description": "Меняем B с C и F с G (вертикальная ось передней грани)"},
+      {"id": "s_ab", "mapping": [1,0,3,2,5,4,7,6], "name": "Отражение A<->B",                 "description": "Меняем A с B, C с D, E с F, G с H (горизонтальная ось)"},
+      {"id": "r90",  "mapping": [1,3,0,2,5,7,4,6], "name": "Циклический сдвиг на 90° (ABDC)", "description": "A->B->D->C->A на передней грани, аналогично на задней"},
+      {"id": "r180", "mapping": [3,2,1,0,7,6,5,4], "name": "Поворот на 180°",                 "description": "A<->D, B<->C на передней грани; E<->H, F<->G на задней"},
+      {"id": "r270", "mapping": [2,0,3,1,6,4,7,5], "name": "Циклический сдвиг на 270° (ACDB)", "description": "A->C->D->B->A на передней грани, аналогично на задней"},
+      {"id": "s_ad", "mapping": [2,3,0,1,6,7,4,5], "name": "Отражение A<->C",                 "description": "Меняем A с C, B с D, E с G, F с H (горизонтальная ось грани)"},
+      {"id": "s_dg", "mapping": [3,1,2,0,7,5,6,4], "name": "Отражение A<->D",                 "description": "Меняем A с D, E с H (по диагонали); B и C на месте"}
+    ],
+    "generators": ["r90", "s_bc"],
+    "cayley_table": {}
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": false,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "glowing"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Граф куба с раскрашенными ребрами. Типы ребер ограничивают допустимые перестановки."},
+    {"trigger": "after_first_valid", "text": "Автоморфизмы должны сохранять типы рёбер: сплошные, толстые, пунктирные."},
+    {"trigger": "after_10_found", "text": "Группа изоморфна D4 — диэдральная группа квадрата. Всего 8 элементов."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Разные типы рёбер делят вершины на две группы: белые (передняя грань) и серые (задняя). Автоморфизмы не могут их смешивать.",
+      "target_crystals": []
+    },
+    {
+      "text": "Каждая грань — это граф K_{2,2}. Его автоморфизмы дают группу из 8 элементов, изоморфную D4.",
+      "target_crystals": []
+    },
+    {
+      "text": "Два генератора: поворот на 90° (r90) и отражение (s_bc). Из них можно получить все 8 автоморфизмов.",
+      "target_crystals": [0, 1, 2, 3, 4, 5, 6, 7]
+    }
+  ]
+}

@@ -225,6 +225,11 @@ func _spawn_hall_nodes() -> void:
 		node.setup(hall_id, display_name, display_group, visual_state)
 		node.hall_selected.connect(_on_hall_selected)
 
+		# Set layer badges for this hall
+		var badges := _get_layer_badges(hall_id)
+		if badges.size() > 0:
+			node.set_layer_badges(badges)
+
 		_node_container.add_child(node)
 		_hall_nodes[hall_id] = node
 
@@ -515,6 +520,10 @@ func _create_legend() -> VBoxContainer:
 		{"text": "Закрыт", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LOCKED]},
 	]
 
+	# Add layer legend if Layer 2 is unlocked
+	if _progression and _progression.is_layer_unlocked(2):
+		items.append({"text": "Слой 2", "color": HallNodeVisual.LAYER_COLORS[2]})
+
 	for item in items:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 6)
@@ -538,22 +547,42 @@ func _create_legend() -> VBoxContainer:
 ## --- Interaction ---
 
 func _on_hall_selected(hall_id: String) -> void:
-	enter_hall(hall_id)
+	# Determine which layer to enter
+	var target_layer := _determine_target_layer(hall_id)
+	enter_hall(hall_id, target_layer)
 
 
 func _on_back_pressed() -> void:
 	GameManager.return_to_menu()
 
 
-## Navigate to a level scene for the given hall.
-func enter_hall(hall_id: String) -> void:
+## Determine the best layer to enter for a hall.
+## Logic: if Layer 1 is completed and Layer 2 is available/in_progress, go to Layer 2.
+## Otherwise, go to Layer 1 (or the highest available uncompleted layer).
+func _determine_target_layer(hall_id: String) -> int:
+	if _progression == null:
+		return 1
+
+	# Check each layer from 2 down to 1
+	for layer in range(2, 0, -1):
+		var layer_state := _progression.get_hall_layer_state(hall_id, layer)
+		if layer_state == "available" or layer_state == "in_progress":
+			return layer
+
+	# Default: Layer 1
+	return 1
+
+
+## Navigate to a level scene for the given hall at the specified layer.
+func enter_hall(hall_id: String, layer: int = 1) -> void:
 	var level_path := GameManager.get_level_path(hall_id)
 	if level_path == "":
 		push_warning("MapScene: No level file for hall '%s'" % hall_id)
 		return
 
-	# Store the hall_id for LevelScene to know which hall it's playing
+	# Store the hall_id and layer for LevelScene to know which hall and layer it's playing
 	GameManager.current_hall_id = hall_id
+	GameManager.current_layer = layer
 
 	# Transition to LevelScene
 	get_tree().change_scene_to_file("res://src/game/level_scene.tscn")
@@ -577,6 +606,11 @@ func refresh_states() -> void:
 			_:
 				visual_state = HallNodeVisual.VisualState.LOCKED
 		node.set_visual_state(visual_state)
+
+		# Update layer badges
+		var badges := _get_layer_badges(hall_id)
+		if badges.size() > 0:
+			node.set_layer_badges(badges)
 
 	# Refresh gate visuals
 	_refresh_gate_visuals()
@@ -696,6 +730,51 @@ func _center_camera_on_available() -> void:
 
 
 ## --- Helper Methods ---
+
+## Get layer badge data for a hall. Returns array of {layer, state}.
+## Only includes badges for layers that are relevant (not all locked).
+func _get_layer_badges(hall_id: String) -> Array:
+	if _progression == null:
+		return []
+
+	var badges: Array = []
+	var hall_state := _progression.get_hall_state(hall_id)
+
+	# Layer 1 badge — always show for non-locked halls
+	if hall_state != HallProgressionEngine.HallState.LOCKED:
+		var l1_state: String
+		match hall_state:
+			HallProgressionEngine.HallState.AVAILABLE:
+				l1_state = "available"
+			HallProgressionEngine.HallState.COMPLETED:
+				l1_state = "completed"
+			HallProgressionEngine.HallState.PERFECT:
+				l1_state = "perfect"
+			_:
+				l1_state = "locked"
+		badges.append({"layer": 1, "state": l1_state})
+
+	# Layer 2+ badges — show if layer is globally unlocked
+	for layer in range(2, 6):
+		var layer_state := _progression.get_hall_layer_state(hall_id, layer)
+		if layer_state == "locked":
+			# Only show locked badge if the previous layer is completed
+			# (so user can see "next layer coming")
+			if layer == 2 and (hall_state == HallProgressionEngine.HallState.COMPLETED or hall_state == HallProgressionEngine.HallState.PERFECT):
+				if _progression.is_layer_unlocked(layer):
+					badges.append({"layer": layer, "state": "available"})
+				else:
+					badges.append({"layer": layer, "state": "locked"})
+			break  # Don't show higher layers if this one is locked
+		else:
+			badges.append({"layer": layer, "state": layer_state})
+
+	# Only return badges if there's more than just Layer 1
+	# (to avoid cluttering halls that only have Layer 1)
+	if badges.size() <= 1:
+		return []
+	return badges
+
 
 func _get_hall_display_name(hall_id: String) -> String:
 	# Try to get name from level JSON meta

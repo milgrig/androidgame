@@ -202,6 +202,7 @@
     "allowed_actions": ["swap", "combine"],
     "show_cayley_button": true,
     "show_generators_hint": false,
+    "win_condition": "inner_doors_only",
     "inner_doors": [
       {
         "id": "center_door",

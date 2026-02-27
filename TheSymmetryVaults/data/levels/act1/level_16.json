@@ -1,0 +1,90 @@
+{
+  "meta": {
+    "id": "act1_level16",
+    "act": 1,
+    "level": 16,
+    "title": "Семиугольный зал",
+    "subtitle": "Семь шагов к совершенству",
+    "group_name": "Z7",
+    "group_order": 7
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "violet", "position": [640, 140], "label": "A"},
+      {"id": 1, "color": "violet", "position": [862, 268], "label": "B"},
+      {"id": 2, "color": "violet", "position": [820, 526], "label": "C"},
+      {"id": 3, "color": "violet", "position": [640, 640], "label": "D"},
+      {"id": 4, "color": "violet", "position": [460, 526], "label": "E"},
+      {"id": 5, "color": "violet", "position": [418, 268], "label": "F"},
+      {"id": 6, "color": "violet", "position": [530, 160], "label": "G"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "directed", "weight": 1},
+      {"from": 1, "to": 2, "type": "directed", "weight": 1},
+      {"from": 2, "to": 3, "type": "directed", "weight": 1},
+      {"from": 3, "to": 4, "type": "directed", "weight": 1},
+      {"from": 4, "to": 5, "type": "directed", "weight": 1},
+      {"from": 5, "to": 6, "type": "directed", "weight": 1},
+      {"from": 6, "to": 0, "type": "directed", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2,3,4,5,6], "name": "Тождество",       "description": "Всё остаётся на месте"},
+      {"id": "r1", "mapping": [1,2,3,4,5,6,0], "name": "Поворот на 51.4°", "description": "Один шаг по часовой (порядок 7)"},
+      {"id": "r2", "mapping": [2,3,4,5,6,0,1], "name": "Поворот на 102.8°","description": "Два шага по часовой (порядок 7)"},
+      {"id": "r3", "mapping": [3,4,5,6,0,1,2], "name": "Поворот на 154.3°","description": "Три шага по часовой (порядок 7)"},
+      {"id": "r4", "mapping": [4,5,6,0,1,2,3], "name": "Поворот на 205.7°","description": "Четыре шага по часовой (порядок 7)"},
+      {"id": "r5", "mapping": [5,6,0,1,2,3,4], "name": "Поворот на 257.1°","description": "Пять шагов по часовой (порядок 7)"},
+      {"id": "r6", "mapping": [6,0,1,2,3,4,5], "name": "Поворот на 308.6°","description": "Шесть шагов по часовой (порядок 7)"}
+    ],
+    "generators": ["r1"],
+    "cayley_table": {
+      "e":  {"e":"e",  "r1":"r1","r2":"r2","r3":"r3","r4":"r4","r5":"r5","r6":"r6"},
+      "r1": {"e":"r1", "r1":"r2","r2":"r3","r3":"r4","r4":"r5","r5":"r6","r6":"e"},
+      "r2": {"e":"r2", "r1":"r3","r2":"r4","r3":"r5","r4":"r6","r5":"e", "r6":"r1"},
+      "r3": {"e":"r3", "r1":"r4","r2":"r5","r3":"r6","r4":"e", "r5":"r1","r6":"r2"},
+      "r4": {"e":"r4", "r1":"r5","r2":"r6","r3":"e", "r4":"r1","r5":"r2","r6":"r3"},
+      "r5": {"e":"r5", "r1":"r6","r2":"e", "r3":"r1","r4":"r2","r5":"r3","r6":"r4"},
+      "r6": {"e":"r6", "r1":"e", "r2":"r1","r3":"r2","r4":"r3","r5":"r4","r6":"r5"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": true,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "directed_thread"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Семиугольник со стрелками. Семь — простое число, это важно!"},
+    {"trigger": "after_first_valid", "text": "Каждый ключ, кроме тождества, имеет порядок 7. Попробуйте скомбинировать."},
+    {"trigger": "after_3_found", "text": "Один генератор порождает всю группу! Продолжайте комбинировать r1 с собой."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Семиугольник... семь — это простое число. Сколько подгрупп может быть?",
+      "target_crystals": []
+    },
+    {
+      "text": "Попробуйте сдвинуть все кристаллы на один шаг по часовой. Затем снова, и снова...",
+      "target_crystals": []
+    },
+    {
+      "text": "Один поворот на 51.4° — генератор. Примените его 7 раз подряд, чтобы найти все ключи.",
+      "target_crystals": [0, 1, 2, 3, 4, 5, 6]
+    }
+  ]
+}

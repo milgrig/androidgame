@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Комнаты и ключи — единая визуализация</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #08080d;
+    --panel-bg: #0b0b14;
+    --border: #181828;
+    --dim: #2a2a3a;
+    --mid: #5a5a6a;
+    --hi: #9a9aa0;
+    --bright: #d0d0d4;
+    --gold: #c9a84c;
+  }
+
+  body {
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--hi);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ═══ Layout ═══ */
+  #app {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr auto;
+    height: 100%;
+    gap: 0;
+  }
+
+  #crystal-panel {
+    border-right: 1px solid var(--border);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #map-panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #key-bar {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--panel-bg);
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  /* ═══ Panel labels ═══ */
+  .panel-label {
+    position: absolute;
+    top: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 8px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  /* ═══ Crystals ═══ */
+  #crystal-area {
+    width: 280px;
+    height: 280px;
+    position: relative;
+  }
+
+  .c-slot {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: var(--dim);
+  }
+
+  .crystal {
+    position: absolute;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: rgba(255,255,255,0.85);
+    text-shadow: 0 0 8px rgba(255,255,255,0.3);
+    transition: left 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 2;
+  }
+
+  /* Connection lines between slots */
+  #crystal-lines {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  /* Current room indicator */
+  #room-indicator {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+  }
+
+  #room-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  #room-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  /* ═══ Map canvas ═══ */
+  #map-canvas {
+    /* sized by JS */
+  }
+
+  /* ═══ Key bar ═══ */
+  #key-bar-label {
+    font-size: 8px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #key-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .key-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    min-width: 48px;
+    justify-content: center;
+  }
+
+  .key-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  .key-btn .k-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .key-btn .k-num {
+    font-family: inherit;
+    font-size: 10px;
+    color: var(--mid);
+  }
+
+  .key-btn.locked {
+    opacity: 0.2;
+    pointer-events: none;
+  }
+
+  .key-btn.current-key {
+    border-color: var(--gold) !important;
+    box-shadow: 0 0 8px rgba(201,168,76,0.2);
+  }
+
+  /* Group selector */
+  #group-sel {
+    display: flex;
+    gap: 4px;
+  }
+
+  #group-sel button {
+    padding: 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 9px;
+    cursor: pointer;
+  }
+  #group-sel button:hover { color: var(--mid); }
+  #group-sel button.active { border-color: var(--dim); color: var(--hi); }
+
+  /* Flash overlay */
+  #flash {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.1s;
+    z-index: 100;
+  }
+  #flash.on { opacity: 1; transition: opacity 0.03s; }
+</style>
+</head>
+<body>
+
+<div id="flash"></div>
+
+<div id="app">
+  <div id="crystal-panel">
+    <div class="panel-label">Кристаллы</div>
+    <div id="crystal-area">
+      <svg id="crystal-lines" viewBox="0 0 280 280"></svg>
+    </div>
+    <div id="room-indicator">
+      <div id="room-badge">
+        <div id="room-color-dot"></div>
+        <span id="room-name-text">Дом</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-panel">
+    <div class="panel-label">Карта</div>
+    <canvas id="map-canvas"></canvas>
+  </div>
+
+  <div id="key-bar">
+    <div id="key-bar-label">
+      <span>Ключи</span>
+      <div id="group-sel">
+        <button class="active" onclick="loadG('s3')">S₃ · 6</button>
+        <button onclick="loadG('d4')">D₄ · 8</button>
+        <button onclick="loadG('a4')">A₄ · 12</button>
+        <button onclick="loadG('z2z3z4')">Z₂×Z₃×Z₄ · 24</button>
+      </div>
+    </div>
+    <div id="key-grid"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  COLOR GENERATION
+// ═══════════════════════════════
+
+function generateColors(n) {
+  const colors = [];
+  // Room 0 = gold (home)
+  colors.push({ h: 43, s: 60, l: 54, hex: '#c9a84c' });
+  for (let i = 1; i < n; i++) {
+    const hue = (i * 360 / (n - 1) + 200) % 360;
+    const sat = 50 + (i % 3) * 10;
+    const lit = 45 + (i % 2) * 10;
+    const hex = hslToHex(hue, sat, lit);
+    colors.push({ h: hue, s: sat, l: lit, hex });
+  }
+  return colors;
+}
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1-l);
+  const f = n => {
+    const k = (n + h/30) % 12;
+    const color = l - a * Math.max(Math.min(k-3, 9-k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2,'0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// ═══════════════════════════════
+//  GROUPS
+// ═══════════════════════════════
+
+function perm(n, ...cycles) {
+  const p = Array.from({length:n},(_,i)=>i);
+  for (const c of cycles) for (let i=0;i<c.length;i++) p[c[i]]=c[(i+1)%c.length];
+  return p;
+}
+
+function compose(a,b) { return a.map(i=>b[i]); }
+
+function buildGroup(gens, degree) {
+  const id = Array.from({length:degree},(_,i)=>i);
+  const els = [id];
+  const eq = (a,b) => a.every((v,i)=>v===b[i]);
+  const find = p => els.findIndex(e => eq(e,p));
+
+  let changed = true;
+  let safety = 0;
+  while (changed && safety < 200) {
+    changed = false; safety++;
+    const len = els.length;
+    for (let i = 0; i < len; i++) {
+      for (const g of gens) {
+        for (const prod of [compose(els[i],g), compose(g,els[i])]) {
+          if (find(prod) === -1) { els.push(prod); changed = true; }
+        }
+      }
+    }
+  }
+
+  const n = els.length;
+  const mult = Array.from({length:n},(_,a)=>
+    Array.from({length:n},(_,b)=> find(compose(els[a],els[b]))));
+
+  return { n, mult, els };
+}
+
+function makeG(name) {
+  let g;
+  switch(name) {
+    case 's3':
+      g = buildGroup([perm(3,[0,1,2]), perm(3,[0,1])], 3);
+      g.crystalSlots = [
+        {x:140,y:50}, {x:60,y:210}, {x:220,y:210}
+      ];
+      g.crystalConns = [[0,1],[1,2],[0,2]];
+      g.crystals = [
+        {symbol:'▲',color:'#d45a5a',glow:'rgba(212,90,90,0.4)'},
+        {symbol:'●',color:'#5ab87a',glow:'rgba(90,184,122,0.4)'},
+        {symbol:'◆',color:'#5a7ed4',glow:'rgba(90,126,212,0.4)'}
+      ];
+      break;
+    case 'd4':
+      g = buildGroup([perm(4,[0,1,2,3]), perm(4,[1,3])], 4);
+      g.crystalSlots = [
+        {x:80,y:60},{x:200,y:60},{x:200,y:200},{x:80,y:200}
+      ];
+      g.crystalConns = [[0,1],[1,2],[2,3],[3,0]];
+      g.crystals = [
+        {symbol:'▲',color:'#d45a5a',glow:'rgba(212,90,90,0.4)'},
+        {symbol:'●',color:'#5ab87a',glow:'rgba(90,184,122,0.4)'},
+        {symbol:'◆',color:'#5a7ed4',glow:'rgba(90,126,212,0.4)'},
+        {symbol:'★',color:'#d4a85a',glow:'rgba(212,168,90,0.4)'}
+      ];
+      break;
+    case 'a4':
+      g = buildGroup([perm(4,[0,1,2]), perm(4,[0,1,3])], 4);
+      g.crystalSlots = [
+        {x:140,y:40},{x:50,y:160},{x:230,y:160},{x:140,y:240}
+      ];
+      g.crystalConns = [[0,1],[0,2],[0,3],[1,2],[1,3],[2,3]];
+      g.crystals = [
+        {symbol:'▲',color:'#d45a5a',glow:'rgba(212,90,90,0.4)'},
+        {symbol:'●',color:'#5ab87a',glow:'rgba(90,184,122,0.4)'},
+        {symbol:'◆',color:'#5a7ed4',glow:'rgba(90,126,212,0.4)'},
+        {symbol:'★',color:'#d4a85a',glow:'rgba(212,168,90,0.4)'}
+      ];
+      break;
+    case 'z2z3z4': {
+      // Z2 x Z3 x Z4 as permutation group on 9 elements
+      // Z2 acts on {0,1}, Z3 on {2,3,4}, Z4 on {5,6,7,8}
+      const g2 = perm(9, [0,1]);           // generator of Z2
+      const g3 = perm(9, [2,3,4]);         // generator of Z3
+      const g4 = perm(9, [5,6,7,8]);       // generator of Z4
+      g = buildGroup([g2, g3, g4], 9);
+      g.crystalSlots = [
+        {x:140,y:40},{x:50,y:140},{x:230,y:140},{x:140,y:240}
+      ];
+      g.crystalConns = [[0,1],[1,2],[2,3],[3,0],[0,2]];
+      // We'll show 4 crystals representing a projection
+      g.crystals = [
+        {symbol:'▲',color:'#d45a5a',glow:'rgba(212,90,90,0.4)'},
+        {symbol:'●',color:'#5ab87a',glow:'rgba(90,184,122,0.4)'},
+        {symbol:'◆',color:'#5a7ed4',glow:'rgba(90,126,212,0.4)'},
+        {symbol:'★',color:'#d4a85a',glow:'rgba(212,168,90,0.4)'}
+      ];
+      break;
+    }
+  }
+  g.name = name;
+  g.colors = generateColors(g.n);
+  return g;
+}
+
+// ═══════════════════════════════
+//  STATE
+// ═══════════════════════════════
+
+let G = null;
+let currentRoom = 0;
+let discovered = new Set();
+let fadingEdges = []; // {from, to, color, alpha, key}
+let mapCanvas, mapCtx, mapW, mapH;
+let mapPositions = [];
+let hoverKey = -1;
+let hoverNode = -1;
+
+// ═══════════════════════════════
+//  MAP LAYOUT
+// ═══════════════════════════════
+
+function computeMapLayout() {
+  mapPositions = [];
+  const cx = mapW/2, cy = mapH/2;
+  const n = G.n;
+
+  // BFS distance from 0
+  const dist = new Array(n).fill(-1);
+  dist[0] = 0;
+  const q = [0];
+  while (q.length) {
+    const v = q.shift();
+    for (let k = 0; k < n; k++) {
+      if (G.mult[v][k] !== undefined) {
+        const next = G.mult[v][k];
+        if (dist[next] === -1) { dist[next] = dist[v]+1; q.push(next); }
+      }
+    }
+    // Just use direct multiplication by all elements
+    // But limit to neighbors: elements reachable in 1 generator step
+    // Actually for layout, use BFS by generators
+  }
+
+  // Simpler: use all elements as potential generators
+  // BFS with minimal generating set
+  const dist2 = new Array(n).fill(999);
+  dist2[0] = 0;
+  const q2 = [0];
+  const vis = new Set([0]);
+  while (q2.length) {
+    const v = q2.shift();
+    for (let k = 1; k < n; k++) {
+      const next = G.mult[v][k];
+      if (!vis.has(next)) {
+        vis.add(next);
+        dist2[next] = dist2[v] + 1;
+        q2.push(next);
+      }
+    }
+  }
+
+  // Group by distance
+  const layers = {};
+  for (let i=0;i<n;i++) {
+    const d = dist2[i];
+    if (!layers[d]) layers[d] = [];
+    layers[d].push(i);
+  }
+
+  const layerKeys = Object.keys(layers).map(Number).sort((a,b)=>a-b);
+  const totalLayers = layerKeys.length;
+
+  // Layout: concentric arcs
+  const maxR = Math.min(mapW, mapH) * 0.38;
+
+  for (let i = 0; i < n; i++) {
+    const d = dist2[i] || 0;
+    const layer = layers[d];
+    const idx = layer.indexOf(i);
+    const count = layer.length;
+
+    if (d === 0) {
+      mapPositions.push({x: cx, y: cy});
+    } else {
+      const r = (d / Math.max(1, totalLayers - 1)) * maxR;
+      const angleSpan = Math.min(Math.PI * 2, count * 0.6);
+      const startAngle = -Math.PI/2 - angleSpan/2 + d * 0.4;
+      const angle = count === 1
+        ? -Math.PI/2
+        : startAngle + (idx / (count - 1)) * angleSpan;
+      mapPositions.push({
+        x: cx + r * Math.cos(angle),
+        y: cy + r * Math.sin(angle)
+      });
+    }
+  }
+
+  // Force-directed relaxation to spread nodes
+  for (let iter = 0; iter < 200; iter++) {
+    const forces = mapPositions.map(()=>({x:0,y:0}));
+    const repulsion = 800;
+    const attraction = 0.01;
+
+    for (let i=0;i<n;i++) {
+      for (let j=i+1;j<n;j++) {
+        const dx = mapPositions[j].x - mapPositions[i].x;
+        const dy = mapPositions[j].y - mapPositions[i].y;
+        const d = Math.max(1, Math.sqrt(dx*dx+dy*dy));
+        const f = repulsion / (d * d);
+        forces[i].x -= dx/d * f;
+        forces[i].y -= dy/d * f;
+        forces[j].x += dx/d * f;
+        forces[j].y += dy/d * f;
+      }
+      // Pull toward target
+      const tgt = {x: cx, y: cy};
+      if (dist2[i] > 0) {
+        const r = (dist2[i] / Math.max(1, totalLayers-1)) * maxR;
+        const curDx = mapPositions[i].x - cx;
+        const curDy = mapPositions[i].y - cy;
+        const curR = Math.sqrt(curDx*curDx + curDy*curDy);
+        if (curR > 0) {
+          const targetR = r;
+          const diff = curR - targetR;
+          forces[i].x -= curDx/curR * diff * 0.1;
+          forces[i].y -= curDy/curR * diff * 0.1;
+        }
+      }
+    }
+
+    // Apply forces
+    for (let i = 0; i < n; i++) {
+      if (i === 0) continue; // keep home fixed
+      mapPositions[i].x += forces[i].x * 0.3;
+      mapPositions[i].y += forces[i].y * 0.3;
+      // Clamp
+      mapPositions[i].x = Math.max(30, Math.min(mapW-30, mapPositions[i].x));
+      mapPositions[i].y = Math.max(30, Math.min(mapH-30, mapPositions[i].y));
+    }
+  }
+}
+
+// ═══════════════════════════════
+//  CRYSTALS
+// ═══════════════════════════════
+
+function renderCrystals() {
+  const area = document.getElementById('crystal-area');
+  area.querySelectorAll('.crystal, .c-slot').forEach(e=>e.remove());
+
+  if (!G.crystalSlots) return;
+
+  // Slots
+  G.crystalSlots.forEach((s,i) => {
+    const el = document.createElement('div');
+    el.className = 'c-slot';
+    el.style.left = (s.x - 30) + 'px';
+    el.style.top = (s.y - 30) + 'px';
+    el.dataset.label = i+1;
+    area.appendChild(el);
+  });
+
+  // Connection lines
+  const svg = document.getElementById('crystal-lines');
+  svg.innerHTML = '';
+  if (G.crystalConns) {
+    G.crystalConns.forEach(([a,b]) => {
+      const sa = G.crystalSlots[a], sb = G.crystalSlots[b];
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',sa.x); line.setAttribute('y1',sa.y);
+      line.setAttribute('x2',sb.x); line.setAttribute('y2',sb.y);
+      line.setAttribute('stroke','rgba(255,255,255,0.04)');
+      line.setAttribute('stroke-width','1');
+      svg.appendChild(line);
+    });
+  }
+
+  // Crystals — placed according to current room's permutation
+  const currentPerm = G.els[currentRoom];
+  const nCrystals = Math.min(G.crystals.length, G.crystalSlots.length);
+
+  for (let i = 0; i < nCrystals; i++) {
+    const c = G.crystals[i];
+    // Crystal i is at slot currentPerm[i] (if within range)
+    const slotIdx = currentPerm[i] < G.crystalSlots.length ? currentPerm[i] : i;
+    const slot = G.crystalSlots[slotIdx];
+
+    const el = document.createElement('div');
+    el.className = 'crystal';
+    el.style.left = (slot.x - 24) + 'px';
+    el.style.top = (slot.y - 24) + 'px';
+    el.style.background = `radial-gradient(circle at 38% 38%, ${c.color}, ${c.color}66)`;
+    el.style.boxShadow = `0 0 20px ${c.glow}, inset 0 0 10px rgba(255,255,255,0.1)`;
+    el.textContent = c.symbol;
+    el.dataset.idx = i;
+    area.appendChild(el);
+  }
+
+  // Room indicator
+  const col = G.colors[currentRoom];
+  document.getElementById('room-color-dot').style.background = col.hex;
+  document.getElementById('room-name-text').textContent =
+    currentRoom === 0 ? 'Дом' : `Комната ${currentRoom}`;
+  document.getElementById('room-badge').style.borderColor = col.hex + '44';
+}
+
+function animateCrystals() {
+  // Re-render — CSS transition handles animation
+  const area = document.getElementById('crystal-area');
+  const crystals = area.querySelectorAll('.crystal');
+  const currentPerm = G.els[currentRoom];
+  const nCrystals = Math.min(G.crystals.length, G.crystalSlots.length);
+
+  crystals.forEach(el => {
+    const i = parseInt(el.dataset.idx);
+    const slotIdx = currentPerm[i] < G.crystalSlots.length ? currentPerm[i] : i;
+    const slot = G.crystalSlots[slotIdx];
+    el.style.left = (slot.x - 24) + 'px';
+    el.style.top = (slot.y - 24) + 'px';
+  });
+}
+
+// ═══════════════════════════════
+//  MAP DRAWING
+// ═══════════════════════════════
+
+function drawMap() {
+  mapCtx.clearRect(0, 0, mapW*2, mapH*2);
+  mapCtx.save();
+  mapCtx.scale(2, 2);
+
+  // Fading edges
+  fadingEdges = fadingEdges.filter(e => e.alpha > 0.01);
+  fadingEdges.forEach(e => {
+    const p1 = mapPositions[e.from];
+    const p2 = mapPositions[e.to];
+    if (!p1 || !p2) return;
+
+    mapCtx.beginPath();
+    mapCtx.moveTo(p1.x, p1.y);
+
+    // Curved
+    const mx = (p1.x+p2.x)/2;
+    const my = (p1.y+p2.y)/2;
+    const dx = p2.x-p1.x, dy = p2.y-p1.y;
+    const len = Math.sqrt(dx*dx+dy*dy);
+    const nx = -dy/len * 15, ny = dx/len * 15;
+
+    mapCtx.quadraticCurveTo(mx+nx, my+ny, p2.x, p2.y);
+    mapCtx.strokeStyle = e.color;
+    mapCtx.globalAlpha = e.alpha;
+    mapCtx.lineWidth = 2.5 * e.alpha;
+    mapCtx.stroke();
+
+    // Arrow
+    const t = 0.78;
+    const ax = (1-t)*(1-t)*p1.x + 2*(1-t)*t*(mx+nx) + t*t*p2.x;
+    const ay = (1-t)*(1-t)*p1.y + 2*(1-t)*t*(my+ny) + t*t*p2.y;
+    const tx2 = 2*(1-t)*((mx+nx)-p1.x) + 2*t*(p2.x-(mx+nx));
+    const ty2 = 2*(1-t)*((my+ny)-p1.y) + 2*t*(p2.y-(my+ny));
+    const tl = Math.sqrt(tx2*tx2+ty2*ty2);
+    if (tl > 0) {
+      const sz = 5 * e.alpha;
+      const px = -ty2/tl, py = tx2/tl;
+      mapCtx.beginPath();
+      mapCtx.moveTo(ax+tx2/tl*sz, ay+ty2/tl*sz);
+      mapCtx.lineTo(ax-px*sz*0.6, ay-py*sz*0.6);
+      mapCtx.lineTo(ax+px*sz*0.6, ay+py*sz*0.6);
+      mapCtx.closePath();
+      mapCtx.fillStyle = e.color;
+      mapCtx.fill();
+    }
+
+    mapCtx.globalAlpha = 1;
+
+    e.alpha *= 0.985; // slow fade
+  });
+
+  // Hover key preview: show all transitions for this key
+  if (hoverKey >= 0 && hoverKey < G.n) {
+    const keyColor = G.colors[hoverKey].hex;
+    for (let from = 0; from < G.n; from++) {
+      if (!discovered.has(from)) continue;
+      const to = G.mult[from][hoverKey];
+      if (!discovered.has(to)) continue;
+      if (from === to) continue;
+
+      const p1 = mapPositions[from];
+      const p2 = mapPositions[to];
+      if (!p1 || !p2) continue;
+
+      const mx = (p1.x+p2.x)/2;
+      const my = (p1.y+p2.y)/2;
+      const dx = p2.x-p1.x, dy = p2.y-p1.y;
+      const len = Math.sqrt(dx*dx+dy*dy) || 1;
+      const nx = -dy/len * 12, ny = dx/len * 12;
+
+      mapCtx.beginPath();
+      mapCtx.moveTo(p1.x, p1.y);
+      mapCtx.quadraticCurveTo(mx+nx, my+ny, p2.x, p2.y);
+      mapCtx.strokeStyle = keyColor;
+      mapCtx.globalAlpha = 0.2;
+      mapCtx.lineWidth = 1;
+      mapCtx.stroke();
+      mapCtx.globalAlpha = 1;
+    }
+  }
+
+  // Nodes
+  const sz = G.n > 16 ? 7 : G.n > 8 ? 9 : 11;
+
+  for (let i = 0; i < G.n; i++) {
+    const p = mapPositions[i];
+    if (!p) continue;
+
+    if (!discovered.has(i)) {
+      mapCtx.globalAlpha = 0.12;
+      mapCtx.strokeStyle = '#333';
+      mapCtx.lineWidth = 0.5;
+      mapCtx.strokeRect(p.x-sz/2, p.y-sz/2, sz, sz);
+      mapCtx.globalAlpha = 1;
+      continue;
+    }
+
+    const isCur = i === currentRoom;
+    const isHov = i === hoverNode;
+    const col = G.colors[i];
+
+    if (isCur) {
+      mapCtx.shadowColor = col.hex + '88';
+      mapCtx.shadowBlur = 14;
+    }
+
+    // Filled square with room's color
+    mapCtx.beginPath();
+    mapCtx.rect(p.x-sz/2, p.y-sz/2, sz, sz);
+    mapCtx.fillStyle = isCur ? col.hex : isHov ? col.hex + 'aa' : col.hex + '55';
+    mapCtx.fill();
+    mapCtx.strokeStyle = isCur ? col.hex : col.hex + '44';
+    mapCtx.lineWidth = isCur ? 1.5 : 0.5;
+    mapCtx.stroke();
+
+    mapCtx.shadowColor = 'transparent';
+    mapCtx.shadowBlur = 0;
+
+    // Number
+    if (G.n <= 16 || isCur || isHov) {
+      mapCtx.fillStyle = isCur ? '#fff' : isHov ? '#ccc' : '#777';
+      mapCtx.font = `${sz > 9 ? 8 : 6}px 'JetBrains Mono', monospace`;
+      mapCtx.textAlign = 'center';
+      mapCtx.textBaseline = 'top';
+      mapCtx.fillText(i === 0 ? '⌂' : i, p.x, p.y + sz/2 + 3);
+    }
+  }
+
+  mapCtx.restore();
+
+  if (fadingEdges.length > 0) requestAnimationFrame(drawMap);
+}
+
+// ═══════════════════════════════
+//  KEY APPLICATION
+// ═══════════════════════════════
+
+function applyKey(keyIdx) {
+  if (!discovered.has(keyIdx)) return;
+
+  const from = currentRoom;
+  const to = G.mult[from][keyIdx];
+
+  // Flash
+  const flash = document.getElementById('flash');
+  const col = G.colors[keyIdx];
+  flash.style.background = `radial-gradient(ellipse at center, ${col.hex}15, transparent 70%)`;
+  flash.classList.add('on');
+  setTimeout(() => flash.classList.remove('on'), 300);
+
+  // Add fading edge on map
+  fadingEdges.push({
+    from, to,
+    color: col.hex,
+    alpha: 1.0,
+    key: keyIdx
+  });
+
+  // Move
+  currentRoom = to;
+  if (!discovered.has(to)) {
+    discovered.add(to);
+    renderKeys();
+  }
+
+  animateCrystals();
+  updateRoomIndicator();
+  requestAnimationFrame(drawMap);
+}
+
+function updateRoomIndicator() {
+  const col = G.colors[currentRoom];
+  document.getElementById('room-color-dot').style.background = col.hex;
+  document.getElementById('room-name-text').textContent =
+    currentRoom === 0 ? 'Дом' : `Комната ${currentRoom}`;
+  document.getElementById('room-badge').style.borderColor = col.hex + '44';
+}
+
+// ═══════════════════════════════
+//  KEY BAR
+// ═══════════════════════════════
+
+function renderKeys() {
+  const grid = document.getElementById('key-grid');
+  grid.innerHTML = '';
+
+  for (let i = 0; i < G.n; i++) {
+    const col = G.colors[i];
+    const btn = document.createElement('button');
+    btn.className = 'key-btn';
+    if (!discovered.has(i)) btn.classList.add('locked');
+    if (i === currentRoom) btn.classList.add('current-key');
+
+    btn.style.borderColor = discovered.has(i) ? col.hex + '33' : '';
+
+    btn.innerHTML = `
+      <div class="k-dot" style="background:${col.hex}"></div>
+      <span class="k-num" style="color:${discovered.has(i) ? col.hex : ''}">${i === 0 ? '⌂' : i}</span>
+    `;
+
+    btn.onmouseenter = () => {
+      hoverKey = i;
+      requestAnimationFrame(drawMap);
+    };
+    btn.onmouseleave = () => {
+      hoverKey = -1;
+      requestAnimationFrame(drawMap);
+    };
+    btn.onclick = () => applyKey(i);
+
+    grid.appendChild(btn);
+  }
+}
+
+// ═══════════════════════════════
+//  MAP INTERACTION
+// ═══════════════════════════════
+
+function setupMapInteraction() {
+  const c = document.getElementById('map-canvas');
+  c.addEventListener('mousemove', e => {
+    const rect = c.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const sz = G.n > 16 ? 7 : G.n > 8 ? 9 : 11;
+    let found = -1;
+    for (let i = 0; i < G.n; i++) {
+      if (!discovered.has(i)) continue;
+      const p = mapPositions[i];
+      if (Math.abs(mx-p.x) < sz+4 && Math.abs(my-p.y) < sz+4) { found = i; break; }
+    }
+    if (found !== hoverNode) {
+      hoverNode = found;
+      drawMap();
+    }
+  });
+  c.addEventListener('click', () => {
+    if (hoverNode >= 0) {
+      currentRoom = hoverNode;
+      animateCrystals();
+      updateRoomIndicator();
+      renderKeys();
+      drawMap();
+    }
+  });
+}
+
+// ═══════════════════════════════
+//  LOAD / INIT
+// ═══════════════════════════════
+
+function loadG(name) {
+  G = makeG(name);
+  currentRoom = 0;
+  discovered = new Set([0]);
+  fadingEdges = [];
+  hoverKey = -1;
+  hoverNode = -1;
+
+  // Discover all for demo (in real game, discovered incrementally)
+  for (let i = 0; i < G.n; i++) discovered.add(i);
+
+  document.querySelectorAll('#group-sel button').forEach(b => {
+    b.classList.toggle('active', b.textContent.includes(
+      name === 's3' ? 'S₃' : name === 'd4' ? 'D₄' : name === 'a4' ? 'A₄' : 'Z₂'
+    ));
+  });
+
+  sizeMap();
+  computeMapLayout();
+  renderCrystals();
+  renderKeys();
+  drawMap();
+}
+
+function sizeMap() {
+  const panel = document.getElementById('map-panel');
+  mapW = panel.clientWidth;
+  mapH = panel.clientHeight;
+  mapCanvas = document.getElementById('map-canvas');
+  mapCtx = mapCanvas.getContext('2d');
+  mapCanvas.width = mapW * 2;
+  mapCanvas.height = mapH * 2;
+  mapCanvas.style.width = mapW + 'px';
+  mapCanvas.style.height = mapH + 'px';
+}
+
+window.addEventListener('resize', () => {
+  sizeMap();
+  computeMapLayout();
+  drawMap();
+});
+
+sizeMap();
+setupMapInteraction();
+loadG('s3');
+</script>
+</body>
+</html>

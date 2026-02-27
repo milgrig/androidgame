@@ -240,6 +240,16 @@ static func serialize_edge(edge: EdgeRenderer) -> Dictionary:
 
 
 static func serialize_keyring(kr: KeyRing) -> Dictionary:
+	if kr == null:
+		return {
+			"found": [],
+			"found_count": 0,
+			"total": 0,
+			"complete": false,
+			"has_identity": false,
+			"is_closed": false,
+			"has_inverses": false,
+		}
 	var found_list: Array = []
 	for i in range(kr.count()):
 		var p: Permutation = kr.get_key(i)
@@ -308,7 +318,7 @@ static func get_command_catalog() -> Array:
 		{"cmd": "get_node", "args": ["path"], "description": "Detailed info about one node by path."},
 		{"cmd": "get_events", "description": "Drain the event queue (signals that fired)."},
 		{"cmd": "select_keys", "args": ["indices"], "description": "Select keys by index on the inner door panel (Act 2). indices is an array of ints."},
-		{"cmd": "try_open_door", "args": ["indices (optional)"], "description": "Try to open an inner door with selected keys. Optionally pass indices to select first."},
+		{"cmd": "check_subgroup", "args": ["indices (optional)"], "description": "Check if selected keys form a valid subgroup (Act 2). Optionally pass indices to select first. Alias: 'try_open_door'."},
 		{"cmd": "quit", "description": "Exit Godot."},
 	]
 

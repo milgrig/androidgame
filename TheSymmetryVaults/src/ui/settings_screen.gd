@@ -341,13 +341,14 @@ func _on_confirm_reset() -> void:
 	_reset_button.disabled = true
 
 	# Restore after 2 seconds
-	get_tree().create_timer(2.0).timeout.connect(func():
-		if is_instance_valid(_reset_button):
-			_reset_button.text = "Сбросить прогресс"
-			_reset_button.add_theme_color_override("font_color", Color(1.0, 0.6, 0.5, 0.9))
-			_reset_button.disabled = false
-	)
+	get_tree().create_timer(2.0).timeout.connect(_restore_reset_button)
 
+
+func _restore_reset_button() -> void:
+	if is_instance_valid(_reset_button):
+		_reset_button.text = "Сбросить прогресс"
+		_reset_button.add_theme_color_override("font_color", Color(1.0, 0.6, 0.5, 0.9))
+		_reset_button.disabled = false
 
 func _on_cancel_reset() -> void:
 	var tween = create_tween()

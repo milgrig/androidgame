@@ -1,0 +1,80 @@
+{
+  "meta": {
+    "id": "act1_level18",
+    "act": 1,
+    "level": 18,
+    "title": "Треугольное зеркало",
+    "subtitle": "Три поворота, три отражения",
+    "group_name": "D3",
+    "group_order": 6
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "silver", "position": [640, 200], "label": "A"},
+      {"id": 1, "color": "silver", "position": [440, 520], "label": "B"},
+      {"id": 2, "color": "silver", "position": [840, 520], "label": "C"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 2, "to": 0, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2], "name": "Тождество",                    "description": "Всё остаётся на месте"},
+      {"id": "r1", "mapping": [1,2,0], "name": "Поворот на 120°",              "description": "Один шаг по часовой"},
+      {"id": "r2", "mapping": [2,0,1], "name": "Поворот на 240°",              "description": "Два шага по часовой"},
+      {"id": "s0", "mapping": [0,2,1], "name": "Отражение через вершину A",     "description": "Зеркало через вершину A"},
+      {"id": "s1", "mapping": [2,1,0], "name": "Отражение через вершину B",     "description": "Зеркало через вершину B"},
+      {"id": "s2", "mapping": [1,0,2], "name": "Отражение через вершину C",     "description": "Зеркало через вершину C"}
+    ],
+    "generators": ["r1", "s0"],
+    "cayley_table": {
+      "e":  {"e":"e",  "r1":"r1","r2":"r2","s0":"s0","s1":"s1","s2":"s2"},
+      "r1": {"e":"r1", "r1":"r2","r2":"e", "s0":"s2","s1":"s0","s2":"s1"},
+      "r2": {"e":"r2", "r1":"e", "r2":"r1","s0":"s1","s1":"s2","s2":"s0"},
+      "s0": {"e":"s0", "r1":"s1","r2":"s2","s0":"e", "s1":"r1","s2":"r2"},
+      "s1": {"e":"s1", "r1":"s2","r2":"s0","s0":"r2","s1":"e", "s2":"r1"},
+      "s2": {"e":"s2", "r1":"s0","r2":"s1","s0":"r1","s1":"r2","s2":"e"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": true,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Равносторонний треугольник. Сколько способов его повернуть? Отразить?"},
+    {"trigger": "after_first_valid", "text": "D3 — это группа симметрий треугольника. Три поворота + три отражения."},
+    {"trigger": "after_3_found", "text": "Повороты образуют подгруппу. Отражения нет — они не замкнуты!"}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Треугольник симметричен. Попробуйте повороты на 120° и 240°.",
+      "target_crystals": []
+    },
+    {
+      "text": "Отразите треугольник через биссектрису от каждой вершины. Три отражения.",
+      "target_crystals": []
+    },
+    {
+      "text": "D3 ≅ S3. Это та же группа, что и в уровне 9, но визуально другая!",
+      "target_crystals": [0, 1, 2]
+    }
+  ]
+}

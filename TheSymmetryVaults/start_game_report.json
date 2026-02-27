@@ -1,0 +1,9 @@
+{
+  "button_pressed": "/root/MainMenu/ButtonContainer/StartButton",
+  "scene_after": {
+    "root_name": "root",
+    "root_script": "Window",
+    "children_count": 3
+  },
+  "success": true
+}

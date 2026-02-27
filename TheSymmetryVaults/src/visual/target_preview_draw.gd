@@ -139,11 +139,10 @@ func _draw() -> void:
 	for seg in _edge_segments:
 		draw_line(seg["from"], seg["to"], edge_color, 1.5, true)
 
-	# Draw node circles
+	# Draw node circles (pattern only — no labels, only color + edges matter)
 	for nc in _node_circles:
 		var pos: Vector2 = nc["pos"]
 		var col: Color = nc["color"]
-		var label_str: String = nc["label"]
 
 		# Outer glow
 		draw_circle(pos, _node_radius + 1.5, Color(col.r, col.g, col.b, 0.3))
@@ -153,12 +152,3 @@ func _draw() -> void:
 
 		# Inner highlight
 		draw_circle(pos + Vector2(-2, -2), _node_radius * 0.35, Color(1, 1, 1, 0.35))
-
-		# Label
-		if label_str != "":
-			var font := ThemeDB.fallback_font
-			var font_size := 9
-			if font:
-				var text_size := font.get_string_size(label_str, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-				var text_pos := pos - text_size / 2.0 + Vector2(0, text_size.y * 0.35)
-				draw_string(font, text_pos, label_str, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color(1, 1, 1, 0.95))

@@ -1,19 +1,18 @@
 class_name SubgroupSelector
 extends PanelContainer
-## SubgroupSelector — Enhanced panel for selecting keys and checking subgroups.
+## SubgroupSelector — Enhanced panel for selecting keys and finding subgroups.
 ##
 ## Wraps InnerDoorPanel with visual improvements:
 ## - Styled dark panel with bronze/gold border
 ## - Each key has a mini permutation diagram (arrows showing where nodes go)
-## - "ПРОВЕРИТЬ ПОДГРУППУ" button checks closure before opening
+## - "ПРОВЕРИТЬ НАБОР" button checks if selected keys form a subgroup
 ## - Visual feedback: green for valid subgroup, red + diagnostic for invalid
-## - Integrates with InnerDoorVisual for on-field door animations
+## - Found subgroups panel with progress tracking
 ##
-## This panel appears when the player clicks an InnerDoorVisual on the field,
-## or is always visible in the HUD for Act 2 levels.
+## No doors, no locks — pure subgroup discovery.
 
 signal subgroup_validated(is_valid: bool, selected_indices: Array)
-signal door_open_requested(door_id: String, selected_indices: Array)
+signal subgroup_found_signal(sg_name: String, selected_indices: Array)
 
 const _InnerDoorPanelClass = preload("res://src/game/inner_door_panel.gd")
 
@@ -29,10 +28,10 @@ var _mini_diagrams: Array = []            # Array of Control nodes for key diagr
 var _scroll: ScrollContainer
 var _content: VBoxContainer
 var _title_label: Label
-var _doors_section: VBoxContainer
+var _progress_label: Label
+var _found_section: VBoxContainer
 var _keys_section: VBoxContainer
 var _check_button: Button
-var _open_button: Button
 var _status_label: Label
 var _key_checkboxes: Array = []           # Array[CheckBox]
 var _selected_indices: Array = []
@@ -61,8 +60,8 @@ func setup(doors_data: Array, subgroups_data: Array, key_ring_ref: KeyRing, leve
 	add_child(_inner_panel)
 
 	# Forward signals from inner panel
-	_inner_panel.door_opened.connect(func(did): door_open_requested.emit(did, _selected_indices))
-	_inner_panel.door_attempt_failed.connect(func(_did, _r): pass)
+	_inner_panel.subgroup_found.connect(_on_inner_subgroup_found)
+	_inner_panel.subgroup_check_failed.connect(_on_inner_check_failed)
 
 	_build_ui()
 
@@ -109,17 +108,33 @@ func _build_ui() -> void:
 	# Title
 	_title_label = Label.new()
 	_title_label.name = "SelectorTitle"
-	_title_label.text = "Внутренние двери"
+	_title_label.text = "Поиск подгрупп"
 	_title_label.add_theme_font_size_override("font_size", 16)
 	_title_label.add_theme_color_override("font_color", Color(0.9, 0.8, 0.4, 0.95))
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_content.add_child(_title_label)
 
-	# Doors section
-	_doors_section = VBoxContainer.new()
-	_doors_section.name = "DoorsSection"
-	_content.add_child(_doors_section)
-	_rebuild_doors_display()
+	# Progress counter
+	_progress_label = Label.new()
+	_progress_label.name = "ProgressLabel"
+	_progress_label.add_theme_font_size_override("font_size", 13)
+	_progress_label.add_theme_color_override("font_color", Color(0.7, 0.85, 0.9, 0.9))
+	_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_content.add_child(_progress_label)
+	_update_progress_label()
+
+	# Found subgroups section
+	var found_header := Label.new()
+	found_header.name = "FoundHeader"
+	found_header.text = "Найденные подгруппы:"
+	found_header.add_theme_font_size_override("font_size", 12)
+	found_header.add_theme_color_override("font_color", Color(0.6, 0.7, 0.6, 0.8))
+	_content.add_child(found_header)
+
+	_found_section = VBoxContainer.new()
+	_found_section.name = "FoundSection"
+	_content.add_child(_found_section)
+	_rebuild_found_display()
 
 	# Separator
 	var sep := HSeparator.new()
@@ -129,7 +144,7 @@ func _build_ui() -> void:
 	# Keys selection header
 	var keys_header := Label.new()
 	keys_header.name = "KeysHeader"
-	keys_header.text = "Выберите ключи для подгруппы:"
+	keys_header.text = "Выберите ключи для набора:"
 	keys_header.add_theme_font_size_override("font_size", 13)
 	keys_header.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85, 0.85))
 	_content.add_child(keys_header)
@@ -143,24 +158,13 @@ func _build_ui() -> void:
 	# Check subgroup button
 	_check_button = Button.new()
 	_check_button.name = "CheckSubgroupBtn"
-	_check_button.text = "ПРОВЕРИТЬ ПОДГРУППУ"
-	_check_button.add_theme_font_size_override("font_size", 13)
-	_check_button.custom_minimum_size = Vector2(0, 32)
+	_check_button.text = "ПРОВЕРИТЬ НАБОР"
+	_check_button.add_theme_font_size_override("font_size", 14)
+	_check_button.custom_minimum_size = Vector2(0, 36)
 	_check_button.disabled = true
 	_check_button.pressed.connect(_on_check_subgroup)
 	_apply_button_style(_check_button, Color(0.15, 0.2, 0.35, 0.7), Color(0.4, 0.5, 0.8, 0.5))
 	_content.add_child(_check_button)
-
-	# Open door button
-	_open_button = Button.new()
-	_open_button.name = "OpenDoorBtn"
-	_open_button.text = "ОТКРЫТЬ ДВЕРЬ"
-	_open_button.add_theme_font_size_override("font_size", 14)
-	_open_button.custom_minimum_size = Vector2(0, 36)
-	_open_button.disabled = true
-	_open_button.pressed.connect(_on_open_door)
-	_apply_button_style(_open_button, Color(0.2, 0.15, 0.08, 0.7), Color(0.75, 0.6, 0.2, 0.6))
-	_content.add_child(_open_button)
 
 	# Status label
 	_status_label = Label.new()
@@ -192,51 +196,56 @@ func _apply_button_style(btn: Button, bg: Color, border: Color) -> void:
 	btn.add_theme_stylebox_override("hover", hover)
 
 
-func _rebuild_doors_display() -> void:
-	if _doors_section == null:
+func _rebuild_found_display() -> void:
+	if _found_section == null:
 		return
-	for child in _doors_section.get_children():
+	for child in _found_section.get_children():
 		child.queue_free()
 
-	var door_states: Dictionary = _inner_panel.door_states if _inner_panel else {}
+	if _inner_panel == null:
+		return
 
-	for door in _doors_data:
-		var did: String = door.get("id", "")
-		var hint: String = door.get("visual_hint", "")
-		var req_sg: String = door.get("required_subgroup", "")
+	var target_subgroups: Array = _inner_panel._target_subgroups
+	var found: Array = _inner_panel.found_subgroups
 
-		# Find subgroup order
-		var sg_order: int = 0
-		for sg in _subgroups_data:
-			if sg.get("name", "") == req_sg:
-				sg_order = sg.get("order", 0)
-				break
-
-		var is_opened: bool = door_states.get(did, "locked") == "opened"
+	for sg in target_subgroups:
+		var sg_name: String = sg.get("name", "")
+		var sg_desc: String = sg.get("description", sg_name)
+		var elements: Array = sg.get("elements", [])
+		var is_found: bool = sg_name in found
 
 		var row := HBoxContainer.new()
-		row.custom_minimum_size = Vector2(0, 24)
+		row.custom_minimum_size = Vector2(0, 22)
 
-		# Icon
+		# Status icon
 		var icon_label := Label.new()
-		icon_label.text = "✅" if is_opened else "🔒"
-		icon_label.add_theme_font_size_override("font_size", 14)
-		icon_label.custom_minimum_size = Vector2(24, 24)
+		icon_label.text = "✅" if is_found else "⬜"
+		icon_label.add_theme_font_size_override("font_size", 13)
+		icon_label.custom_minimum_size = Vector2(22, 22)
 		row.add_child(icon_label)
 
-		# Door info
+		# Info
 		var info_label := Label.new()
-		var truncated_hint := hint if hint.length() <= 35 else hint.left(32) + "..."
-		info_label.text = "%s (порядок %d)" % [truncated_hint, sg_order]
-		info_label.add_theme_font_size_override("font_size", 12)
-		if is_opened:
+		if is_found:
+			var elements_str := "{%s}" % ", ".join(elements)
+			info_label.text = "%s — %s" % [sg_desc, elements_str]
 			info_label.add_theme_color_override("font_color", Color(0.4, 0.9, 0.4, 0.9))
 		else:
-			info_label.add_theme_color_override("font_color", Color(0.75, 0.7, 0.6, 0.85))
+			info_label.text = "%s (порядок %d)" % [sg_desc, sg.get("order", 0)]
+			info_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 0.7))
+		info_label.add_theme_font_size_override("font_size", 11)
 		info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info_label.autowrap_mode = TextServer.AUTOWRAP_WORD
 		row.add_child(info_label)
 
-		_doors_section.add_child(row)
+		_found_section.add_child(row)
+
+
+func _update_progress_label() -> void:
+	if _progress_label and _inner_panel:
+		_progress_label.text = "Подгруппы: %d / %d" % [_inner_panel.get_opened_count(), _inner_panel.get_total_count()]
+	elif _progress_label:
+		_progress_label.text = "Подгруппы: 0 / 0"
 
 
 func _rebuild_key_checkboxes() -> void:
@@ -259,17 +268,13 @@ func _rebuild_key_checkboxes() -> void:
 		# Checkbox
 		var cb := CheckBox.new()
 		cb.name = "KeyCB_%d" % i
-		var display_name := ""
-		if _level_scene and _level_scene.has_method("_get_key_display_name"):
-			display_name = _level_scene._get_key_display_name(i)
-		else:
-			display_name = "Ключ %d" % (i + 1)
+		var display_name := _get_key_name(i)
 		cb.text = display_name
 		cb.add_theme_font_size_override("font_size", 12)
 		cb.add_theme_color_override("font_color", Color(0.7, 0.8, 0.7, 0.9))
 		cb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var cb_index := i
-		cb.toggled.connect(func(pressed): _on_key_toggled(pressed, cb_index))
+		cb.toggled.connect(_on_key_checkbox_toggled.bind(cb_index))
 		row.add_child(cb)
 		_key_checkboxes.append(cb)
 
@@ -290,12 +295,10 @@ func _create_mini_diagram(key_index: int) -> Control:
 	diagram.custom_minimum_size = Vector2(MINI_DIAGRAM_SIZE, MINI_DIAGRAM_SIZE)
 	diagram.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-	# Draw the diagram via _draw callback
 	var perm: Permutation = _key_ring.get_key(key_index) if _key_ring and key_index < _key_ring.count() else null
 	if perm == null:
 		return diagram
 
-	# Store mapping data on the control for drawing
 	diagram.set_meta("mapping", Array(perm.mapping))
 	diagram.draw.connect(_draw_mini_diagram.bind(diagram))
 	return diagram
@@ -311,13 +314,11 @@ func _draw_mini_diagram(ctrl: Control) -> void:
 	var center := Vector2(MINI_DIAGRAM_SIZE / 2.0, MINI_DIAGRAM_SIZE / 2.0)
 	var radius := MINI_DIAGRAM_SIZE / 2.0 - 3.0
 
-	# Draw node positions in a circle
 	var positions: Array[Vector2] = []
 	for i in range(n):
 		var angle := (TAU / n) * i - PI / 2.0
 		positions.append(center + Vector2(cos(angle), sin(angle)) * radius)
 
-	# Draw arrows for non-fixed points
 	for i in range(n):
 		var target: int = mapping[i]
 		if target != i:
@@ -325,7 +326,6 @@ func _draw_mini_diagram(ctrl: Control) -> void:
 			var to_pt := positions[target]
 			ctrl.draw_line(from_pt, to_pt, Color(0.5, 0.7, 1.0, 0.6), 1.0)
 
-	# Draw nodes
 	for i in range(n):
 		var is_fixed: bool = mapping[i] == i
 		var col := Color(0.4, 0.7, 0.4, 0.8) if is_fixed else Color(0.8, 0.6, 0.3, 0.9)
@@ -333,6 +333,24 @@ func _draw_mini_diagram(ctrl: Control) -> void:
 
 
 # --- Event handlers ---
+
+## Forward inner panel subgroup_found to our signal (replaces lambda).
+func _on_inner_subgroup_found(sg_name: String) -> void:
+	subgroup_found_signal.emit(sg_name, _selected_indices)
+
+## No-op handler for inner panel check failure (replaces lambda).
+func _on_inner_check_failed(_r) -> void:
+	pass
+
+## Checkbox toggled handler with bound index (replaces lambda).
+func _on_key_checkbox_toggled(pressed: bool, index: int) -> void:
+	_on_key_toggled(pressed, index)
+
+## Reset checkbox font colors after validation feedback (replaces lambda).
+func _reset_checkbox_colors() -> void:
+	for cb in _key_checkboxes:
+		if is_instance_valid(cb):
+			cb.add_theme_color_override("font_color", Color(0.7, 0.8, 0.7, 0.9))
 
 func _on_key_toggled(pressed: bool, index: int) -> void:
 	if pressed:
@@ -348,42 +366,47 @@ func _on_key_toggled(pressed: bool, index: int) -> void:
 
 func _update_buttons() -> void:
 	var has_selection := not _selected_indices.is_empty()
-	var has_locked_door := false
-	if _inner_panel:
-		for did in _inner_panel.door_states:
-			if _inner_panel.door_states[did] == "locked":
-				has_locked_door = true
-				break
+	var has_unfound := _inner_panel != null and _inner_panel.get_opened_count() < _inner_panel.get_total_count()
 
 	if _check_button:
-		_check_button.disabled = not has_selection
-		_check_button.text = "ПРОВЕРИТЬ ПОДГРУППУ (%d)" % _selected_indices.size() if has_selection else "ПРОВЕРИТЬ ПОДГРУППУ"
-
-	if _open_button:
-		_open_button.disabled = true  # Only enabled after successful check
-		_open_button.text = "ОТКРЫТЬ ДВЕРЬ"
+		_check_button.disabled = not has_selection or not has_unfound
+		_check_button.text = "ПРОВЕРИТЬ НАБОР (%d)" % _selected_indices.size() if has_selection else "ПРОВЕРИТЬ НАБОР"
 
 
 func _on_check_subgroup() -> void:
 	if _key_ring == null or _selected_indices.is_empty():
 		return
 
+	# Sync selection to inner panel and trigger check
+	if _inner_panel:
+		_inner_panel.set_selected_keys(_selected_indices)
+		_inner_panel._on_check_pressed()
+
+	# Read result from inner panel state
 	var result: Dictionary = _key_ring.check_subgroup(_selected_indices)
 	var is_valid: bool = result.get("is_subgroup", false)
 
 	subgroup_validated.emit(is_valid, _selected_indices.duplicate())
 
 	if is_valid:
-		_show_status("✓ Это подгруппа! Можете открыть дверь.", Color(0.3, 1.0, 0.4, 0.95))
-		if _open_button:
-			_open_button.disabled = false
+		# Check if it was actually a new target subgroup found
+		_rebuild_found_display()
+		_update_progress_label()
+		_update_buttons()
+
 		# Highlight checkboxes green
 		for idx in _selected_indices:
 			if idx < _key_checkboxes.size():
 				_key_checkboxes[idx].add_theme_color_override("font_color", Color(0.3, 1.0, 0.4, 0.95))
+
+		# Show appropriate status from inner panel
+		if _inner_panel and _inner_panel._status_label:
+			var msg: String = _inner_panel._status_label.text
+			var col: Color = _inner_panel._status_label.get_theme_color("font_color")
+			_show_status(msg, col)
 	else:
 		var reasons: Array = result.get("reasons", [])
-		var msg := "✗ Это не подгруппа. "
+		var msg := "Это не подгруппа. "
 		if reasons.has("missing_identity"):
 			msg += "Нет Тождества (e) — «ничего не делать» тоже ключ! Добавьте его в набор."
 		elif reasons.has("missing_inverse"):
@@ -393,8 +416,11 @@ func _on_check_subgroup() -> void:
 			var closure_example := _get_closure_example_text()
 			msg += "Набор НЕ ЗАМКНУТ. %s Попробуйте добавить недостающий ключ!" % closure_example
 		_show_status(msg, Color(1.0, 0.4, 0.3, 0.95))
-		if _open_button:
-			_open_button.disabled = true
+
+	# Reset checkbox colors after delay
+	var tween := create_tween()
+	tween.tween_interval(4.0)
+	tween.tween_callback(_reset_checkbox_colors)
 
 
 func _get_closure_example_text() -> String:
@@ -402,7 +428,6 @@ func _get_closure_example_text() -> String:
 	if _key_ring == null or _selected_indices.size() < 2:
 		return "Комбинация двух ключей даёт ключ вне набора."
 
-	# Try to find a concrete counterexample
 	for i in _selected_indices:
 		for j in _selected_indices:
 			if i >= _key_ring.count() or j >= _key_ring.count():
@@ -411,7 +436,6 @@ func _get_closure_example_text() -> String:
 			var key_b: Permutation = _key_ring.get_key(j)
 			var product: Permutation = key_a.compose(key_b)
 
-			# Check if product is in selected subset
 			var found_in_subset := false
 			for k in _selected_indices:
 				if k >= _key_ring.count():
@@ -445,7 +469,6 @@ func _get_inverse_example_text() -> String:
 		var key: Permutation = _key_ring.get_key(i)
 		var inv: Permutation = key.inverse()
 
-		# Check if inverse is in subset
 		var found_inv := false
 		for j in _selected_indices:
 			if j >= _key_ring.count():
@@ -467,31 +490,16 @@ func _get_inverse_example_text() -> String:
 
 
 func _get_key_name(index: int) -> String:
-	## Get display name for a key.
-	if _level_scene and _level_scene.has_method("_get_key_display_name"):
-		return _level_scene._get_key_display_name(index)
+	## Get display name for a key (delegates to ValidationManager).
+	if _level_scene and _level_scene._validation_mgr:
+		return _level_scene._validation_mgr.get_key_display_name(index)
 	return "Ключ %d" % (index + 1)
-
-
-func _on_open_door() -> void:
-	if _inner_panel == null:
-		return
-	# Sync selection and trigger open
-	_inner_panel.set_selected_keys(_selected_indices)
-	_inner_panel._on_open_pressed()
-	# Refresh displays
-	_rebuild_doors_display()
-	_update_buttons()
-	# Reset checkbox colors
-	for cb in _key_checkboxes:
-		cb.add_theme_color_override("font_color", Color(0.7, 0.8, 0.7, 0.9))
 
 
 func _show_status(text: String, color: Color) -> void:
 	if _status_label:
 		_status_label.text = text
 		_status_label.add_theme_color_override("font_color", color)
-		# Auto-clear after delay
 		var tween := create_tween()
 		tween.tween_interval(4.0)
 		tween.tween_callback(_reset_status_label)
@@ -513,8 +521,11 @@ func refresh_keys() -> void:
 		_inner_panel.refresh_keys()
 
 
-func refresh_doors() -> void:
-	_rebuild_doors_display()
+func refresh_found() -> void:
+	## Called after subgroup found. Rebuild found list.
+	_rebuild_found_display()
+	_update_progress_label()
+	_update_buttons()
 
 
 func is_all_doors_opened() -> bool:

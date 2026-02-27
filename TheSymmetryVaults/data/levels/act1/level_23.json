@@ -1,0 +1,107 @@
+{
+  "meta": {
+    "id": "act1_level23",
+    "act": 1,
+    "level": 23,
+    "title": "Граф Петерсена",
+    "subtitle": "Знаменитый граф, скрытые симметрии",
+    "group_name": "D5",
+    "group_order": 10
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "magenta", "position": [640, 120], "label": "A"},
+      {"id": 1, "color": "magenta", "position": [862, 268], "label": "B"},
+      {"id": 2, "color": "magenta", "position": [820, 526], "label": "C"},
+      {"id": 3, "color": "magenta", "position": [460, 526], "label": "D"},
+      {"id": 4, "color": "magenta", "position": [418, 268], "label": "E"},
+      {"id": 5, "color": "lime",    "position": [640, 240], "label": "F"},
+      {"id": 6, "color": "lime",    "position": [760, 340], "label": "G"},
+      {"id": 7, "color": "lime",    "position": [720, 480], "label": "H"},
+      {"id": 8, "color": "lime",    "position": [560, 480], "label": "I"},
+      {"id": 9, "color": "lime",    "position": [520, 340], "label": "J"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "thick",    "weight": 1},
+      {"from": 1, "to": 2, "type": "thick",    "weight": 1},
+      {"from": 2, "to": 3, "type": "thick",    "weight": 1},
+      {"from": 3, "to": 4, "type": "thick",    "weight": 1},
+      {"from": 4, "to": 0, "type": "thick",    "weight": 1},
+      {"from": 0, "to": 5, "type": "standard", "weight": 1},
+      {"from": 1, "to": 6, "type": "standard", "weight": 1},
+      {"from": 2, "to": 7, "type": "standard", "weight": 1},
+      {"from": 3, "to": 8, "type": "standard", "weight": 1},
+      {"from": 4, "to": 9, "type": "standard", "weight": 1},
+      {"from": 5, "to": 7, "type": "glowing",  "weight": 1},
+      {"from": 7, "to": 9, "type": "glowing",  "weight": 1},
+      {"from": 9, "to": 6, "type": "glowing",  "weight": 1},
+      {"from": 6, "to": 8, "type": "glowing",  "weight": 1},
+      {"from": 8, "to": 5, "type": "glowing",  "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2,3,4,5,6,7,8,9], "name": "Тождество",          "description": "Всё остаётся на месте"},
+      {"id": "r1", "mapping": [1,2,3,4,0,6,7,8,9,5], "name": "Поворот на 72°",     "description": "Один шаг по часовой"},
+      {"id": "r2", "mapping": [2,3,4,0,1,7,8,9,5,6], "name": "Поворот на 144°",    "description": "Два шага по часовой"},
+      {"id": "r3", "mapping": [3,4,0,1,2,8,9,5,6,7], "name": "Поворот на 216°",    "description": "Три шага по часовой"},
+      {"id": "r4", "mapping": [4,0,1,2,3,9,5,6,7,8], "name": "Поворот на 288°",    "description": "Четыре шага по часовой"},
+      {"id": "s0", "mapping": [0,4,3,2,1,5,9,8,7,6], "name": "Отражение через A",  "description": "Зеркало через вершину A"},
+      {"id": "s1", "mapping": [1,0,4,3,2,6,5,9,8,7], "name": "Отражение через B",  "description": "Зеркало через вершину B"},
+      {"id": "s2", "mapping": [2,1,0,4,3,7,6,5,9,8], "name": "Отражение через C",  "description": "Зеркало через вершину C"},
+      {"id": "s3", "mapping": [3,2,1,0,4,8,7,6,5,9], "name": "Отражение через D",  "description": "Зеркало через вершину D"},
+      {"id": "s4", "mapping": [4,3,2,1,0,9,8,7,6,5], "name": "Отражение через E",  "description": "Зеркало через вершину E"}
+    ],
+    "generators": ["r1", "s0"],
+    "cayley_table": {
+      "e":  {"e":"e",  "r1":"r1","r2":"r2","r3":"r3","r4":"r4","s0":"s0","s1":"s1","s2":"s2","s3":"s3","s4":"s4"},
+      "r1": {"e":"r1", "r1":"r2","r2":"r3","r3":"r4","r4":"e", "s0":"s1","s1":"s2","s2":"s3","s3":"s4","s4":"s0"},
+      "r2": {"e":"r2", "r1":"r3","r2":"r4","r3":"e", "r4":"r1","s0":"s2","s1":"s3","s2":"s4","s3":"s0","s4":"s1"},
+      "r3": {"e":"r3", "r1":"r4","r2":"e", "r3":"r1","r4":"r2","s0":"s3","s1":"s4","s2":"s0","s3":"s1","s4":"s2"},
+      "r4": {"e":"r4", "r1":"e", "r2":"r1","r3":"r2","r4":"r3","s0":"s4","s1":"s0","s2":"s1","s3":"s2","s4":"s3"},
+      "s0": {"e":"s0", "r1":"s4","r2":"s3","r3":"s2","r4":"s1","s0":"e", "s1":"r4","s2":"r3","s3":"r2","s4":"r1"},
+      "s1": {"e":"s1", "r1":"s0","r2":"s4","r3":"s3","r4":"s2","s0":"r1","s1":"e", "s2":"r4","s3":"r3","s4":"r2"},
+      "s2": {"e":"s2", "r1":"s1","r2":"s0","r3":"s4","r4":"s3","s0":"r2","s1":"r1","s2":"e", "s3":"r4","s4":"r3"},
+      "s3": {"e":"s3", "r1":"s2","r2":"s1","r3":"s0","r4":"s4","s0":"r3","s1":"r2","s2":"r1","s3":"e", "s4":"r4"},
+      "s4": {"e":"s4", "r1":"s3","r2":"s2","r3":"s1","r4":"s0","s0":"r4","s1":"r3","s2":"r2","s3":"r1","s4":"e"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": true,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "glowing"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Граф Петерсена — один из самых знаменитых графов. Три типа рёбер выделяют разные связи."},
+    {"trigger": "after_first_valid", "text": "Внешний пятиугольник и внутренняя звезда. Поворот одного тянет за собой другой!"},
+    {"trigger": "after_5_found", "text": "5 поворотов найдены! Теперь ищите отражения — они переворачивают и пятиугольник, и звезду."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Граф Петерсена: 10 вершин, 15 рёбер. Три типа рёбер: пятиугольник, спицы, звезда.",
+      "target_crystals": []
+    },
+    {
+      "text": "Поворот пятиугольника на 72° сдвигает и внутреннюю звезду. Всего 5 поворотов.",
+      "target_crystals": []
+    },
+    {
+      "text": "Группа D5: 5 поворотов + 5 отражений = 10 ключей. Тот же D5, что и в уровне 19!",
+      "target_crystals": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    }
+  ]
+}

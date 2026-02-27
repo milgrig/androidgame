@@ -1,0 +1,14 @@
+[
+  "=== STEP 1: Main Menu ===",
+  "Buttons found: 3",
+  "Pressing: /root/MainMenu/ButtonContainer/StartButton",
+  "Button pressed!",
+  "\n=== STEP 2: Waiting for Scene Transition ===",
+  "Root: root",
+  "Children: 3",
+  "  - GameManager (game_manager)",
+  "  - AgentBridge (agent_bridge)",
+  "  - MapScene (MapScene)",
+  "\n✓ SUCCESS: Map scene loaded!",
+  "Map node: /root/MapScene"
+]

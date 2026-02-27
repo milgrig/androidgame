@@ -455,10 +455,10 @@ class TestKeyRingDisplayFriendlyNames(unittest.TestCase):
 
         display = self._build_keyring_display(sim)
 
-        # Must contain friendly names
-        self.assertIn("Identity", display)
-        self.assertIn("Rotation 120", display)
-        self.assertIn("Rotation 240", display)
+        # Must contain friendly names (Russian)
+        self.assertIn("Тождество", display)
+        self.assertIn("Поворот на 120°", display)
+        self.assertIn("Поворот на 240°", display)
 
         # Must NOT contain raw cycle notation
         self.assertNotIn("(0 1 2)", display)
@@ -475,10 +475,10 @@ class TestKeyRingDisplayFriendlyNames(unittest.TestCase):
 
         display = self._build_keyring_display(sim)
 
-        # Must contain descriptions from JSON
-        self.assertIn("Everything stays in place", display)
-        self.assertIn("One step clockwise", display)
-        self.assertIn("Two steps clockwise", display)
+        # Must contain descriptions from JSON (Russian)
+        self.assertIn("Всё остаётся на месте", display)
+        self.assertIn("Один шаг по часовой", display)
+        self.assertIn("Два шага по часовой", display)
 
     def test_level1_display_format(self):
         """Level 1: Display format should be 'Name — Description'"""
@@ -490,9 +490,9 @@ class TestKeyRingDisplayFriendlyNames(unittest.TestCase):
 
         # Should contain em-dash separator between name and description
         self.assertIn("\u2014", display)
-        # Full expected line
-        self.assertIn("Rotation 120", display)
-        self.assertIn("One step clockwise", display)
+        # Full expected line (Russian)
+        self.assertIn("Поворот на 120°", display)
+        self.assertIn("Один шаг по часовой", display)
 
     def test_level3_shows_friendly_names(self):
         """Level 3: Display should show 'Reflection' not '(1 2)'"""
@@ -503,9 +503,9 @@ class TestKeyRingDisplayFriendlyNames(unittest.TestCase):
 
         display = self._build_keyring_display(sim)
 
-        self.assertIn("Identity", display)
-        self.assertIn("Reflection", display)
-        self.assertIn("Swap the two green crystals", display)
+        self.assertIn("Тождество", display)
+        self.assertIn("Отражение", display)
+        self.assertIn("Поменять местами два зелёных кристалла", display)
         # Must NOT contain cycle notation
         self.assertNotIn("(1 2)", display)
 
@@ -517,9 +517,9 @@ class TestKeyRingDisplayFriendlyNames(unittest.TestCase):
 
         display = self._build_keyring_display(sim)
 
-        self.assertIn("Rotation 120", display)
-        self.assertNotIn("Identity", display)
-        self.assertNotIn("Rotation 240", display)
+        self.assertIn("Поворот на 120°", display)
+        self.assertNotIn("Тождество", display)
+        self.assertNotIn("Поворот на 240°", display)
 
 
 class TestOnboardingTutorial(unittest.TestCase):
@@ -549,7 +549,7 @@ class TestOnboardingTutorial(unittest.TestCase):
         self.assertEqual(result, "new_symmetry")
         # The message logic: for identity, show special message
         sym_name = sim.target_names.get("e", "")
-        self.assertEqual(sym_name, "Identity")
+        self.assertEqual(sym_name, "Тождество")
 
     def test_first_symmetry_message_rotation(self):
         """First symmetry message for rotation should mention the name"""
@@ -558,7 +558,7 @@ class TestOnboardingTutorial(unittest.TestCase):
         result = sim._validate_permutation(Permutation([1, 2, 0]))
         self.assertEqual(result, "new_symmetry")
         sym_name = sim.target_names.get("r1", "")
-        self.assertIn("Rotation", sym_name)
+        self.assertIn("Поворот", sym_name)
 
     def test_remaining_count_after_first_discovery(self):
         """After first discovery, remaining count should be total - 1"""

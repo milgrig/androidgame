@@ -1,0 +1,249 @@
+{
+  "meta": {
+    "id": "act1_level15",
+    "act": 1,
+    "level": 15,
+    "title": "Зал четных перестановок",
+    "subtitle": "Только половина ключей работает",
+    "group_name": "A4",
+    "group_order": 12
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": 0,
+        "color": "red",
+        "position": [
+          640,
+          200
+        ],
+        "label": "A"
+      },
+      {
+        "id": 1,
+        "color": "blue",
+        "position": [
+          400,
+          500
+        ],
+        "label": "B"
+      },
+      {
+        "id": 2,
+        "color": "green",
+        "position": [
+          880,
+          500
+        ],
+        "label": "C"
+      },
+      {
+        "id": 3,
+        "color": "yellow",
+        "position": [
+          640,
+          650
+        ],
+        "label": "D"
+      }
+    ],
+    "edges": [
+      {
+        "from": 0,
+        "to": 1,
+        "type": "glowing",
+        "weight": 1
+      },
+      {
+        "from": 0,
+        "to": 2,
+        "type": "glowing",
+        "weight": 1
+      },
+      {
+        "from": 0,
+        "to": 3,
+        "type": "glowing",
+        "weight": 1
+      },
+      {
+        "from": 1,
+        "to": 2,
+        "type": "glowing",
+        "weight": 1
+      },
+      {
+        "from": 1,
+        "to": 3,
+        "type": "glowing",
+        "weight": 1
+      },
+      {
+        "from": 2,
+        "to": 3,
+        "type": "glowing",
+        "weight": 1
+      }
+    ]
+  },
+  "symmetries": {
+    "automorphisms": [
+      {
+        "id": "even_perm_0",
+        "mapping": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "name": "Четная перестановка 1",
+        "description": "(0, 1, 2, 3)"
+      },
+      {
+        "id": "even_perm_1",
+        "mapping": [
+          0,
+          2,
+          3,
+          1
+        ],
+        "name": "Четная перестановка 2",
+        "description": "(0, 2, 3, 1)"
+      },
+      {
+        "id": "even_perm_2",
+        "mapping": [
+          0,
+          3,
+          1,
+          2
+        ],
+        "name": "Четная перестановка 3",
+        "description": "(0, 3, 1, 2)"
+      },
+      {
+        "id": "even_perm_3",
+        "mapping": [
+          1,
+          0,
+          3,
+          2
+        ],
+        "name": "Четная перестановка 4",
+        "description": "(1, 0, 3, 2)"
+      },
+      {
+        "id": "even_perm_4",
+        "mapping": [
+          1,
+          2,
+          0,
+          3
+        ],
+        "name": "Четная перестановка 5",
+        "description": "(1, 2, 0, 3)"
+      },
+      {
+        "id": "even_perm_5",
+        "mapping": [
+          1,
+          3,
+          2,
+          0
+        ],
+        "name": "Четная перестановка 6",
+        "description": "(1, 3, 2, 0)"
+      },
+      {
+        "id": "even_perm_6",
+        "mapping": [
+          2,
+          0,
+          1,
+          3
+        ],
+        "name": "Четная перестановка 7",
+        "description": "(2, 0, 1, 3)"
+      },
+      {
+        "id": "even_perm_7",
+        "mapping": [
+          2,
+          1,
+          3,
+          0
+        ],
+        "name": "Четная перестановка 8",
+        "description": "(2, 1, 3, 0)"
+      },
+      {
+        "id": "even_perm_8",
+        "mapping": [
+          2,
+          3,
+          0,
+          1
+        ],
+        "name": "Четная перестановка 9",
+        "description": "(2, 3, 0, 1)"
+      },
+      {
+        "id": "even_perm_9",
+        "mapping": [
+          3,
+          0,
+          2,
+          1
+        ],
+        "name": "Четная перестановка 10",
+        "description": "(3, 0, 2, 1)"
+      },
+      {
+        "id": "even_perm_10",
+        "mapping": [
+          3,
+          1,
+          0,
+          2
+        ],
+        "name": "Четная перестановка 11",
+        "description": "(3, 1, 0, 2)"
+      },
+      {
+        "id": "even_perm_11",
+        "mapping": [
+          3,
+          2,
+          1,
+          0
+        ],
+        "name": "Четная перестановка 12",
+        "description": "(3, 2, 1, 0)"
+      }
+    ],
+    "generators": [],
+    "cayley_table": {}
+  },
+  "mechanics": {
+    "allowed_actions": [
+      "swap"
+    ],
+    "show_cayley_button": true,
+    "show_generators_hint": false,
+    "inner_doors": [],
+    "palette": null
+  },
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "glowing"
+  },
+  "hints": [
+    {
+      "trigger": "after_30_seconds_no_action",
+      "text": "Это сложный уровень. Попробуйте найти закономерности в структуре."
+    }
+  ],
+  "echo_hints": []
+}

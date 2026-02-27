@@ -1,0 +1,98 @@
+{
+  "meta": {
+    "id": "act1_level20",
+    "act": 1,
+    "level": 20,
+    "title": "Шестигранный храм",
+    "subtitle": "Множество подгрупп скрывается в шести углах",
+    "group_name": "D6",
+    "group_order": 12
+  },
+
+  "graph": {
+    "nodes": [
+      {"id": 0, "color": "aqua", "position": [640, 130], "label": "A"},
+      {"id": 1, "color": "aqua", "position": [830, 260], "label": "B"},
+      {"id": 2, "color": "aqua", "position": [830, 460], "label": "C"},
+      {"id": 3, "color": "aqua", "position": [640, 590], "label": "D"},
+      {"id": 4, "color": "aqua", "position": [450, 460], "label": "E"},
+      {"id": 5, "color": "aqua", "position": [450, 260], "label": "F"}
+    ],
+    "edges": [
+      {"from": 0, "to": 1, "type": "standard", "weight": 1},
+      {"from": 1, "to": 2, "type": "standard", "weight": 1},
+      {"from": 2, "to": 3, "type": "standard", "weight": 1},
+      {"from": 3, "to": 4, "type": "standard", "weight": 1},
+      {"from": 4, "to": 5, "type": "standard", "weight": 1},
+      {"from": 5, "to": 0, "type": "standard", "weight": 1}
+    ]
+  },
+
+  "symmetries": {
+    "automorphisms": [
+      {"id": "e",  "mapping": [0,1,2,3,4,5], "name": "Тождество",          "description": "Всё остаётся на месте"},
+      {"id": "r1", "mapping": [1,2,3,4,5,0], "name": "Поворот на 60°",     "description": "Один шаг по часовой"},
+      {"id": "r2", "mapping": [2,3,4,5,0,1], "name": "Поворот на 120°",    "description": "Два шага по часовой"},
+      {"id": "r3", "mapping": [3,4,5,0,1,2], "name": "Поворот на 180°",    "description": "Три шага по часовой"},
+      {"id": "r4", "mapping": [4,5,0,1,2,3], "name": "Поворот на 240°",    "description": "Четыре шага по часовой"},
+      {"id": "r5", "mapping": [5,0,1,2,3,4], "name": "Поворот на 300°",    "description": "Пять шагов по часовой"},
+      {"id": "s0", "mapping": [0,5,4,3,2,1], "name": "Отражение через A-D", "description": "Ось через вершины A и D"},
+      {"id": "s1", "mapping": [1,0,5,4,3,2], "name": "Отражение через B-E", "description": "Ось через вершины B и E"},
+      {"id": "s2", "mapping": [2,1,0,5,4,3], "name": "Отражение через C-F", "description": "Ось через вершины C и F"},
+      {"id": "s3", "mapping": [5,4,3,2,1,0], "name": "Отражение через грань AB-DE", "description": "Ось через центры граней"},
+      {"id": "s4", "mapping": [4,3,2,1,0,5], "name": "Отражение через грань BC-EF", "description": "Ось через центры граней"},
+      {"id": "s5", "mapping": [3,2,1,0,5,4], "name": "Отражение через грань CD-FA", "description": "Ось через центры граней"}
+    ],
+    "generators": ["r1", "s0"],
+    "cayley_table": {
+      "e":  {"e":"e",  "r1":"r1","r2":"r2","r3":"r3","r4":"r4","r5":"r5","s0":"s0","s1":"s1","s2":"s2","s3":"s3","s4":"s4","s5":"s5"},
+      "r1": {"e":"r1", "r1":"r2","r2":"r3","r3":"r4","r4":"r5","r5":"e", "s0":"s1","s1":"s2","s2":"s5","s3":"s0","s4":"s3","s5":"s4"},
+      "r2": {"e":"r2", "r1":"r3","r2":"r4","r3":"r5","r4":"e", "r5":"r1","s0":"s2","s1":"s5","s2":"s4","s3":"s1","s4":"s0","s5":"s3"},
+      "r3": {"e":"r3", "r1":"r4","r2":"r5","r3":"e", "r4":"r1","r5":"r2","s0":"s5","s1":"s4","s2":"s3","s3":"s2","s4":"s1","s5":"s0"},
+      "r4": {"e":"r4", "r1":"r5","r2":"e", "r3":"r1","r4":"r2","r5":"r3","s0":"s4","s1":"s3","s2":"s0","s3":"s5","s4":"s2","s5":"s1"},
+      "r5": {"e":"r5", "r1":"e", "r2":"r1","r3":"r2","r4":"r3","r5":"r4","s0":"s3","s1":"s0","s2":"s1","s3":"s4","s4":"s5","s5":"s2"},
+      "s0": {"e":"s0", "r1":"s3","r2":"s4","r3":"s5","r4":"s2","r5":"s1","s0":"e", "s1":"r5","s2":"r4","s3":"r1","s4":"r2","s5":"r3"},
+      "s1": {"e":"s1", "r1":"s0","r2":"s3","r3":"s4","r4":"s5","r5":"s2","s0":"r1","s1":"e", "s2":"r5","s3":"r2","s4":"r3","s5":"r4"},
+      "s2": {"e":"s2", "r1":"s1","r2":"s0","r3":"s3","r4":"s4","r5":"s5","s0":"r2","s1":"r1","s2":"e", "s3":"r3","s4":"r4","s5":"r5"},
+      "s3": {"e":"s3", "r1":"s4","r2":"s5","r3":"s2","r4":"s1","r5":"s0","s0":"r5","s1":"r4","s2":"r3","s3":"e", "s4":"r1","s5":"r2"},
+      "s4": {"e":"s4", "r1":"s5","r2":"s2","r3":"s1","r4":"s0","r5":"s3","s0":"r4","s1":"r3","s2":"r2","s3":"r5","s4":"e", "s5":"r1"},
+      "s5": {"e":"s5", "r1":"s2","r2":"s1","r3":"s0","r4":"s3","r5":"s4","s0":"r3","s1":"r2","s2":"r1","s3":"r4","s4":"r5","s5":"e"}
+    }
+  },
+
+  "mechanics": {
+    "allowed_actions": ["swap"],
+    "show_cayley_button": true,
+    "show_generators_hint": true,
+    "inner_doors": [],
+    "palette": null
+  },
+
+  "visuals": {
+    "background_theme": "stone_vault",
+    "ambient_particles": "dust_motes",
+    "crystal_style": "basic_gem",
+    "edge_style": "thin_thread"
+  },
+
+  "hints": [
+    {"trigger": "after_30_seconds_no_action", "text": "Правильный шестиугольник. 6 поворотов + 6 отражений = 12 ключей."},
+    {"trigger": "after_first_valid", "text": "D6 — самая богатая по подгруппам среди малых групп. Z2, Z3, Z6, D3..."},
+    {"trigger": "after_6_found", "text": "Половина найдена! Ищите оси отражений — через вершины и через грани."}
+  ],
+
+  "echo_hints": [
+    {
+      "text": "Шестиугольник. 6 = 2×3, поэтому подгрупп много: Z2, Z3, Z6, D3, D6...",
+      "target_crystals": []
+    },
+    {
+      "text": "Шесть поворотов образуют циклическую подгруппу Z6. Это нормальная подгруппа!",
+      "target_crystals": []
+    },
+    {
+      "text": "Шесть отражений: три через вершины (A-D, B-E, C-F) и три через грани.",
+      "target_crystals": [0, 1, 2, 3, 4, 5]
+    }
+  ]
+}

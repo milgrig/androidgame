@@ -214,5 +214,53 @@
     "message": "Agent 'developer_game2' not found",
     "attempt": 1,
     "resolved": true
+  },
+  {
+    "id": "F0019",
+    "timestamp": "2026-02-27T15:25:07",
+    "task_id": "T074",
+    "agent": "developer_game",
+    "role": "executor",
+    "runtime": "opus",
+    "error_type": "config",
+    "message": "Agent 'developer_game' not found",
+    "attempt": 1,
+    "resolved": false
+  },
+  {
+    "id": "F0020",
+    "timestamp": "2026-02-27T15:25:08",
+    "task_id": "T075",
+    "agent": "developer_game",
+    "role": "executor",
+    "runtime": "opus",
+    "error_type": "config",
+    "message": "Agent 'developer_game' not found",
+    "attempt": 1,
+    "resolved": false
+  },
+  {
+    "id": "F0021",
+    "timestamp": "2026-02-27T17:43:39",
+    "task_id": "T078",
+    "agent": "developer_game",
+    "role": "executor",
+    "runtime": "opus",
+    "error_type": "config",
+    "message": "Agent 'developer_game' not found",
+    "attempt": 1,
+    "resolved": false
+  },
+  {
+    "id": "F0022",
+    "timestamp": "2026-02-27T17:43:39",
+    "task_id": "T080",
+    "agent": "developer_game",
+    "role": "executor",
+    "runtime": "opus",
+    "error_type": "config",
+    "message": "Agent 'developer_game' not found",
+    "attempt": 1,
+    "resolved": false
   }
 ]

@@ -43,6 +43,10 @@ const COLOR_PALETTE := {
 	"orange": Color(1.0, 0.55, 0.1, 1.0),
 	"white": Color(0.95, 0.95, 1.0, 1.0),
 	"pink": Color(1.0, 0.5, 0.7, 1.0),
+	"silver": Color(0.78, 0.8, 0.85, 1.0),
+	"bronze": Color(0.8, 0.55, 0.3, 1.0),
+	"magenta": Color(0.9, 0.2, 0.7, 1.0),
+	"yellow": Color(1.0, 0.95, 0.3, 1.0),
 }
 
 ## Default glow colors (slightly brighter/lighter than base)
@@ -56,6 +60,10 @@ const GLOW_PALETTE := {
 	"orange": Color(1.0, 0.7, 0.3, 0.8),
 	"white": Color(1.0, 1.0, 1.0, 0.8),
 	"pink": Color(1.0, 0.7, 0.85, 0.8),
+	"silver": Color(0.88, 0.9, 0.95, 0.8),
+	"bronze": Color(0.95, 0.7, 0.45, 0.8),
+	"magenta": Color(1.0, 0.4, 0.8, 0.8),
+	"yellow": Color(1.0, 1.0, 0.55, 0.8),
 }
 
 # --- Internal State ---
