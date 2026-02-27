@@ -203,6 +203,61 @@ func get_all_sym_ids() -> Array:
 	return _sym_id_to_perm.keys()
 
 
+## Try to pair two keys by their sym_ids.
+## Called when the player presses key A then key B and returns to Home.
+## Returns: {success: bool, key_sym_id: String, inv_sym_id: String,
+##           pair_index: int, is_self_inverse: bool}
+func try_pair_by_sym_ids(sym_a: String, sym_b: String) -> Dictionary:
+	# Try both orderings: maybe pair has sym_a as key, or sym_b as key
+	var result := try_pair(sym_a, sym_b)
+	if result["success"]:
+		return {
+			"success": true,
+			"key_sym_id": sym_a,
+			"inv_sym_id": sym_b,
+			"pair_index": result["pair_index"],
+			"is_self_inverse": result["is_self_inverse"],
+		}
+	# Try reverse: sym_b as key, sym_a as candidate
+	result = try_pair(sym_b, sym_a)
+	if result["success"]:
+		return {
+			"success": true,
+			"key_sym_id": sym_b,
+			"inv_sym_id": sym_a,
+			"pair_index": result["pair_index"],
+			"is_self_inverse": result["is_self_inverse"],
+		}
+	return {"success": false, "key_sym_id": sym_a, "inv_sym_id": sym_b,
+			"pair_index": -1, "is_self_inverse": false}
+
+
+## Check if a sym_id's pair is already matched.
+func is_paired(sym_id: String) -> bool:
+	for pair in pairs:
+		if pair.key_sym_id == sym_id or pair.inverse_sym_id == sym_id:
+			return pair.paired
+	return false
+
+
+## Get the inverse sym_id for a given sym_id (regardless of pairing state).
+func get_inverse_sym_id(sym_id: String) -> String:
+	for pair in pairs:
+		if pair.key_sym_id == sym_id:
+			return pair.inverse_sym_id
+		if pair.inverse_sym_id == sym_id:
+			return pair.key_sym_id
+	return ""
+
+
+## Check if a sym_id is a self-inverse element.
+func is_self_inverse_sym(sym_id: String) -> bool:
+	for pair in pairs:
+		if pair.key_sym_id == sym_id or pair.inverse_sym_id == sym_id:
+			return pair.is_self_inverse
+	return false
+
+
 # --- Internal helpers ---
 
 ## Find a pair by its key sym_id.

@@ -314,7 +314,7 @@ func _poll_command_file() -> void:
 		return
 
 	# Collect only events that fired during this command's execution
-	var cmd_events := _event_queue.duplicate()
+	var cmd_events: Array = _event_queue.duplicate()
 	_event_queue.clear()
 
 	# Inject events into response
@@ -837,7 +837,7 @@ func _cmd_get_node(args: Dictionary, cmd_id: int) -> String:
 
 
 func _cmd_get_events(cmd_id: int) -> String:
-	var events := _event_queue.duplicate()
+	var events: Array = _event_queue.duplicate()
 	_event_queue.clear()
 	return AgentProtocol.success({"events": events, "count": events.size()}, [], cmd_id)
 

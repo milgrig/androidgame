@@ -159,7 +159,7 @@ static func generate_shuffle(size: int, seed_val: int) -> Array[int]:
 	# Fisher-Yates shuffle
 	for i in range(size - 1, 0, -1):
 		var j := rng.randi_range(0, i)
-		var tmp := perm[i]
+		var tmp: int = perm[i]
 		perm[i] = perm[j]
 		perm[j] = tmp
 
@@ -170,7 +170,7 @@ static func generate_shuffle(size: int, seed_val: int) -> Array[int]:
 			is_identity = false
 			break
 	if is_identity:
-		var tmp := perm[0]
+		var tmp: int = perm[0]
 		perm[0] = perm[1]
 		perm[1] = tmp
 

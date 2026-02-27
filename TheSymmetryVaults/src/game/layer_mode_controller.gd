@@ -1,10 +1,17 @@
 ## LayerModeController — Orchestrates layer-specific behavior within LevelScene.
 ##
-## When LevelScene loads a level for Layer 2+, this controller:
-##   - Disables crystal dragging (graph is read-only)
-##   - Creates the appropriate UI panel (InversePairingPanel for Layer 2)
-##   - Manages layer-specific validation and completion
-##   - Saves layer progress to GameManager
+## Layer 2 REDESIGN: reuses the SAME UI as Layer 1 (room map + key bar + crystal view).
+## Player discovers inverse pairs by pressing keys and observing when they
+## return to the same room. No separate pairing panel.
+##
+## Gameplay flow:
+##   1. All keys visible from start (already discovered in Layer 1)
+##   2. Crystal dragging disabled — player navigates via keys only
+##   3. Player presses key A → moves to room X
+##   4. Player presses key B → returns to the starting room
+##   5. System detects: A then B returned to start → A and B are an inverse pair!
+##   6. Keys A and B are visually paired in the KeyBar
+##   7. Self-inverse: pressing key C takes you somewhere, pressing C again returns
 ##
 ## Future layers (3-5) will add new modes here.
 class_name LayerModeController
@@ -14,7 +21,7 @@ extends RefCounted
 
 enum LayerMode {
 	LAYER_1,             ## Default: crystal swapping, key discovery
-	LAYER_2_INVERSE,     ## Inverse key pairing
+	LAYER_2_INVERSE,     ## Inverse key pairing via key presses
 	## Future:
 	## LAYER_3_GROUP,     ## Composition table / closure
 	## LAYER_4_NORMAL,    ## Normal subgroup identification
@@ -24,15 +31,20 @@ enum LayerMode {
 # ── Signals ──────────────────────────────────────────────────────────
 
 signal layer_completed(layer: int, hall_id: String)
+signal pair_found(key_a_idx: int, key_b_idx: int, is_self_inverse: bool)
 
 # ── State ────────────────────────────────────────────────────────────
 
 var current_layer: LayerMode = LayerMode.LAYER_1
 var layer_number: int = 1
 var inverse_pair_mgr: InversePairManager = null
-var pairing_panel: InversePairingPanel = null
 var _level_scene = null  ## Weak reference to LevelScene (no type to avoid circular)
+var _room_state: RoomState = null
 var _hall_id: String = ""
+
+## Key-press tracking for pair detection
+var _prev_key_idx: int = -1       ## The previous key pressed (-1 = none)
+var _room_before_prev: int = -1   ## Room the player was in BEFORE pressing _prev_key_idx
 
 # ── Layer 2 color scheme constants ───────────────────────────────────
 
@@ -56,7 +68,6 @@ func setup(layer: int, level_data: Dictionary, level_scene) -> void:
 	match layer:
 		1:
 			current_layer = LayerMode.LAYER_1
-			# No special setup — default LevelScene behavior
 		2:
 			current_layer = LayerMode.LAYER_2_INVERSE
 			_setup_layer_2(level_data, level_scene)
@@ -67,90 +78,139 @@ func setup(layer: int, level_data: Dictionary, level_scene) -> void:
 
 ## Clean up all layer-specific resources.
 func cleanup() -> void:
-	if pairing_panel != null and is_instance_valid(pairing_panel):
-		pairing_panel.queue_free()
-		pairing_panel = null
 	inverse_pair_mgr = null
 	_level_scene = null
+	_room_state = null
+	_prev_key_idx = -1
+	_room_before_prev = -1
 
 
-# ── Layer 2: Inverse Key Pairing ─────────────────────────────────────
+# ── Layer 2: Inverse Key Pairing via Key Presses ────────────────────
 
 func _setup_layer_2(level_data: Dictionary, level_scene) -> void:
+	_room_state = level_scene._room_state
+
 	# 1. Disable crystal dragging (graph is read-only on Layer 2)
 	for crystal in level_scene.crystals.values():
 		if crystal is CrystalNode:
 			crystal.set_draggable(false)
 
-	# 2. Hide Layer 1 UI elements that aren't relevant
-	_hide_layer1_ui(level_scene)
+	# 2. Make ALL rooms discovered (player already found them in Layer 1)
+	for i in range(_room_state.group_order):
+		_room_state.discover_room(i)
 
-	# 3. Initialize inverse pair manager
+	# 3. Show Home key immediately
+	if level_scene._key_bar:
+		level_scene._key_bar.home_visible = true
+		level_scene._key_bar.rebuild(_room_state)
+
+	# 4. Hide target preview (every key application is valid in Layer 2)
+	_hide_target_preview(level_scene)
+
+	# 5. Hide action buttons (Reset, Check — not used in Layer 2)
+	_hide_action_buttons(level_scene)
+
+	# 6. Initialize inverse pair manager
 	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_2", {})
 	inverse_pair_mgr = InversePairManager.new()
 	inverse_pair_mgr.setup(level_data, layer_config)
 
-	# 4. Create and show pairing panel in the right zone (map area)
-	pairing_panel = InversePairingPanel.new()
-	pairing_panel.name = "InversePairingPanel"
-
-	# Use the map_rect area for the panel
-	var map_rect: Rect2 = level_scene._map_rect
-	var panel_rect := Rect2(
-		Vector2(map_rect.position.x + 4, map_rect.position.y + 4),
-		Vector2(map_rect.size.x - 8, map_rect.size.y - 8)
-	)
-	pairing_panel.setup(inverse_pair_mgr, panel_rect)
-	level_scene.hud_layer.add_child(pairing_panel)
-
-	# 5. Connect panel signals
-	pairing_panel.layer_completed.connect(_on_layer_2_completed)
-	pairing_panel.key_selected.connect(_on_key_selected_for_preview)
-	pairing_panel.candidate_hovered.connect(_on_candidate_hovered_for_preview)
-
-	# 6. Connect InversePairManager signals
+	# 7. Connect InversePairManager signals
 	inverse_pair_mgr.pair_matched.connect(_on_pair_matched)
 	inverse_pair_mgr.all_pairs_matched.connect(_on_all_pairs_matched)
 
-	# 7. Update HUD elements for Layer 2 theme
+	# 8. Apply Layer 2 theme (green accents)
 	_apply_layer_2_theme(level_scene)
 
-	# 8. Update the counter for Layer 2
-	_update_layer_2_counter(level_scene)
+	# 9. Update counter for Layer 2 progress
+	_update_layer_2_counter()
 
-	# 9. Set layer progress to "in_progress"
+	# 10. Reset key-press tracking
+	_prev_key_idx = -1
+	_room_before_prev = -1
+
+	# 11. Room map stays visible — update it with all rooms discovered
+	if level_scene._room_map:
+		level_scene._room_map.home_visible = true
+		level_scene._room_map.queue_redraw()
+
+	# 12. Save "in_progress" state
 	GameManager.set_layer_progress(_hall_id, 2, {"status": "in_progress"})
 
 
-func _hide_layer1_ui(level_scene) -> void:
-	## Hide Layer 1 specific UI elements that don't apply in Layer 2.
-	var hud := level_scene.hud_layer
-	# Hide the room map panel (replaced by inverse pairing panel)
-	if level_scene._room_map:
-		level_scene._room_map.visible = false
-	# Hide the map frame title (will show Layer 2 title instead)
-	var map_frame = hud.get_node_or_null("MapFrame")
-	if map_frame:
-		var title = map_frame.get_node_or_null("MapFrameTitle")
-		if title:
-			title.text = "Обратные ключи"
-			title.add_theme_color_override("font_color", L2_GREEN_DIM)
-	# Hide action buttons (Reset, Check) — not used in Layer 2
-	for btn_name in ["ResetButton", "CheckButton", "RepeatButton", "CombineButton"]:
+## Called by LevelScene when a key is pressed during Layer 2.
+## key_idx: the room index of the key pressed (0 = identity/Home)
+## room_before: the room the player was in BEFORE this key press
+## room_after: the room the player is in AFTER this key press
+func on_key_pressed(key_idx: int, room_before: int, room_after: int) -> void:
+	if inverse_pair_mgr == null or _room_state == null:
+		return
+
+	# Identity key press — reset tracking (doesn't form meaningful pairs)
+	if key_idx == 0:
+		_prev_key_idx = -1
+		_room_before_prev = -1
+		return
+
+	if _prev_key_idx == -1:
+		# First key press in a potential pair — record it
+		_prev_key_idx = key_idx
+		_room_before_prev = room_before
+	else:
+		# Second key press — check if we returned to the starting room
+		if room_after == _room_before_prev:
+			# Player returned to the room they started from!
+			# Keys _prev_key_idx and key_idx are inverse pair candidates
+			var sym_a: String = _room_state.get_room_sym_id(_prev_key_idx)
+			var sym_b: String = _room_state.get_room_sym_id(key_idx)
+
+			if sym_a != "" and sym_b != "":
+				var result: Dictionary = inverse_pair_mgr.try_pair_by_sym_ids(sym_a, sym_b)
+				if result["success"]:
+					var is_self_inv: bool = result["is_self_inverse"]
+					pair_found.emit(_prev_key_idx, key_idx, is_self_inv)
+
+					# Update KeyBar pairing visualization
+					_update_key_bar_pairing()
+
+					# Show feedback message
+					_show_pair_feedback(_prev_key_idx, key_idx, is_self_inv)
+
+		# Reset tracking — start fresh for next potential pair
+		# (Whether we found a pair or not, reset after 2 presses)
+		_prev_key_idx = key_idx
+		_room_before_prev = room_before
+
+
+## Reset key-press tracking (e.g., when player uses Reset button)
+func reset_tracking() -> void:
+	_prev_key_idx = -1
+	_room_before_prev = -1
+
+
+# ── UI Helpers ───────────────────────────────────────────────────────
+
+func _hide_target_preview(level_scene) -> void:
+	## Hide the target preview (not relevant for Layer 2)
+	if level_scene.target_preview:
+		level_scene.target_preview.visible = false
+	var target_frame = level_scene.hud_layer.get_node_or_null("TargetFrame")
+	if target_frame:
+		target_frame.visible = false
+
+
+func _hide_action_buttons(level_scene) -> void:
+	## Hide action buttons not used in Layer 2
+	var hud = level_scene.hud_layer
+	for btn_name in ["ResetButton", "CheckButton"]:
 		var btn = hud.get_node_or_null(btn_name)
 		if btn:
 			btn.visible = false
-	# Make crystal graph visually read-only (dimmed, non-interactive)
-	# Crystals are already non-draggable, but pulse them gently
-	for crystal in level_scene.crystals.values():
-		if crystal is CrystalNode:
-			crystal.set_idle_pulse(true)
-			crystal.modulate = Color(0.7, 0.9, 0.75, 0.85)
 
 
 func _apply_layer_2_theme(level_scene) -> void:
-	## Apply green color theme to existing HUD elements.
-	var hud := level_scene.hud_layer
+	## Apply green color accents to existing HUD elements.
+	var hud = level_scene.hud_layer
 
 	# Level number label — add "Слой 2" indicator
 	var lvl_label = hud.get_node_or_null("LevelNumberLabel")
@@ -158,45 +218,21 @@ func _apply_layer_2_theme(level_scene) -> void:
 		lvl_label.text += "  ·  Слой 2: Обратные"
 		lvl_label.add_theme_color_override("font_color", L2_GREEN_DIM)
 
-	# Target frame border → green
-	var target_frame = hud.get_node_or_null("TargetFrame")
-	if target_frame:
-		var style: StyleBoxFlat = target_frame.get_theme_stylebox("panel") as StyleBoxFlat
-		if style:
-			var new_style := style.duplicate() as StyleBoxFlat
-			new_style.border_color = L2_GREEN_BORDER
-			target_frame.add_theme_stylebox_override("panel", new_style)
+	# Map frame title → indicate Layer 2
+	var map_frame = hud.get_node_or_null("MapFrame")
+	if map_frame:
+		var map_title = map_frame.get_node_or_null("MapFrameTitle")
+		if map_title:
+			map_title.text = "Карта комнат — Обратные"
+			map_title.add_theme_color_override("font_color", L2_GREEN_DIM)
 
-	# Crystal frame border → green
-	var crystal_frame = hud.get_node_or_null("CrystalFrame")
-	if crystal_frame:
-		var style: StyleBoxFlat = crystal_frame.get_theme_stylebox("panel") as StyleBoxFlat
-		if style:
-			var new_style := style.duplicate() as StyleBoxFlat
-			new_style.border_color = L2_GREEN_BORDER
-			crystal_frame.add_theme_stylebox_override("panel", new_style)
-
-	# KeyBar frame → green
+	# KeyBar frame title → indicate inverse pairing
 	var key_frame = hud.get_node_or_null("KeyBarFrame")
 	if key_frame:
-		var style: StyleBoxFlat = key_frame.get_theme_stylebox("panel") as StyleBoxFlat
-		if style:
-			var new_style := style.duplicate() as StyleBoxFlat
-			new_style.border_color = L2_GREEN_BORDER
-			key_frame.add_theme_stylebox_override("panel", new_style)
 		var key_title = key_frame.get_node_or_null("KeyBarFrameTitle")
 		if key_title:
-			key_title.text = "Ключи (Слой 1)"
+			key_title.text = "Ключи — найдите обратные пары"
 			key_title.add_theme_color_override("font_color", L2_GREEN_DIM)
-
-	# Hints frame → green
-	var hints_frame = hud.get_node_or_null("HintsFrame")
-	if hints_frame:
-		var style: StyleBoxFlat = hints_frame.get_theme_stylebox("panel") as StyleBoxFlat
-		if style:
-			var new_style := style.duplicate() as StyleBoxFlat
-			new_style.border_color = L2_GREEN_BORDER
-			hints_frame.add_theme_stylebox_override("panel", new_style)
 
 	# Counter label → green
 	var counter = hud.get_node_or_null("CounterLabel")
@@ -204,34 +240,69 @@ func _apply_layer_2_theme(level_scene) -> void:
 		counter.add_theme_color_override("font_color", L2_GREEN_DIM)
 
 
-func _update_layer_2_counter(level_scene) -> void:
+func _update_layer_2_counter() -> void:
 	## Update the counter label to show Layer 2 progress.
-	var cl = level_scene.hud_layer.get_node_or_null("CounterLabel")
-	if cl and inverse_pair_mgr:
-		var p := inverse_pair_mgr.get_progress()
-		cl.text = "Обратные: %d / %d" % [p["matched"], p["total"]]
+	if _level_scene == null or inverse_pair_mgr == null:
+		return
+	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
+	if cl:
+		var p: Dictionary = inverse_pair_mgr.get_progress()
+		cl.text = "Обратные пары: %d / %d" % [p["matched"], p["total"]]
+
+
+func _update_key_bar_pairing() -> void:
+	## Notify KeyBar to update pairing visualization.
+	if _level_scene == null or _level_scene._key_bar == null:
+		return
+	if inverse_pair_mgr == null or _room_state == null:
+		return
+	_level_scene._key_bar.update_layer2_pairs(_room_state, inverse_pair_mgr)
+
+
+func _show_pair_feedback(key_a_idx: int, key_b_idx: int, is_self_inverse: bool) -> void:
+	## Show a hint message when a pair is found.
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+
+	var name_a: String = _room_state.get_room_name(key_a_idx)
+	var name_b: String = _room_state.get_room_name(key_b_idx)
+	var text: String
+	var color: Color
+
+	if is_self_inverse:
+		text = "↻ %s — сам себе обратный!" % name_a
+		color = Color(1.0, 0.85, 0.3, 0.9)
+	else:
+		text = "Пара найдена: %s ↔ %s" % [name_a, name_b]
+		color = L2_GREEN
+
+	hl.text = text
+	var tw: Tween = _level_scene.create_tween()
+	tw.tween_property(hl, "theme_override_colors/font_color", color, 0.3)
+	tw.tween_interval(3.0)
+	tw.tween_property(hl, "theme_override_colors/font_color", Color(0.5, 0.8, 0.5, 0.5), 1.0)
 
 
 # ── Signal Handlers ──────────────────────────────────────────────────
 
-func _on_pair_matched(pair_index: int, key_sym_id: String, inverse_sym_id: String) -> void:
+func _on_pair_matched(_pair_index: int, _key_sym_id: String, _inverse_sym_id: String) -> void:
 	if _level_scene == null:
 		return
 
 	# Update counter
-	_update_layer_2_counter(_level_scene)
+	_update_layer_2_counter()
 
-	# Play valid feedback on crystals (visual confirmation)
+	# Play valid feedback on crystals
 	if _level_scene.feedback_fx:
 		_level_scene.feedback_fx.play_valid_feedback(
 			_level_scene.crystals.values(), _level_scene.edges)
 
-	# Animate the key's permutation on the graph (visual-only)
-	_preview_key_on_graph(key_sym_id)
-
 
 func _on_all_pairs_matched() -> void:
-	pass  # Handled via pairing_panel.layer_completed signal
+	_on_layer_2_completed()
 
 
 func _on_layer_2_completed() -> void:
@@ -239,7 +310,7 @@ func _on_layer_2_completed() -> void:
 		return
 
 	# Save layer progress as completed
-	var progress := inverse_pair_mgr.get_progress()
+	var progress: Dictionary = inverse_pair_mgr.get_progress()
 	GameManager.set_layer_progress(_hall_id, 2, {
 		"status": "completed",
 		"pairs_found": progress["matched"],
@@ -254,50 +325,21 @@ func _on_layer_2_completed() -> void:
 	# Update HUD
 	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
 	if cl:
-		cl.text = "Слой 2 завершён!"
+		cl.text = "Все обратные пары найдены!"
 		cl.add_theme_color_override("font_color", L2_GREEN)
 
+	# Show completion hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		hl.text = "Каждое действие можно отменить"
+		hl.add_theme_color_override("font_color", L2_GREEN)
+
 	# Show completion summary after a delay
-	var timer := _level_scene.get_tree().create_timer(1.5)
+	var timer: SceneTreeTimer = _level_scene.get_tree().create_timer(1.5)
 	timer.timeout.connect(_show_layer_2_summary)
 
 	# Emit layer completed
 	layer_completed.emit(2, _hall_id)
-
-
-func _on_key_selected_for_preview(sym_id: String) -> void:
-	## When a key is selected in the pairing panel, animate it on the graph.
-	_preview_key_on_graph(sym_id)
-
-
-func _on_candidate_hovered_for_preview(sym_id: String) -> void:
-	## When a candidate is hovered, show composition preview.
-	if sym_id == "" or _level_scene == null:
-		return
-	# For now, just show the candidate's permutation
-	_preview_key_on_graph(sym_id)
-
-
-# ── Graph Preview ────────────────────────────────────────────────────
-
-func _preview_key_on_graph(sym_id: String) -> void:
-	## Animate a key's permutation on the crystal graph (visual-only).
-	if _level_scene == null or inverse_pair_mgr == null:
-		return
-
-	var perm := inverse_pair_mgr.get_perm(sym_id)
-	if perm == null or perm.is_identity():
-		return
-
-	# Glow crystals that will move
-	var n := perm.mapping.size()
-	for i in range(n):
-		var target_pos: int = perm.apply(i)
-		if target_pos != i:
-			# Find the crystal currently at slot i
-			if i in _level_scene.crystals:
-				var crystal: CrystalNode = _level_scene.crystals[i]
-				crystal.play_glow()
 
 
 # ── Completion Summary ───────────────────────────────────────────────
@@ -306,13 +348,20 @@ func _show_layer_2_summary() -> void:
 	if _level_scene == null:
 		return
 
-	var hud := _level_scene.hud_layer
+	var hud: CanvasLayer = _level_scene.hud_layer
 
 	# Build a summary panel
 	var panel := Panel.new()
 	panel.name = "Layer2SummaryPanel"
-	panel.position = Vector2(240, 80)
-	panel.size = Vector2(800, 480)
+	var vp_size: Vector2 = Vector2(1280, 720)
+	if _level_scene.get_viewport():
+		var vr: Rect2 = _level_scene.get_viewport_rect()
+		if vr.size != Vector2.ZERO:
+			vp_size = vr.size
+	var pw: float = minf(vp_size.x * 0.6, 800.0)
+	var ph: float = minf(vp_size.y * 0.7, 500.0)
+	panel.position = Vector2((vp_size.x - pw) / 2.0, (vp_size.y - ph) / 2.0)
+	panel.size = Vector2(pw, ph)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.03, 0.07, 0.04, 0.95)
 	style.border_color = L2_GREEN
@@ -325,6 +374,8 @@ func _show_layer_2_summary() -> void:
 	panel.add_theme_stylebox_override("panel", style)
 	hud.add_child(panel)
 
+	var inner_w: float = pw - 40.0
+
 	# Title
 	var title := Label.new()
 	title.text = "Слой 2 — Обратные ключи завершён!"
@@ -332,7 +383,7 @@ func _show_layer_2_summary() -> void:
 	title.add_theme_color_override("font_color", L2_GREEN)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.position = Vector2(20, 20)
-	title.size = Vector2(760, 30)
+	title.size = Vector2(inner_w, 30)
 	panel.add_child(title)
 
 	# Insight message
@@ -342,20 +393,20 @@ func _show_layer_2_summary() -> void:
 	insight.add_theme_color_override("font_color", Color(0.7, 0.9, 0.75, 0.9))
 	insight.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	insight.position = Vector2(20, 58)
-	insight.size = Vector2(760, 25)
+	insight.size = Vector2(inner_w, 25)
 	panel.add_child(insight)
 
 	# Divider
 	var div := Panel.new()
-	div.position = Vector2(80, 92)
-	div.size = Vector2(640, 1)
+	div.position = Vector2(60, 92)
+	div.size = Vector2(inner_w - 80, 1)
 	var div_style := StyleBoxFlat.new()
 	div_style.bg_color = L2_GREEN_BORDER
 	div.add_theme_stylebox_override("panel", div_style)
 	panel.add_child(div)
 
 	# List all pairs
-	var pairs := inverse_pair_mgr.get_pairs()
+	var pairs: Array = inverse_pair_mgr.get_pairs()
 	var y_offset := 105
 	for pair in pairs:
 		var pair_label := Label.new()
@@ -371,7 +422,7 @@ func _show_layer_2_summary() -> void:
 		pair_label.add_theme_font_size_override("font_size", 14)
 		pair_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		pair_label.position = Vector2(20, y_offset)
-		pair_label.size = Vector2(760, 22)
+		pair_label.size = Vector2(inner_w, 22)
 		panel.add_child(pair_label)
 		y_offset += 26
 
@@ -380,8 +431,9 @@ func _show_layer_2_summary() -> void:
 	btn.name = "ReturnToMapBtn"
 	btn.text = "ВЕРНУТЬСЯ НА КАРТУ"
 	btn.add_theme_font_size_override("font_size", 18)
-	btn.position = Vector2(250, 420)
-	btn.size = Vector2(300, 45)
+	var btn_w: float = minf(300.0, inner_w * 0.6)
+	btn.position = Vector2((pw - btn_w) / 2.0, ph - 60.0)
+	btn.size = Vector2(btn_w, 45)
 	btn.pressed.connect(_on_return_to_map)
 
 	var btn_style := StyleBoxFlat.new()
