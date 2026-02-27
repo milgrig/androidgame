@@ -154,7 +154,7 @@ func apply_permutation(p: Permutation) -> CrystalGraph:
 	var new_nodes: Array[Dictionary] = []
 	for i in range(node_count()):
 		var src := inv.apply(i)
-		var new_node := nodes[src].duplicate()
+		var new_node: Dictionary = nodes[src].duplicate()
 		new_node["id"] = i
 		# Keep position of target slot, change color/label
 		if nodes[i].has("position"):
@@ -163,7 +163,7 @@ func apply_permutation(p: Permutation) -> CrystalGraph:
 
 	var new_edges: Array[Dictionary] = []
 	for edge in edges:
-		var new_edge := edge.duplicate()
+		var new_edge: Dictionary = edge.duplicate()
 		new_edge["from"] = p.apply(edge["from"])
 		new_edge["to"] = p.apply(edge["to"])
 		new_edges.append(new_edge)

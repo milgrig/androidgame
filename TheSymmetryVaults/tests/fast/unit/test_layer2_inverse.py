@@ -137,6 +137,50 @@ class InversePairManager:
             "is_identity": result.is_identity()
         }
 
+    def try_pair_by_sym_ids(self, sym_a: str, sym_b: str) -> dict:
+        """Try to pair two keys by their sym_ids (tries both orderings)."""
+        result = self.try_pair(sym_a, sym_b)
+        if result["success"]:
+            return {
+                "success": True, "key_sym_id": sym_a, "inv_sym_id": sym_b,
+                "pair_index": result["pair_index"], "is_self_inverse": result["is_self_inverse"],
+            }
+        result = self.try_pair(sym_b, sym_a)
+        if result["success"]:
+            return {
+                "success": True, "key_sym_id": sym_b, "inv_sym_id": sym_a,
+                "pair_index": result["pair_index"], "is_self_inverse": result["is_self_inverse"],
+            }
+        return {"success": False, "key_sym_id": sym_a, "inv_sym_id": sym_b,
+                "pair_index": -1, "is_self_inverse": False}
+
+    def is_paired(self, sym_id: str) -> bool:
+        """Check if a sym_id's pair is already matched."""
+        for pair in self.pairs:
+            if pair.key_sym_id == sym_id or pair.inverse_sym_id == sym_id:
+                return pair.paired
+        return False
+
+    def get_inverse_sym_id(self, sym_id: str) -> str:
+        """Get the inverse sym_id for a given sym_id."""
+        for pair in self.pairs:
+            if pair.key_sym_id == sym_id:
+                return pair.inverse_sym_id
+            if pair.inverse_sym_id == sym_id:
+                return pair.key_sym_id
+        return ""
+
+    def is_self_inverse_sym(self, sym_id: str) -> bool:
+        """Check if a sym_id is a self-inverse element."""
+        for pair in self.pairs:
+            if pair.key_sym_id == sym_id or pair.inverse_sym_id == sym_id:
+                return pair.is_self_inverse
+        return False
+
+    def get_all_sym_ids(self) -> list[str]:
+        """Get all sym_ids."""
+        return list(self._sym_id_to_perm.keys())
+
     def _find_pair_by_key(self, sym_id: str) -> InversePair | None:
         for pair in self.pairs:
             if pair.key_sym_id == sym_id:
@@ -942,6 +986,509 @@ class TestSpecificLevelInverses(unittest.TestCase):
         self.assertTrue(perms["r1"].inverse().equals(perms["r6"]))
         self.assertTrue(perms["r2"].inverse().equals(perms["r5"]))
         self.assertTrue(perms["r3"].inverse().equals(perms["r4"]))
+
+
+# === T092: Tests for key-press-based pair detection API ===
+
+class TestTryPairBySymIds(unittest.TestCase):
+    """Test try_pair_by_sym_ids() — the new key-press pair detection method."""
+
+    def _setup_z3(self) -> InversePairManager:
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        return mgr
+
+    def test_pair_correct_order(self):
+        """try_pair_by_sym_ids(r1, r2) succeeds."""
+        mgr = self._setup_z3()
+        result = mgr.try_pair_by_sym_ids("r1", "r2")
+        self.assertTrue(result["success"])
+        self.assertIn(result["key_sym_id"], ("r1", "r2"))
+        self.assertIn(result["inv_sym_id"], ("r1", "r2"))
+        self.assertNotEqual(result["key_sym_id"], result["inv_sym_id"])
+
+    def test_pair_reverse_order(self):
+        """try_pair_by_sym_ids(r2, r1) also succeeds (tries both orderings)."""
+        mgr = self._setup_z3()
+        result = mgr.try_pair_by_sym_ids("r2", "r1")
+        self.assertTrue(result["success"])
+
+    def test_pair_wrong_combination(self):
+        """try_pair_by_sym_ids(r1, r1) fails (not inverses)."""
+        mgr = self._setup_z3()
+        result = mgr.try_pair_by_sym_ids("r1", "r1")
+        self.assertFalse(result["success"])
+
+    def test_pair_self_inverse(self):
+        """try_pair_by_sym_ids(s, s) succeeds for self-inverse in Z2."""
+        data = load_level_json("level_03.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        # Find the self-inverse element
+        self_inv = [p for p in mgr.pairs if p.is_self_inverse and not p.is_identity]
+        self.assertEqual(len(self_inv), 1)
+        sid = self_inv[0].key_sym_id
+        result = mgr.try_pair_by_sym_ids(sid, sid)
+        self.assertTrue(result["success"])
+        self.assertTrue(result["is_self_inverse"])
+
+    def test_pair_unknown_sym_id(self):
+        """try_pair_by_sym_ids with unknown sym_id fails."""
+        mgr = self._setup_z3()
+        result = mgr.try_pair_by_sym_ids("nonexistent", "r1")
+        self.assertFalse(result["success"])
+
+    def test_pair_already_paired(self):
+        """try_pair_by_sym_ids fails if pair is already matched."""
+        mgr = self._setup_z3()
+        mgr.try_pair_by_sym_ids("r1", "r2")
+        result = mgr.try_pair_by_sym_ids("r1", "r2")
+        self.assertFalse(result["success"])
+
+
+class TestIsPaired(unittest.TestCase):
+    """Test is_paired() query method."""
+
+    def test_identity_is_paired(self):
+        """Identity is auto-paired at setup."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertTrue(mgr.is_paired("e"))
+
+    def test_unpaired_returns_false(self):
+        """Unpaired key returns False."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertFalse(mgr.is_paired("r1"))
+
+    def test_paired_after_match(self):
+        """Key becomes paired after successful match."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        mgr.try_pair_by_sym_ids("r1", "r2")
+        self.assertTrue(mgr.is_paired("r1"))
+        self.assertTrue(mgr.is_paired("r2"))
+
+    def test_unknown_sym_id(self):
+        """Unknown sym_id returns False."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertFalse(mgr.is_paired("nonexistent"))
+
+
+class TestGetInverseSymId(unittest.TestCase):
+    """Test get_inverse_sym_id() query method."""
+
+    def test_mutual_inverse(self):
+        """r1's inverse is r2 in Z3."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        inv = mgr.get_inverse_sym_id("r1")
+        self.assertEqual(inv, "r2")
+
+    def test_reverse_lookup(self):
+        """r2's inverse is r1 in Z3 (reverse lookup through inverse_sym_id)."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        inv = mgr.get_inverse_sym_id("r2")
+        self.assertEqual(inv, "r1")
+
+    def test_identity_self_inverse(self):
+        """Identity's inverse is itself."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        inv = mgr.get_inverse_sym_id("e")
+        self.assertEqual(inv, "e")
+
+    def test_self_inverse_element(self):
+        """Self-inverse element returns itself."""
+        data = load_level_json("level_03.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self_inv = [p for p in mgr.pairs if p.is_self_inverse and not p.is_identity]
+        sid = self_inv[0].key_sym_id
+        self.assertEqual(mgr.get_inverse_sym_id(sid), sid)
+
+    def test_unknown_returns_empty(self):
+        """Unknown sym_id returns empty string."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertEqual(mgr.get_inverse_sym_id("nonexistent"), "")
+
+
+class TestIsSelfInverseSym(unittest.TestCase):
+    """Test is_self_inverse_sym() query method."""
+
+    def test_rotation_not_self_inverse(self):
+        """r1 in Z3 is not self-inverse."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertFalse(mgr.is_self_inverse_sym("r1"))
+
+    def test_reflection_is_self_inverse(self):
+        """Reflection in Z2 is self-inverse."""
+        data = load_level_json("level_03.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self_inv = [p for p in mgr.pairs if p.is_self_inverse and not p.is_identity]
+        sid = self_inv[0].key_sym_id
+        self.assertTrue(mgr.is_self_inverse_sym(sid))
+
+    def test_identity_is_self_inverse(self):
+        """Identity is self-inverse."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertTrue(mgr.is_self_inverse_sym("e"))
+
+    def test_unknown_returns_false(self):
+        """Unknown sym_id returns False."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        self.assertFalse(mgr.is_self_inverse_sym("nonexistent"))
+
+    def test_s3_reflections_self_inverse(self):
+        """All reflections in S3 are self-inverse."""
+        data = load_level_json("level_09.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        for sym_id in mgr.get_all_sym_ids():
+            if sym_id.startswith("s"):
+                self.assertTrue(mgr.is_self_inverse_sym(sym_id),
+                    f"S3 reflection {sym_id} should be self-inverse")
+
+    def test_s3_rotations_not_self_inverse(self):
+        """Non-identity rotations in S3 are not self-inverse (except possibly r3=r_180)."""
+        data = load_level_json("level_09.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+        # r1 and r2 in S3 are mutual inverses, not self-inverse
+        self.assertFalse(mgr.is_self_inverse_sym("r1"))
+        self.assertFalse(mgr.is_self_inverse_sym("r2"))
+
+
+class TestKeyPressBasedPairDetection(unittest.TestCase):
+    """Integration test: simulate the key-press pair detection flow.
+    This mirrors LayerModeController.on_key_pressed() logic."""
+
+    def _simulate_key_presses(self, mgr: InversePairManager, room_state_perm_ids: list[str],
+                                cayley_table: list[list[int]], key_sequence: list[int]) -> list[dict]:
+        """Simulate a sequence of key presses and return detected pairs.
+        Mirrors LayerModeController.on_key_pressed() state machine.
+        """
+        detected_pairs = []
+        prev_key_idx = -1
+        room_before_prev = -1
+        current_room = 0  # Start at Home
+
+        for key_idx in key_sequence:
+            room_before = current_room
+            room_after = cayley_table[current_room][key_idx]
+            current_room = room_after
+
+            # Skip identity key
+            if key_idx == 0:
+                prev_key_idx = -1
+                room_before_prev = -1
+                continue
+
+            if prev_key_idx == -1:
+                prev_key_idx = key_idx
+                room_before_prev = room_before
+            else:
+                if room_after == room_before_prev:
+                    # Pair detected!
+                    sym_a = room_state_perm_ids[prev_key_idx]
+                    sym_b = room_state_perm_ids[key_idx]
+                    result = mgr.try_pair_by_sym_ids(sym_a, sym_b)
+                    if result["success"]:
+                        detected_pairs.append(result)
+                # Reset for next pair
+                prev_key_idx = key_idx
+                room_before_prev = room_before
+
+        return detected_pairs
+
+    def _build_cayley_table(self, perms: list[Permutation]) -> list[list[int]]:
+        """Build Cayley table matching RoomState convention: table[a][b] = a*b."""
+        n = len(perms)
+        table = []
+        for a in range(n):
+            row = [0] * n
+            for b in range(n):
+                product = perms[b].compose(perms[a])  # a*b in math = b.compose(a)
+                for k in range(n):
+                    if perms[k].equals(product):
+                        row[b] = k
+                        break
+            table.append(row)
+        return table
+
+    def _setup_room_data(self, data: dict) -> tuple:
+        """Parse level data into (perms, perm_ids, cayley_table).
+        Returns lists with identity at index 0."""
+        autos = data.get("symmetries", {}).get("automorphisms", [])
+        raw_perms = []
+        raw_ids = []
+        for auto in autos:
+            raw_perms.append(Permutation(auto["mapping"]))
+            raw_ids.append(auto["id"])
+
+        # Move identity to index 0
+        identity_idx = next(i for i, p in enumerate(raw_perms) if p.is_identity())
+        perms = [raw_perms[identity_idx]]
+        perm_ids = [raw_ids[identity_idx]]
+        for i in range(len(raw_perms)):
+            if i != identity_idx:
+                perms.append(raw_perms[i])
+                perm_ids.append(raw_ids[i])
+
+        table = self._build_cayley_table(perms)
+        return perms, perm_ids, table
+
+    def test_z3_pair_by_key_presses(self):
+        """Z3: press key 1 (r1) from Home, then key 2 (r2) → returns to Home → pair detected."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+
+        perms, perm_ids, table = self._setup_room_data(data)
+
+        # Press key 1 (r1), then key 2 (r2) — should find r1<->r2
+        pairs = self._simulate_key_presses(mgr, perm_ids, table, [1, 2])
+        self.assertEqual(len(pairs), 1)
+        self.assertTrue(pairs[0]["success"])
+        self.assertTrue(mgr.is_complete())
+
+    def test_z3_wrong_pair_no_detection(self):
+        """Z3: press key 1 (r1) twice — does NOT return to Home → no pair."""
+        data = load_level_json("level_01.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+
+        perms, perm_ids, table = self._setup_room_data(data)
+
+        # r1 then r1 = r2 (not Home), so no pair detected
+        pairs = self._simulate_key_presses(mgr, perm_ids, table, [1, 1])
+        self.assertEqual(len(pairs), 0)
+        self.assertFalse(mgr.is_complete())
+
+    def test_z2_self_inverse_detection(self):
+        """Z2: press key s from Home → goes away, press s again → returns to Home."""
+        data = load_level_json("level_03.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+
+        perms, perm_ids, table = self._setup_room_data(data)
+
+        # Find the non-identity key index
+        s_idx = next(i for i, sid in enumerate(perm_ids) if sid != "e")
+
+        # Press s, then s → returns to Home → self-inverse detected
+        pairs = self._simulate_key_presses(mgr, perm_ids, table, [s_idx, s_idx])
+        self.assertEqual(len(pairs), 1)
+        self.assertTrue(pairs[0]["is_self_inverse"])
+
+    def test_s3_full_completion_by_key_presses(self):
+        """S3: complete all inverse pairs via key presses."""
+        data = load_level_json("level_09.json")
+        mgr = InversePairManager()
+        mgr.setup(data)
+
+        perms, perm_ids, table = self._setup_room_data(data)
+
+        # Identify mutual and self-inverse pairs from the manager
+        for pair in mgr.pairs:
+            if pair.is_identity or pair.paired:
+                continue
+            key_idx = perm_ids.index(pair.key_sym_id)
+            inv_idx = perm_ids.index(pair.inverse_sym_id)
+            # Press key, then inverse — should return to Home and detect pair
+            self._simulate_key_presses(mgr, perm_ids, table, [key_idx, inv_idx])
+
+        self.assertTrue(mgr.is_complete(),
+            "S3 should be complete after pairing all inverse keys via key presses")
+
+
+class TestKeyPressFromAnyRoom(unittest.TestCase):
+    """T092 update: pair detection works from ANY starting room, not just Home.
+    Two consecutive key presses that return to the SAME starting room = pair."""
+
+    def _build_cayley_table(self, perms: list[Permutation]) -> list[list[int]]:
+        n = len(perms)
+        table = []
+        for a in range(n):
+            row = [0] * n
+            for b in range(n):
+                product = perms[b].compose(perms[a])
+                for k in range(n):
+                    if perms[k].equals(product):
+                        row[b] = k
+                        break
+            table.append(row)
+        return table
+
+    def _setup_room_data(self, data: dict) -> tuple:
+        autos = data.get("symmetries", {}).get("automorphisms", [])
+        raw_perms = []
+        raw_ids = []
+        for auto in autos:
+            raw_perms.append(Permutation(auto["mapping"]))
+            raw_ids.append(auto["id"])
+        identity_idx = next(i for i, p in enumerate(raw_perms) if p.is_identity())
+        perms = [raw_perms[identity_idx]]
+        perm_ids = [raw_ids[identity_idx]]
+        for i in range(len(raw_perms)):
+            if i != identity_idx:
+                perms.append(raw_perms[i])
+                perm_ids.append(raw_ids[i])
+        table = self._build_cayley_table(perms)
+        return perms, perm_ids, table
+
+    def _simulate_key_presses_from_room(self, mgr: InversePairManager,
+            perm_ids: list[str], cayley_table: list[list[int]],
+            start_room: int, key_sequence: list[int]) -> list[dict]:
+        """Simulate key presses starting from a specific room."""
+        detected = []
+        prev_key_idx = -1
+        room_before_prev = -1
+        current_room = start_room
+
+        for key_idx in key_sequence:
+            room_before = current_room
+            room_after = cayley_table[current_room][key_idx]
+            current_room = room_after
+
+            if key_idx == 0:
+                prev_key_idx = -1
+                room_before_prev = -1
+                continue
+
+            if prev_key_idx == -1:
+                prev_key_idx = key_idx
+                room_before_prev = room_before
+            else:
+                if room_after == room_before_prev:
+                    sym_a = perm_ids[prev_key_idx]
+                    sym_b = perm_ids[key_idx]
+                    result = mgr.try_pair_by_sym_ids(sym_a, sym_b)
+                    if result["success"]:
+                        detected.append(result)
+                prev_key_idx = key_idx
+                room_before_prev = room_before
+
+        return detected
+
+    def test_z3_pair_detected_from_every_room(self):
+        """Z3: pressing r1→r2 detects pair regardless of starting room.
+        Since r1*r2 = e, applying both from any room returns to that room."""
+        data = load_level_json("level_01.json")
+        perms, perm_ids, table = self._setup_room_data(data)
+        r1_idx = perm_ids.index("r1")
+        r2_idx = perm_ids.index("r2")
+
+        for start_room in range(len(perms)):
+            mgr = InversePairManager()
+            mgr.setup(data)
+            pairs = self._simulate_key_presses_from_room(
+                mgr, perm_ids, table, start_room, [r1_idx, r2_idx])
+            self.assertEqual(len(pairs), 1,
+                f"Z3: pair r1<->r2 should be detected from room {start_room}")
+            self.assertTrue(pairs[0]["success"])
+
+    def test_z2_self_inverse_from_every_room(self):
+        """Z2: pressing s→s detects self-inverse pair from every room."""
+        data = load_level_json("level_03.json")
+        perms, perm_ids, table = self._setup_room_data(data)
+        s_idx = next(i for i, sid in enumerate(perm_ids) if sid != "e")
+
+        for start_room in range(len(perms)):
+            mgr = InversePairManager()
+            mgr.setup(data)
+            pairs = self._simulate_key_presses_from_room(
+                mgr, perm_ids, table, start_room, [s_idx, s_idx])
+            self.assertEqual(len(pairs), 1,
+                f"Z2: self-inverse should be detected from room {start_room}")
+            self.assertTrue(pairs[0]["is_self_inverse"])
+
+    def test_s3_all_pairs_from_non_home(self):
+        """S3: complete all pairs starting from a non-Home room."""
+        data = load_level_json("level_09.json")
+        perms, perm_ids, table = self._setup_room_data(data)
+        mgr = InversePairManager()
+        mgr.setup(data)
+
+        current_room = 1  # Start from room 1, not Home
+        prev_key_idx = -1
+        room_before_prev = -1
+
+        for pair in mgr.pairs:
+            if pair.is_identity or pair.paired:
+                continue
+            key_idx = perm_ids.index(pair.key_sym_id)
+            inv_idx = perm_ids.index(pair.inverse_sym_id)
+
+            # Press key from current_room
+            room_before = current_room
+            room_after = table[current_room][key_idx]
+            current_room = room_after
+            prev_key_idx = key_idx
+            room_before_prev = room_before
+
+            # Press inverse
+            room_before2 = current_room
+            room_after2 = table[current_room][inv_idx]
+            current_room = room_after2
+
+            if room_after2 == room_before_prev:
+                sym_a = perm_ids[prev_key_idx]
+                sym_b = perm_ids[inv_idx]
+                mgr.try_pair_by_sym_ids(sym_a, sym_b)
+
+            prev_key_idx = inv_idx
+            room_before_prev = room_before2
+
+        self.assertTrue(mgr.is_complete(),
+            "S3 should be completable from a non-Home starting room")
+
+    def test_all_levels_completable_from_any_room(self):
+        """Every level can be completed via key presses from any starting room.
+        This is the key T092 invariant: inverse keys return you to the same room
+        regardless of where you start."""
+        for filename in get_all_act1_level_files():
+            data = load_level_json(filename)
+            perms, perm_ids, table = self._setup_room_data(data)
+
+            # Try from room 0 and room 1 (if exists)
+            for start_room in [0, min(1, len(perms) - 1)]:
+                mgr = InversePairManager()
+                mgr.setup(data)
+
+                for pair in mgr.pairs:
+                    if pair.is_identity or pair.paired:
+                        continue
+                    key_idx = perm_ids.index(pair.key_sym_id)
+                    inv_idx = perm_ids.index(pair.inverse_sym_id)
+
+                    pairs = self._simulate_key_presses_from_room(
+                        mgr, perm_ids, table, start_room, [key_idx, inv_idx])
+                    self.assertGreater(len(pairs), 0,
+                        f"{filename}: pair {pair.key_sym_id}<->{pair.inverse_sym_id} "
+                        f"not detected from room {start_room}")
+
+                self.assertTrue(mgr.is_complete(),
+                    f"{filename}: not completable from room {start_room}")
 
 
 if __name__ == "__main__":

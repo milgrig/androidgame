@@ -381,6 +381,9 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	if _room_map: _room_map.queue_redraw()
 	if _key_bar: _key_bar.update_state(_room_state)
 	_update_counter()
+	# Layer 2: notify controller about key press for inverse pair detection
+	if _current_layer == 2:
+		_layer_controller.on_key_pressed(key_idx, from_room, to_room)
 
 ## Phase 2 of key application animation: move crystals along arcs.
 func _key_apply_phase2(n: int, active_perm: Permutation, pm: Dictionary,
@@ -492,11 +495,11 @@ func _show_layer_2_instruction_panel() -> void:
 	var p = hud_layer.get_node_or_null("InstructionPanel")
 	if p == null: return
 	var _s := func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
-	var meta := level_data.get("meta", {})
-	var layer_config := level_data.get("layers", {}).get("layer_2", {})
+	var meta: Dictionary = level_data.get("meta", {})
+	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_2", {})
 	_s.call("InstrTitle", "Слой 2 — %s" % meta.get("title", ""))
 	_s.call("InstrGoal", layer_config.get("title", "Обратные ключи"))
-	_s.call("InstrBody", layer_config.get("instruction", "Для каждого ключа найдите обратный — тот, который отменяет его действие.\n\nВыберите ключ слева, затем нажмите на подходящий обратный ключ снизу."))
+	_s.call("InstrBody", layer_config.get("instruction", "Нажимайте ключи и наблюдайте за перемещениями по комнатам.\n\nЕсли после двух нажатий вы вернулись в ту же комнату — эти ключи обратные друг другу!"))
 	var inm = p.get_node_or_null("InstrNewMechanic")
 	if inm: inm.text = layer_config.get("subtitle", "Каждое действие можно отменить"); inm.visible = true
 	# Apply green theme to instruction panel

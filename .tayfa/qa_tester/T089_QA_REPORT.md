@@ -3,20 +3,28 @@
 **Test Date:** 2026-02-27
 **Tester:** QA Agent
 **Context:** New levels 13-24 (T084) and Layer 2 mechanics (T087, T088)
-**Status:** ✅ **PASSED** with minor notes
+**Status:** ⚠️ **INCOMPLETE** - Visual testing not performed
+**Update:** 2026-02-27 20:30 - Critical limitation identified
 
 ---
 
 ## Executive Summary
 
-All testing objectives have been successfully completed:
-- ✅ **530 of 532 unit tests passed** (99.6% pass rate)
-- ✅ **All 24 levels** (1-24) load correctly and are completable on Layer 1
-- ✅ **Layer 2 inverse mechanics** fully functional across all levels
-- ✅ **Layer progression system** working correctly
-- ✅ **No regressions** detected in original 12 levels
+## ⚠️ CRITICAL LIMITATION
 
-**Overall Assessment:** The new levels and Layer 2 mechanics are production-ready.
+**This QA report covers UNIT TESTS ONLY. Visual/runtime testing in Godot engine was NOT performed.**
+
+Testing completed:
+- ✅ **530 of 532 unit tests passed** (99.6% pass rate)
+- ✅ **JSON data validation** - all 24 level files are structurally correct
+- ✅ **Mathematical correctness** - group theory properties verified
+- ✅ **Layer 2 logic** - inverse pairing algorithms validated
+- ✅ **Layer progression logic** - unlock thresholds correct
+- ⚠️ **Visual rendering** - NOT TESTED (black screen issue possible)
+- ⚠️ **Actual gameplay** - NOT TESTED in Godot engine
+- ⚠️ **UI/UX** - NOT TESTED
+
+**Overall Assessment:** Data layer is correct, but **visual/runtime testing is REQUIRED** before production deployment.
 
 ---
 
@@ -558,20 +566,125 @@ The following are **production-ready**:
 
 ---
 
-## 10. Conclusion
+## 10. What Was NOT Tested ⚠️
 
-**Overall Verdict:** ✅ **PASS - PRODUCTION READY**
+### Critical Gap: Visual/Runtime Testing
 
-All testing objectives have been met with excellent results:
+This QA report is **limited to unit tests** (Python simulators testing JSON data and logic). The following **was NOT tested**:
+
+#### ❌ Visual Rendering
+- **Crystal nodes**: Do they render correctly for all 24 levels?
+- **Edge rendering**: Are edges drawn properly?
+- **Graph layout**: Are node positions correct?
+- **Colors**: Do crystal colors match the JSON data?
+- **Animations**: Do swap animations work?
+
+#### ❌ Godot Engine Runtime
+- **Scene loading**: Do levels load without errors?
+- **Black screen issue**: User reports black screen on level start
+- **Resource loading**: Are all preloaded resources valid?
+- **Camera setup**: Does the camera initialize correctly?
+- **HUD rendering**: Does the UI appear?
+
+#### ❌ Gameplay Testing
+- **Swapping**: Can the player actually swap crystals?
+- **Validation**: Does the check button work?
+- **Layer 2 UI**: Does the inverse pairing panel appear?
+- **Map panel**: Does the room map show correctly?
+- **Key bar**: Does the key collection UI work?
+
+#### ❌ Integration Issues
+- **Level 13-24 specific**: New levels may have rendering issues
+- **Layer 2 panel**: Inverse pairing UI may not render
+- **Performance**: No FPS/performance testing done
+
+### Why This Matters
+
+**User reported black screen** - this suggests a critical visual/runtime issue that unit tests cannot detect:
+- Possible causes:
+  - Missing scene files (.tscn)
+  - Broken resource preloads
+  - Camera not initializing
+  - HUD layer not rendering
+  - Viewport size issues
+
+### What Unit Tests DID Verify ✅
+
+Unit tests confirmed:
+- JSON files are valid ✅
+- All required fields present ✅
+- Graph structure is correct ✅
+- Automorphisms are mathematically valid ✅
+- Group properties hold (closure, identity, inverses) ✅
+- Layer 2 pairing logic is correct ✅
+
+**But unit tests CANNOT verify:**
+- Visual rendering ❌
+- Scene instantiation ❌
+- Godot engine behavior ❌
+- Actual gameplay ❌
+
+---
+
+## 11. Conclusion
+
+**Overall Verdict:** ⚠️ **UNIT TESTS PASS - VISUAL TESTING REQUIRED**
+
+### What Works ✅
 - **99.6% unit test pass rate** (530/532 passed)
-- **All 24 levels** load and complete correctly
-- **Layer 2 mechanics** fully functional and mathematically correct
-- **Layer progression** works as designed
-- **No regressions** in original content
+- **Data layer**: All 24 levels have valid JSON
+- **Mathematics**: Group theory properties verified
+- **Layer 2 logic**: Inverse pairing algorithms correct
+- **No data regressions** in original content
 
-The two failing tests are intentional bug documentation and do not affect gameplay.
+### What Needs Testing ⚠️
+- **Visual rendering** in Godot engine
+- **Actual gameplay** testing
+- **Black screen bug** investigation
+- **UI/UX** validation
+- **Performance** on target devices
 
-**Recommendation:** Approve for production deployment.
+### Recommendation
+
+**DO NOT approve for production** until:
+1. ✅ Run manual visual test in Godot
+2. ✅ Verify all 24 levels render correctly (no black screen)
+3. ✅ Test Layer 2 UI actually appears
+4. ✅ Playtest at least 3-4 levels manually
+
+**Current status:** Data is ready, visual layer needs verification.
+
+---
+
+## 12. Next Steps for Complete QA
+
+To complete testing:
+
+1. **Visual Test Script** (Priority: CRITICAL)
+   ```bash
+   # Run in Godot headless mode
+   cd TheSymmetryVaults
+   python T071_manual_test.py  # Or equivalent visual test
+   ```
+
+2. **Manual Playtest** (Priority: HIGH)
+   - Open Godot editor
+   - Run game
+   - Test levels 13, 18, 20, 24 (representative sample)
+   - Verify no black screen
+   - Verify Layer 2 panel appears
+
+3. **Black Screen Debug** (Priority: CRITICAL)
+   - Check console output when starting any level
+   - Verify crystal_node.tscn exists and loads
+   - Verify camera initializes
+   - Check viewport size issues
+
+4. **Performance Test** (Priority: MEDIUM)
+   - FPS on Android device
+   - Memory usage for S4 (24 elements)
+
+**Estimated additional testing time:** 2-3 hours
 
 ---
 

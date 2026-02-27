@@ -64,6 +64,19 @@ var _current_room: int = -1
 ## becomes true after the first correct permutation is discovered.
 var home_visible: bool = false
 
+## Layer 2 pairing state: room_index -> {partner: int, is_self_inverse: bool}
+var _pair_data: Dictionary = {}
+## Overlay for drawing pair bracket lines between paired keys
+var _pair_overlay: Control = null
+## Whether Layer 2 pairing mode is active
+var _layer2_active: bool = false
+
+## Layer 2 green colors
+const L2_PAIR_COLOR := Color(0.2, 0.85, 0.4, 0.7)
+const L2_SELF_COLOR := Color(1.0, 0.85, 0.3, 0.7)
+const L2_PAIRED_BORDER := Color(0.2, 0.85, 0.4, 0.5)
+const L2_SELF_BORDER := Color(1.0, 0.85, 0.3, 0.5)
+
 
 # ── Lifecycle ────────────────────────────────────────────────────────
 
@@ -139,6 +152,52 @@ func reveal_home(room_state: RoomState) -> void:
 		return
 	home_visible = true
 	rebuild(room_state)
+
+
+## Update Layer 2 pairing visualization on existing buttons.
+## Called by LayerModeController after each inverse pair is matched.
+## room_state: RoomState for sym_id → room_index mapping
+## pair_mgr: InversePairManager with current pairing state
+func update_layer2_pairs(room_state: RoomState, pair_mgr: InversePairManager) -> void:
+	if room_state == null or pair_mgr == null:
+		return
+	_layer2_active = true
+
+	# Rebuild _pair_data from InversePairManager's pairs
+	_pair_data.clear()
+	var pairs: Array = pair_mgr.get_pairs()
+	for pair in pairs:
+		if not pair.paired:
+			continue  # Only show matched pairs
+
+		# Map sym_ids → room indices
+		var key_idx: int = _sym_id_to_room_idx(pair.key_sym_id, room_state)
+		var inv_idx: int = _sym_id_to_room_idx(pair.inverse_sym_id, room_state)
+		if key_idx < 0 or inv_idx < 0:
+			continue
+
+		_pair_data[key_idx] = {"partner": inv_idx, "is_self_inverse": pair.is_self_inverse}
+		if not pair.is_self_inverse:
+			_pair_data[inv_idx] = {"partner": key_idx, "is_self_inverse": false}
+
+	# Apply pairing visuals to each button
+	for i in range(_buttons.size()):
+		var btn = _buttons[i]
+		if btn == null or not is_instance_valid(btn):
+			continue
+		if _pair_data.has(i):
+			var info: Dictionary = _pair_data[i]
+			var is_self_inv: bool = info["is_self_inverse"]
+			_apply_paired_style(btn, i, room_state, is_self_inv)
+
+
+## Clear Layer 2 pairing state and restore default button styles.
+func clear_layer2_pairs() -> void:
+	_pair_data.clear()
+	_layer2_active = false
+	if _pair_overlay != null and is_instance_valid(_pair_overlay):
+		_pair_overlay.queue_free()
+		_pair_overlay = null
 
 
 # ── Internal: shell construction ─────────────────────────────────────
@@ -320,6 +379,69 @@ func _find_child_by_name(parent: Node, child_name: String) -> Node:
 			if grandchild.name == child_name:
 				return grandchild
 	return null
+
+
+# ── Internal: Layer 2 pairing visuals ────────────────────────────────
+
+## Map a sym_id to a room index via RoomState.perm_ids.
+func _sym_id_to_room_idx(sym_id: String, room_state: RoomState) -> int:
+	for i in range(room_state.perm_ids.size()):
+		if room_state.perm_ids[i] == sym_id:
+			return i
+	return -1
+
+
+## Apply green "paired" border + checkmark to a button.
+## Self-inverse keys get a yellow/gold loop indicator instead.
+func _apply_paired_style(btn: Button, idx: int, room_state: RoomState,
+		is_self_inverse: bool) -> void:
+	var color: Color = room_state.colors[idx] if idx < room_state.colors.size() else Color.WHITE
+	var pair_border: Color = L2_SELF_BORDER if is_self_inverse else L2_PAIRED_BORDER
+	var pair_accent: Color = L2_SELF_COLOR if is_self_inverse else L2_PAIR_COLOR
+
+	# Update normal style — thicker green/yellow border
+	var normal_style := StyleBoxFlat.new()
+	normal_style.bg_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.06)
+	normal_style.border_color = pair_border
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		normal_style.set(prop, 2)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		normal_style.set(prop, 4)
+	btn.add_theme_stylebox_override("normal", normal_style)
+
+	# Hover style — brighter green/yellow background
+	var hover_style := normal_style.duplicate() as StyleBoxFlat
+	hover_style.border_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.8)
+	hover_style.bg_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.12)
+	btn.add_theme_stylebox_override("hover", hover_style)
+
+	# Pressed style
+	var pressed_style := normal_style.duplicate() as StyleBoxFlat
+	pressed_style.bg_color = Color(pair_accent.r, pair_accent.g, pair_accent.b, 0.18)
+	btn.add_theme_stylebox_override("pressed", pressed_style)
+
+	# Add or update pair indicator label (✓ for pair, ↻ for self-inverse)
+	var indicator_name := "PairMark"
+	var existing = _find_child_by_name(btn, indicator_name)
+	if existing != null:
+		existing.queue_free()
+
+	var hbox = _find_child_by_name(btn, "Content")
+	if hbox:
+		var mark := Label.new()
+		mark.name = indicator_name
+		mark.text = "\u21BB" if is_self_inverse else "\u2713"  # ↻ or ✓
+		mark.add_theme_font_size_override("font_size", 9)
+		mark.add_theme_color_override("font_color", pair_accent)
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hbox.add_child(mark)
+
+	# Update label color to the pair accent
+	var lbl := _find_child_by_name(btn, "Num") as Label
+	if lbl:
+		lbl.add_theme_color_override("font_color", pair_accent)
 
 
 # ── Signal handlers ──────────────────────────────────────────────────

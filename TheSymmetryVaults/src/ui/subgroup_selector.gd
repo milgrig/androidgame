@@ -191,7 +191,7 @@ func _apply_button_style(btn: Button, bg: Color, border: Color) -> void:
 	style.border_width_bottom = 1
 	btn.add_theme_stylebox_override("normal", style)
 
-	var hover := style.duplicate()
+	var hover: StyleBoxFlat = style.duplicate() as StyleBoxFlat
 	hover.bg_color = bg.lightened(0.15)
 	btn.add_theme_stylebox_override("hover", hover)
 
@@ -322,8 +322,8 @@ func _draw_mini_diagram(ctrl: Control) -> void:
 	for i in range(n):
 		var target: int = mapping[i]
 		if target != i:
-			var from_pt := positions[i]
-			var to_pt := positions[target]
+			var from_pt: Vector2 = positions[i]
+			var to_pt: Vector2 = positions[target]
 			ctrl.draw_line(from_pt, to_pt, Color(0.5, 0.7, 1.0, 0.6), 1.0)
 
 	for i in range(n):

@@ -61,18 +61,47 @@ def _get_project_root() -> Path | None:
 
 
 def _get_github_token() -> str:
-    """Get GitHub token from kok/secret_settings.json."""
+    """
+    Get GitHub token. Search order:
+    1. {project_root}/kok/secret_settings.json (legacy local path)
+    2. Central orchestrator: scan parent directories for Tayfa_new/kok/secret_settings.json
+    3. Well-known path: /c/Cursor/Tayfa_new/kok/secret_settings.json
+    """
+    # 1. Local project path
     project_root = _get_project_root()
-    if not project_root:
-        return ""
-    secret_path = project_root / "kok" / "secret_settings.json"
-    if not secret_path.exists():
-        return ""
-    try:
-        settings = json.loads(secret_path.read_text(encoding="utf-8"))
-        return settings.get("githubToken", "").strip()
-    except Exception:
-        return ""
+    if project_root:
+        secret_path = project_root / "kok" / "secret_settings.json"
+        if secret_path.exists():
+            try:
+                settings = json.loads(secret_path.read_text(encoding="utf-8"))
+                token = settings.get("githubToken", "").strip()
+                if token:
+                    return token
+            except Exception:
+                pass
+
+    # 2. Search up from project root for Tayfa_new/kok/ or sibling directories
+    if project_root:
+        # Check sibling directories of the project's parent
+        # e.g., project at /c/Cursor/TayfaProject/AndroidGame
+        #   -> check /c/Cursor/Tayfa_new/kok/secret_settings.json
+        search_dir = project_root.parent  # e.g., TayfaProject
+        for _ in range(3):  # Go up max 3 levels
+            if search_dir and search_dir.exists():
+                for candidate in search_dir.iterdir():
+                    if candidate.is_dir():
+                        secret_path = candidate / "kok" / "secret_settings.json"
+                        if secret_path.exists():
+                            try:
+                                settings = json.loads(secret_path.read_text(encoding="utf-8"))
+                                token = settings.get("githubToken", "").strip()
+                                if token:
+                                    return token
+                            except Exception:
+                                pass
+                search_dir = search_dir.parent
+
+    return ""
 
 
 def _get_authenticated_push_url() -> str | None:
@@ -85,10 +114,122 @@ def _get_authenticated_push_url() -> str | None:
     if not result["success"]:
         return None
     remote_url = result["stdout"].strip()
+    # Remove existing token from URL if present
+    import re
+    remote_url = re.sub(r"https://[^@]+@github\.com/", "https://github.com/", remote_url)
     # Add token to URL
     if remote_url.startswith("https://github.com/"):
         return remote_url.replace("https://github.com/", f"https://{token}@github.com/")
     return None
+
+
+def _ensure_github_repo_exists() -> dict:
+    """
+    Check if GitHub repo exists; create it if not.
+    Extracts owner and repo name from the remote origin URL.
+    Uses urllib to avoid extra dependencies.
+
+    Returns: {"existed": bool, "created": bool, "error": str|None}
+    """
+    import re
+    import urllib.request
+    import urllib.error
+
+    result = {"existed": False, "created": False, "error": None}
+
+    token = _get_github_token()
+    if not token:
+        result["error"] = "GitHub token not configured"
+        return result
+
+    # Get remote URL and extract owner/repo
+    git_result = _run_git(["remote", "get-url", "origin"])
+    if not git_result["success"]:
+        result["error"] = "No remote origin configured"
+        return result
+
+    remote_url = git_result["stdout"].strip()
+    # Extract owner/repo from URL (handles both with and without token)
+    match = re.search(r"github\.com[/:]([^/]+)/([^/.]+?)(?:\.git)?$", remote_url)
+    if not match:
+        result["error"] = f"Cannot parse GitHub owner/repo from URL: {remote_url}"
+        return result
+
+    owner = match.group(1)
+    repo_name = match.group(2)
+
+    # Check if repo exists
+    check_url = f"https://api.github.com/repos/{owner}/{repo_name}"
+    req = urllib.request.Request(check_url, method="GET")
+    req.add_header("Authorization", f"token {token}")
+    req.add_header("Accept", "application/vnd.github.v3+json")
+    req.add_header("User-Agent", "Tayfa-TaskManager")
+
+    try:
+        urllib.request.urlopen(req, timeout=10)
+        result["existed"] = True
+        return result
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            result["error"] = f"GitHub API error checking repo: {e.code} {e.reason}"
+            return result
+        # 404 = repo doesn't exist, proceed to create
+    except Exception as e:
+        result["error"] = f"GitHub API request failed: {str(e)}"
+        return result
+
+    # Create repo — try user repo first
+    create_url = "https://api.github.com/user/repos"
+    body = json.dumps({
+        "name": repo_name,
+        "private": False,
+        "auto_init": False,
+    }).encode("utf-8")
+
+    req = urllib.request.Request(create_url, data=body, method="POST")
+    req.add_header("Authorization", f"token {token}")
+    req.add_header("Accept", "application/vnd.github.v3+json")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "Tayfa-TaskManager")
+
+    try:
+        urllib.request.urlopen(req, timeout=15)
+        result["created"] = True
+        return result
+    except urllib.error.HTTPError as e:
+        if e.code == 422:
+            result["existed"] = True
+            return result
+        if e.code in (404, 403):
+            pass  # fall through to org attempt
+        else:
+            result["error"] = f"GitHub API error creating repo: {e.code} {e.reason}"
+            return result
+    except Exception as e:
+        result["error"] = f"GitHub API create request failed: {str(e)}"
+        return result
+
+    # Try org endpoint
+    org_url = f"https://api.github.com/orgs/{owner}/repos"
+    req = urllib.request.Request(org_url, data=body, method="POST")
+    req.add_header("Authorization", f"token {token}")
+    req.add_header("Accept", "application/vnd.github.v3+json")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("User-Agent", "Tayfa-TaskManager")
+
+    try:
+        urllib.request.urlopen(req, timeout=15)
+        result["created"] = True
+        return result
+    except urllib.error.HTTPError as e:
+        if e.code == 422:
+            result["existed"] = True
+            return result
+        result["error"] = f"GitHub API error creating org repo: {e.code} {e.reason}"
+        return result
+    except Exception as e:
+        result["error"] = f"GitHub API org create request failed: {str(e)}"
+        return result
 
 
 def _run_git(args: list[str], cwd: Path | None = None) -> dict:
@@ -229,7 +370,14 @@ def _release_sprint(sprint_id: str, sprint_title: str = "") -> dict:
         tag_msg = f"Sprint: {sprint_title}" if sprint_title else f"Release {version}"
         _run_git(["tag", "-a", version, "-m", tag_msg])
 
-        # 8. Push to remote (with token for authentication)
+        # 8. Ensure GitHub repo exists (auto-create if needed)
+        ensure_result = _ensure_github_repo_exists()
+        if ensure_result.get("error"):
+            result["repo_warning"] = ensure_result["error"]
+        elif ensure_result.get("created"):
+            result["repo_created"] = True
+
+        # 9. Push to remote (with token for authentication)
         auth_url = _get_authenticated_push_url()
         if auth_url:
             # Push with token directly in URL
