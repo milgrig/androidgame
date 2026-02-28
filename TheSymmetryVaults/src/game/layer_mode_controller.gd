@@ -23,8 +23,8 @@ enum LayerMode {
 	LAYER_1,             ## Default: crystal swapping, key discovery
 	LAYER_2_INVERSE,     ## Inverse key pairing via key presses
 	LAYER_3_SUBGROUPS,   ## Keyring assembly — find all subgroups
+	LAYER_4_NORMAL,      ## Normal subgroup identification via conjugation cracking
 	## Future:
-	## LAYER_4_NORMAL,    ## Normal subgroup identification
 	## LAYER_5_QUOTIENT,  ## Quotient group construction
 }
 
@@ -33,6 +33,7 @@ enum LayerMode {
 signal layer_completed(layer: int, hall_id: String)
 signal pair_found(key_a_idx: int, key_b_idx: int, is_self_inverse: bool)
 signal keyring_subgroup_found(slot_index: int, elements: Array)
+signal conjugation_result(g_sym_id: String, h_sym_id: String, result_sym_id: String, stayed_in: bool)
 
 # ── State ────────────────────────────────────────────────────────────
 
@@ -40,14 +41,20 @@ var current_layer: LayerMode = LayerMode.LAYER_1
 var layer_number: int = 1
 var inverse_pair_mgr: InversePairManager = null
 var keyring_assembly_mgr: KeyringAssemblyManager = null
+var conjugation_cracking_mgr: ConjugationCrackingManager = null
 var _level_scene = null  ## Weak reference to LevelScene (no type to avoid circular)
 var _room_state: RoomState = null
 var _hall_id: String = ""
 var _keyring_panel = null  ## KeyringPanel for Layer 3 UI
+var _cracking_panel = null  ## CrackingPanel for Layer 4 UI
 
 ## Key-press tracking for pair detection
 var _prev_key_idx: int = -1       ## The previous key pressed (-1 = none)
 var _room_before_prev: int = -1   ## Room the player was in BEFORE pressing _prev_key_idx
+
+## Layer 4: conjugation test state
+var _selected_g: String = ""       ## Selected conjugator (g ∈ G)
+var _selected_h: String = ""       ## Selected target (h ∈ H)
 
 # ── Layer 2 color scheme constants ───────────────────────────────────
 
@@ -63,6 +70,14 @@ const L3_GOLD_DIM := Color(0.70, 0.60, 0.15, 0.7)
 const L3_GOLD_BG := Color(0.06, 0.05, 0.02, 0.8)
 const L3_GOLD_BORDER := Color(0.55, 0.45, 0.10, 0.7)
 const L3_GOLD_GLOW := Color(1.0, 0.90, 0.30, 0.9)
+
+# ── Layer 4 color scheme constants ───────────────────────────────────
+
+const L4_RED := Color(0.9, 0.35, 0.3, 1.0)
+const L4_RED_DIM := Color(0.65, 0.25, 0.22, 0.7)
+const L4_RED_BG := Color(0.06, 0.02, 0.02, 0.8)
+const L4_RED_BORDER := Color(0.5, 0.15, 0.12, 0.7)
+const L4_RED_GLOW := Color(1.0, 0.4, 0.3, 0.9)
 
 
 # ── Setup ────────────────────────────────────────────────────────────
@@ -85,6 +100,9 @@ func setup(layer: int, level_data: Dictionary, level_scene) -> void:
 		3:
 			current_layer = LayerMode.LAYER_3_SUBGROUPS
 			_setup_layer_3(level_data, level_scene)
+		4:
+			current_layer = LayerMode.LAYER_4_NORMAL
+			_setup_layer_4(level_data, level_scene)
 		_:
 			push_warning("LayerModeController: Layer %d not yet implemented" % layer)
 			current_layer = LayerMode.LAYER_1
@@ -92,16 +110,27 @@ func setup(layer: int, level_data: Dictionary, level_scene) -> void:
 
 ## Clean up all layer-specific resources.
 func cleanup() -> void:
+	# Disable Layer 3 mode on KeyBar if active
+	if _level_scene and _level_scene._key_bar:
+		_level_scene._key_bar.disable_layer3_mode()
 	inverse_pair_mgr = null
 	keyring_assembly_mgr = null
+	conjugation_cracking_mgr = null
 	if _keyring_panel != null and is_instance_valid(_keyring_panel):
 		_keyring_panel.cleanup()
 		_keyring_panel.queue_free()
 	_keyring_panel = null
+	# Clean up Layer 4 cracking panel
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_cracking_panel.cleanup()
+		_cracking_panel.queue_free()
+	_cracking_panel = null
 	_level_scene = null
 	_room_state = null
 	_prev_key_idx = -1
 	_room_before_prev = -1
+	_selected_g = ""
+	_selected_h = ""
 
 
 # ── Layer 2: Inverse Key Pairing via Key Presses ────────────────────
@@ -544,9 +573,10 @@ func _setup_layer_3(level_data: Dictionary, level_scene) -> void:
 	for i in range(_room_state.group_order):
 		_room_state.discover_room(i)
 
-	# 4. Show Home key and all keys immediately
+	# 4. Show Home key and all keys immediately, enable Layer 3 ⊕ buttons
 	if level_scene._key_bar:
 		level_scene._key_bar.home_visible = true
+		level_scene._key_bar.enable_layer3_mode()
 		level_scene._key_bar.rebuild(_room_state)
 
 	# 5. Hide target preview and action buttons
@@ -606,6 +636,7 @@ func on_key_tapped_layer3(sym_id: String) -> void:
 		if _keyring_panel:
 			_keyring_panel.remove_key_visual(active_slot, sym_id)
 		_update_layer_3_counter()
+		_update_keybar_keyring_state()
 		return
 
 	# Add key to active slot
@@ -639,6 +670,9 @@ func on_key_tapped_layer3(sym_id: String) -> void:
 		# Not a subgroup (yet) — just update display
 		_update_layer_3_counter()
 
+	# Update ⊕/− display on KeyBar
+	_update_keybar_keyring_state()
+
 ## Called when a key is removed from the keyring panel by tapping a dot.
 func _on_keyring_key_removed(sym_id: String) -> void:
 	if keyring_assembly_mgr == null:
@@ -648,6 +682,27 @@ func _on_keyring_key_removed(sym_id: String) -> void:
 	if _keyring_panel:
 		_keyring_panel.remove_key_visual(active_slot, sym_id)
 	_update_layer_3_counter()
+	_update_keybar_keyring_state()
+
+
+## Handle locked slot selection — highlight subgroup rooms on the map.
+func _on_keyring_slot_selected(elements: Array) -> void:
+	if _level_scene == null or _level_scene._room_map == null:
+		return
+	if elements.is_empty():
+		_level_scene._room_map.clear_subgroup_highlight()
+	else:
+		_level_scene._room_map.highlight_subgroup(elements)
+
+
+## Sync ⊕/− indicators on KeyBar with the current active keyring slot contents.
+func _update_keybar_keyring_state() -> void:
+	if _level_scene == null or _level_scene._key_bar == null:
+		return
+	if keyring_assembly_mgr == null or _room_state == null:
+		return
+	_level_scene._key_bar.update_layer3_keyring_state(
+		keyring_assembly_mgr.get_active_keys(), _room_state)
 
 
 ## Layer 3 theme application.
@@ -673,7 +728,7 @@ func _apply_layer_3_theme(level_scene) -> void:
 	if key_frame:
 		var key_title = key_frame.get_node_or_null("KeyBarFrameTitle")
 		if key_title:
-			key_title.text = "Ключи — соберите брелки"
+			key_title.text = "Ключи — нажмите ⊕ для брелка"
 			key_title.add_theme_color_override("font_color", L3_GOLD_DIM)
 
 	# Counter label → gold
@@ -777,8 +832,9 @@ func _build_keyring_panel(level_scene) -> void:
 	_keyring_panel.setup(hud, keyring_rect, _room_state, keyring_assembly_mgr)
 	hud.add_child(_keyring_panel)
 
-	# Connect keyring panel signal for key removal
+	# Connect keyring panel signals
 	_keyring_panel.key_removed.connect(_on_keyring_key_removed)
+	_keyring_panel.slot_selected.connect(_on_keyring_slot_selected)
 
 
 ## Show feedback for new subgroup found.
@@ -1015,6 +1071,675 @@ func _on_dismiss_layer_3_summary() -> void:
 	HudBuilder.show_post_completion_exit_button(hud, _on_return_to_map)
 
 
+# ── Layer 4: Normal Subgroup Identification via Conjugation Cracking ──
+
+func _setup_layer_4(level_data: Dictionary, level_scene) -> void:
+	_room_state = level_scene._room_state
+
+	# 1. Disable crystal dragging (graph is read-only on Layer 4)
+	for crystal in level_scene.crystals.values():
+		if crystal is CrystalNode:
+			crystal.set_draggable(false)
+
+	# 2. Reset crystals to identity (home) arrangement
+	var sm: ShuffleManager = level_scene._shuffle_mgr
+	sm.current_arrangement = sm.identity_arrangement.duplicate()
+	level_scene._swap_mgr.apply_arrangement_to_crystals()
+
+	# 3. Make ALL rooms discovered
+	for i in range(_room_state.group_order):
+		_room_state.discover_room(i)
+
+	# 4. Show Home key and all keys, enable ⊕ buttons for h-selection
+	if level_scene._key_bar:
+		level_scene._key_bar.home_visible = true
+		level_scene._key_bar.enable_layer3_mode()  # Reuse ⊕ buttons for h-selection
+		level_scene._key_bar.rebuild(_room_state)
+
+	# 5. Hide target preview and action buttons
+	_hide_target_preview(level_scene)
+	_hide_action_buttons(level_scene)
+
+	# 6. Initialize ConjugationCrackingManager
+	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_4", {})
+	conjugation_cracking_mgr = ConjugationCrackingManager.new()
+	conjugation_cracking_mgr.setup(level_data, layer_config)
+
+	# 7. Connect ConjugationCrackingManager signals
+	conjugation_cracking_mgr.subgroup_cracked.connect(_on_subgroup_cracked)
+	conjugation_cracking_mgr.subgroup_confirmed_normal.connect(_on_subgroup_confirmed_normal)
+	conjugation_cracking_mgr.all_subgroups_classified.connect(_on_all_subgroups_classified)
+
+	# 8. Apply Layer 4 theme (red accents)
+	_apply_layer_4_theme(level_scene)
+
+	# 9. Update counter for Layer 4 progress
+	_update_layer_4_counter()
+
+	# 10. Room map stays visible
+	if level_scene._room_map:
+		level_scene._room_map.home_visible = true
+		level_scene._room_map.queue_redraw()
+
+	# 11. Build conjugation panel UI
+	_build_cracking_panel(level_scene)
+
+	# 12. Restore from save (if resuming)
+	var saved: Dictionary = {}
+	if GameManager.level_states.has(_hall_id):
+		var lp: Dictionary = GameManager.level_states[_hall_id].get("layer_progress", {})
+		saved = lp.get("layer_4", {})
+	if saved.get("status") == "in_progress":
+		conjugation_cracking_mgr.restore_from_save(saved)
+		_update_layer_4_counter()
+		_refresh_cracking_panel()
+
+	# 13. Save "in_progress" state
+	GameManager.set_layer_progress(_hall_id, 4, conjugation_cracking_mgr.save_state())
+
+
+## Called when the player selects a subgroup in the conjugation panel.
+func on_subgroup_selected_layer4(subgroup_index: int) -> void:
+	if conjugation_cracking_mgr == null:
+		return
+	if conjugation_cracking_mgr.select_subgroup(subgroup_index):
+		# Highlight subgroup rooms on the map
+		var elements: Array = conjugation_cracking_mgr.get_subgroup_elements(subgroup_index)
+		if _level_scene and _level_scene._room_map:
+			_level_scene._room_map.highlight_subgroup(elements)
+		_refresh_cracking_panel()
+
+
+## Called when the player tests a conjugation: g · h · g⁻¹
+func on_conjugation_test(g_sym_id: String, h_sym_id: String) -> void:
+	if conjugation_cracking_mgr == null:
+		return
+
+	var result: Dictionary = conjugation_cracking_mgr.test_conjugation(g_sym_id, h_sym_id)
+	if result.has("error"):
+		return
+
+	# Show the conjugation result on crystals via animation
+	_animate_conjugation(g_sym_id, h_sym_id, result)
+
+	# Show result in CrackingPanel
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_cracking_panel.show_result(g_sym_id, h_sym_id, result)
+
+	# Emit signal for UI updates
+	conjugation_result.emit(g_sym_id, h_sym_id,
+		result["result_sym_id"], result["stayed_in"])
+
+	# Update counter
+	_update_layer_4_counter()
+
+	# Show feedback
+	_show_conjugation_feedback(g_sym_id, h_sym_id, result)
+
+	# Refresh panel state
+	_refresh_cracking_panel()
+
+
+## Called when the player confirms the active subgroup is normal.
+func on_confirm_normal_layer4() -> void:
+	if conjugation_cracking_mgr == null:
+		return
+
+	var result: Dictionary = conjugation_cracking_mgr.confirm_normal()
+	if result["confirmed"]:
+		_show_normal_confirmed_feedback()
+		_update_layer_4_counter()
+		_save_layer_4_progress()
+		_refresh_cracking_panel()
+		# Show confirmation animation on the CrackingPanel
+		if _cracking_panel != null and is_instance_valid(_cracking_panel):
+			_cracking_panel.show_normal_confirmed()
+	else:
+		_show_wrong_normal_feedback()
+		# Show error animation on the CrackingPanel
+		if _cracking_panel != null and is_instance_valid(_cracking_panel):
+			_cracking_panel.show_wrong_normal()
+
+
+## Called when a key press selects the conjugator g for Layer 4.
+func on_conjugator_selected(sym_id: String) -> void:
+	if conjugation_cracking_mgr == null:
+		return
+	# Route through CrackingPanel — fills the g slot visually
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_cracking_panel.set_g(sym_id)
+	else:
+		# Fallback: direct test (if panel not available)
+		_selected_g = sym_id
+		if _selected_h != "":
+			on_conjugation_test(_selected_g, _selected_h)
+			_selected_g = ""
+			_selected_h = ""
+		else:
+			_show_g_selected_feedback(sym_id)
+
+
+## Called when the ⊕ button selects the target h for Layer 4.
+func on_target_selected(sym_id: String) -> void:
+	if conjugation_cracking_mgr == null:
+		return
+	# Only allow h from the active subgroup
+	var active_idx: int = conjugation_cracking_mgr.get_active_subgroup_index()
+	if active_idx < 0:
+		_show_no_subgroup_selected_feedback()
+		return
+	var elements: Array = conjugation_cracking_mgr.get_subgroup_elements(active_idx)
+	if not elements.has(sym_id):
+		_show_h_not_in_subgroup_feedback(sym_id)
+		return
+	# Route through CrackingPanel — fills the h slot visually
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_cracking_panel.set_h(sym_id)
+	else:
+		# Fallback: direct test (if panel not available)
+		_selected_h = sym_id
+		if _selected_g != "":
+			on_conjugation_test(_selected_g, _selected_h)
+			_selected_g = ""
+			_selected_h = ""
+		else:
+			_show_h_selected_feedback(sym_id)
+
+
+func _show_g_selected_feedback(sym_id: String) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	var name: String = conjugation_cracking_mgr.get_name(sym_id)
+	hl.text = "g = %s  — теперь выберите h (⊕)" % name
+	hl.add_theme_color_override("font_color", L4_RED_DIM)
+
+
+func _show_h_selected_feedback(sym_id: String) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	var name: String = conjugation_cracking_mgr.get_name(sym_id)
+	hl.text = "h = %s  — теперь нажмите ключ (g)" % name
+	hl.add_theme_color_override("font_color", L4_RED_DIM)
+
+
+func _show_no_subgroup_selected_feedback() -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	hl.text = "Сначала выберите подгруппу на панели слева"
+	hl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3, 0.8))
+
+
+func _show_h_not_in_subgroup_feedback(sym_id: String) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	var name: String = conjugation_cracking_mgr.get_name(sym_id)
+	hl.text = "%s не принадлежит выбранной подгруппе" % name
+	hl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3, 0.8))
+
+
+## Layer 4 theme application.
+func _apply_layer_4_theme(level_scene) -> void:
+	var hud = level_scene.hud_layer
+
+	# Level number label — add "Слой 4" indicator
+	var lvl_label = hud.get_node_or_null("LevelNumberLabel")
+	if lvl_label:
+		lvl_label.text += "  ·  Слой 4: Нормальные"
+		lvl_label.add_theme_color_override("font_color", L4_RED_DIM)
+
+	# Map frame title → indicate Layer 4
+	var map_frame = hud.get_node_or_null("MapFrame")
+	if map_frame:
+		var map_title = map_frame.get_node_or_null("MapFrameTitle")
+		if map_title:
+			map_title.text = "Карта комнат — Нормальные"
+			map_title.add_theme_color_override("font_color", L4_RED_DIM)
+
+	# KeyBar frame title → indicate conjugation testing
+	var key_frame = hud.get_node_or_null("KeyBarFrame")
+	if key_frame:
+		var key_title = key_frame.get_node_or_null("KeyBarFrameTitle")
+		if key_title:
+			key_title.text = "Ключи — сопряжение g·h·g⁻¹"
+			key_title.add_theme_color_override("font_color", L4_RED_DIM)
+
+	# Counter label → red
+	var counter = hud.get_node_or_null("CounterLabel")
+	if counter:
+		counter.add_theme_color_override("font_color", L4_RED_DIM)
+
+
+## Update the counter label for Layer 4 progress.
+func _update_layer_4_counter() -> void:
+	if _level_scene == null or conjugation_cracking_mgr == null:
+		return
+	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
+	if cl:
+		var p: Dictionary = conjugation_cracking_mgr.get_progress()
+		cl.text = "Подгруппы: %d / %d" % [p["classified"], p["total"]]
+
+
+## Save Layer 4 progress.
+func _save_layer_4_progress() -> void:
+	if conjugation_cracking_mgr == null:
+		return
+	GameManager.set_layer_progress(_hall_id, 4, conjugation_cracking_mgr.save_state())
+
+
+## Animate a conjugation: briefly show g, then h, then g⁻¹ on crystals.
+func _animate_conjugation(g_sym_id: String, h_sym_id: String, result: Dictionary) -> void:
+	if _level_scene == null:
+		return
+	# Visual feedback — flash crystals based on the result
+	if _level_scene.feedback_fx:
+		if result["stayed_in"]:
+			# Conjugate stayed in H — subtle green glow
+			_level_scene.feedback_fx.play_valid_feedback(
+				_level_scene.crystals.values(), _level_scene.edges)
+		else:
+			# Conjugate escaped H — red flash (the "crack")
+			_level_scene.feedback_fx.play_invalid_feedback(
+				_level_scene.crystals.values(), _level_scene.edges)
+
+
+## Show feedback for a conjugation test result.
+func _show_conjugation_feedback(g_sym_id: String, h_sym_id: String, result: Dictionary) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+
+	var g_name: String = conjugation_cracking_mgr.get_name(g_sym_id)
+	var h_name: String = conjugation_cracking_mgr.get_name(h_sym_id)
+	var r_name: String = result.get("result_name", "?")
+	var text: String
+	var color: Color
+
+	if result["stayed_in"]:
+		text = "%s · %s · %s⁻¹ = %s  ∈ H ✓" % [g_name, h_name, g_name, r_name]
+		color = Color(0.3, 0.9, 0.4, 0.9)
+	else:
+		text = "%s · %s · %s⁻¹ = %s  ∉ H — взлом!" % [g_name, h_name, g_name, r_name]
+		color = L4_RED
+
+	hl.text = text
+	var tw: Tween = _level_scene.create_tween()
+	tw.tween_property(hl, "theme_override_colors/font_color", color, 0.3)
+	tw.tween_interval(3.0)
+	tw.tween_property(hl, "theme_override_colors/font_color",
+		Color(0.6, 0.4, 0.4, 0.5), 1.0)
+
+
+## Show feedback when normal confirmation is correct.
+func _show_normal_confirmed_feedback() -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	hl.text = "Подгруппа нормальная — не взламывается!"
+	var tw: Tween = _level_scene.create_tween()
+	tw.tween_property(hl, "theme_override_colors/font_color",
+		Color(0.3, 1.0, 0.5, 1.0), 0.3)
+	tw.tween_interval(3.0)
+	tw.tween_property(hl, "theme_override_colors/font_color",
+		Color(0.6, 0.4, 0.4, 0.5), 1.0)
+
+	if _level_scene.feedback_fx:
+		_level_scene.feedback_fx.play_completion_feedback(
+			_level_scene.crystals.values(), _level_scene.edges)
+
+
+## Show feedback when player wrongly claims a subgroup is normal.
+func _show_wrong_normal_feedback() -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	hl.text = "Эта подгруппа НЕ нормальная — попробуйте найти контрпример!"
+	var tw: Tween = _level_scene.create_tween()
+	tw.tween_property(hl, "theme_override_colors/font_color",
+		Color(1.0, 0.5, 0.3, 0.9), 0.3)
+	tw.tween_interval(3.0)
+	tw.tween_property(hl, "theme_override_colors/font_color",
+		Color(0.6, 0.4, 0.4, 0.5), 1.0)
+
+
+## Build the Layer 4 cracking panel — three-slot maneuver zone + subgroup list.
+## Uses 30% of the crystal zone width (same split as Layer 3 keyring).
+func _build_cracking_panel(level_scene) -> void:
+	var hud: CanvasLayer = level_scene.hud_layer
+	if conjugation_cracking_mgr == null or _room_state == null:
+		return
+
+	# Get the current crystal zone rectangle
+	var crystal_rect: Rect2 = level_scene._crystal_rect
+	if crystal_rect.size == Vector2.ZERO:
+		return
+
+	# Split: cracking panel gets 30% of the crystal zone width
+	var panel_ratio: float = 0.30
+	var panel_w: float = floorf(crystal_rect.size.x * panel_ratio)
+	var crystal_new_w: float = crystal_rect.size.x - panel_w - 2
+
+	# Cracking panel rectangle (left side of old crystal zone)
+	var panel_rect: Rect2 = Rect2(
+		crystal_rect.position.x,
+		crystal_rect.position.y,
+		panel_w,
+		crystal_rect.size.y
+	)
+
+	# New crystal zone (right side, narrower)
+	var new_crystal_rect: Rect2 = Rect2(
+		crystal_rect.position.x + panel_w + 2,
+		crystal_rect.position.y,
+		crystal_new_w,
+		crystal_rect.size.y
+	)
+
+	# Resize crystal frame
+	var crystal_frame = hud.get_node_or_null("CrystalFrame")
+	if crystal_frame:
+		crystal_frame.position = new_crystal_rect.position
+		crystal_frame.size = new_crystal_rect.size
+
+	# Reposition crystal and edge containers
+	level_scene.crystal_container.position = new_crystal_rect.position
+	level_scene.edge_container.position = new_crystal_rect.position
+
+	# Reposition crystals to fit in the narrower zone
+	var nd: Array = level_scene.level_data.get("graph", {}).get("nodes", [])
+	var pm: Dictionary = ShuffleManager.build_positions_map(nd, new_crystal_rect.size)
+	var shuffle_mgr: ShuffleManager = level_scene._shuffle_mgr
+	for i in range(shuffle_mgr.current_arrangement.size()):
+		var cid: int = shuffle_mgr.current_arrangement[i]
+		if cid in level_scene.crystals and i in pm:
+			var crystal: CrystalNode = level_scene.crystals[cid]
+			crystal.position = pm[i]
+			crystal.set_home_position(pm[i])
+
+	# Update the stored crystal rect
+	level_scene._crystal_rect = new_crystal_rect
+
+	# Create the CrackingPanel
+	_cracking_panel = CrackingPanel.new()
+	_cracking_panel.setup(hud, panel_rect, _room_state, conjugation_cracking_mgr)
+	hud.add_child(_cracking_panel)
+
+	# Connect cracking panel signals
+	_cracking_panel.subgroup_selected.connect(_on_cracking_subgroup_selected)
+	_cracking_panel.conjugation_requested.connect(_on_cracking_conjugation_requested)
+	_cracking_panel.confirm_normal_requested.connect(on_confirm_normal_layer4)
+	_cracking_panel.g_slot_tapped.connect(_on_g_slot_tapped)
+	_cracking_panel.h_slot_tapped.connect(_on_h_slot_tapped)
+
+
+## Handle subgroup selection from CrackingPanel.
+func _on_cracking_subgroup_selected(subgroup_index: int) -> void:
+	on_subgroup_selected_layer4(subgroup_index)
+
+
+## Handle conjugation test request from CrackingPanel.
+func _on_cracking_conjugation_requested(g_sym_id: String, h_sym_id: String) -> void:
+	on_conjugation_test(g_sym_id, h_sym_id)
+
+
+## Handle g-slot tapped — update hint to tell player to press a key.
+func _on_g_slot_tapped() -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		hl.text = "Нажмите ключ для выбора g"
+		hl.add_theme_color_override("font_color", L4_RED_DIM)
+
+
+## Handle h-slot tapped — update hint to tell player to press ⊕.
+func _on_h_slot_tapped() -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		hl.text = "Нажмите ⊕ для выбора h из подгруппы"
+		hl.add_theme_color_override("font_color", L4_RED_DIM)
+
+
+## Refresh cracking panel visuals after state change.
+func _refresh_cracking_panel() -> void:
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_cracking_panel.refresh()
+
+
+# ── Layer 4 Signal Handlers ──────────────────────────────────────────
+
+func _on_subgroup_cracked(subgroup_index: int, witness_g: String, witness_h: String, result: String) -> void:
+	if _level_scene == null:
+		return
+
+	_update_layer_4_counter()
+	_save_layer_4_progress()
+
+	# Play cracking feedback
+	if _level_scene.feedback_fx:
+		_level_scene.feedback_fx.play_invalid_feedback(
+			_level_scene.crystals.values(), _level_scene.edges)
+
+
+func _on_subgroup_confirmed_normal(subgroup_index: int) -> void:
+	if _level_scene == null:
+		return
+	_update_layer_4_counter()
+	_save_layer_4_progress()
+
+
+func _on_all_subgroups_classified() -> void:
+	_on_layer_4_completed()
+
+
+func _on_layer_4_completed() -> void:
+	if _level_scene == null:
+		return
+
+	# Save layer progress as completed
+	_save_layer_4_progress()
+
+	# Play completion feedback
+	if _level_scene.feedback_fx:
+		_level_scene.feedback_fx.play_completion_feedback(
+			_level_scene.crystals.values(), _level_scene.edges)
+
+	# Update HUD
+	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
+	if cl:
+		var p: Dictionary = conjugation_cracking_mgr.get_progress()
+		cl.text = "Все подгруппы классифицированы! (%d N, %d ✗)" % [
+			p["normal_count"], p["cracked_count"]]
+		cl.add_theme_color_override("font_color", L4_RED)
+
+	# Show completion hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		hl.text = "Нормальные подгруппы сохраняются при сопряжении"
+		hl.add_theme_color_override("font_color", L4_RED)
+
+	# Show completion summary after a delay
+	var timer: SceneTreeTimer = _level_scene.get_tree().create_timer(1.5)
+	timer.timeout.connect(_show_layer_4_summary)
+
+	# Emit layer completed
+	layer_completed.emit(4, _hall_id)
+
+
+# ── Layer 4 Completion Summary ───────────────────────────────────────
+
+func _show_layer_4_summary() -> void:
+	if _level_scene == null:
+		return
+
+	var hud: CanvasLayer = _level_scene.hud_layer
+
+	var panel: Panel = Panel.new()
+	panel.name = "Layer4SummaryPanel"
+	var vp_size: Vector2 = Vector2(1280, 720)
+	if _level_scene.get_viewport():
+		var vr: Rect2 = _level_scene.get_viewport_rect()
+		if vr.size != Vector2.ZERO:
+			vp_size = vr.size
+	var pw: float = minf(vp_size.x * 0.6, 800.0)
+	var ph: float = minf(vp_size.y * 0.7, 500.0)
+	panel.position = Vector2((vp_size.x - pw) / 2.0, (vp_size.y - ph) / 2.0)
+	panel.size = Vector2(pw, ph)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = L4_RED_BG
+	style.border_color = L4_RED
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		style.set(prop, 2)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		style.set(prop, 14)
+	panel.add_theme_stylebox_override("panel", style)
+	hud.add_child(panel)
+
+	var inner_w: float = pw - 40.0
+
+	# Title
+	var title: Label = Label.new()
+	title.text = "Слой 4 — Все подгруппы классифицированы!"
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", L4_RED)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(20, 20)
+	title.size = Vector2(inner_w, 30)
+	panel.add_child(title)
+
+	# Insight message
+	var insight: Label = Label.new()
+	insight.text = "Нормальные подгруппы сохраняются при сопряжении"
+	insight.add_theme_font_size_override("font_size", 16)
+	insight.add_theme_color_override("font_color", Color(0.9, 0.7, 0.7, 0.9))
+	insight.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	insight.position = Vector2(20, 58)
+	insight.size = Vector2(inner_w, 25)
+	panel.add_child(insight)
+
+	# Divider
+	var div: Panel = Panel.new()
+	div.position = Vector2(60, 92)
+	div.size = Vector2(inner_w - 80, 1)
+	var div_style: StyleBoxFlat = StyleBoxFlat.new()
+	div_style.bg_color = L4_RED_BORDER
+	div.add_theme_stylebox_override("panel", div_style)
+	panel.add_child(div)
+
+	# List classified subgroups
+	var subgroups: Array = conjugation_cracking_mgr.get_target_subgroups() if conjugation_cracking_mgr else []
+	var y_offset: int = 105
+	for i in range(subgroups.size()):
+		var sg: Dictionary = subgroups[i]
+		var elements: Array = sg.get("elements", [])
+		var classification: Dictionary = conjugation_cracking_mgr.get_classification(i)
+		var sg_label: Label = Label.new()
+		var elements_str: String = ", ".join(elements)
+		if classification.get("is_normal", false):
+			sg_label.text = "  ✓ {%s}  — нормальная" % elements_str
+			sg_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.9))
+		else:
+			var witness_g: String = classification.get("witness_g", "?")
+			sg_label.text = "  ✗ {%s}  — взломана (%s)" % [elements_str, witness_g]
+			sg_label.add_theme_color_override("font_color", L4_RED)
+		sg_label.add_theme_font_size_override("font_size", 14)
+		sg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sg_label.position = Vector2(20, y_offset)
+		sg_label.size = Vector2(inner_w, 22)
+		panel.add_child(sg_label)
+		y_offset += 26
+
+	# "Return to map" button
+	var btn: Button = Button.new()
+	btn.name = "ReturnToMapBtn"
+	btn.text = "ВЕРНУТЬСЯ НА КАРТУ"
+	btn.add_theme_font_size_override("font_size", 18)
+	var btn_w: float = minf(300.0, inner_w * 0.6)
+	btn.position = Vector2((pw - btn_w) / 2.0, ph - 60.0)
+	btn.size = Vector2(btn_w, 45)
+	btn.pressed.connect(_on_return_to_map)
+
+	var btn_style: StyleBoxFlat = StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.08, 0.04, 0.04, 0.9)
+	btn_style.border_color = L4_RED
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		btn_style.set(prop, 2)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		btn_style.set(prop, 8)
+	btn.add_theme_stylebox_override("normal", btn_style)
+	var btn_hover: StyleBoxFlat = btn_style.duplicate()
+	btn_hover.bg_color = Color(0.12, 0.06, 0.06, 0.95)
+	btn.add_theme_stylebox_override("hover", btn_hover)
+	btn.add_theme_color_override("font_color", L4_RED)
+	panel.add_child(btn)
+
+	# "Continue playing" dismiss button
+	var dismiss_btn: Button = Button.new()
+	dismiss_btn.name = "L4DismissBtn"
+	dismiss_btn.text = "Продолжить играть"
+	dismiss_btn.add_theme_font_size_override("font_size", 14)
+	var dismiss_w: float = minf(240.0, inner_w * 0.45)
+	dismiss_btn.position = Vector2((pw - dismiss_w) / 2.0, ph - 108.0)
+	dismiss_btn.size = Vector2(dismiss_w, 36)
+	var dismiss_style: StyleBoxFlat = StyleBoxFlat.new()
+	dismiss_style.bg_color = Color(0.06, 0.03, 0.03, 0.7)
+	dismiss_style.border_color = L4_RED_BORDER
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		dismiss_style.set(prop, 1)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		dismiss_style.set(prop, 6)
+	dismiss_btn.add_theme_stylebox_override("normal", dismiss_style)
+	var dismiss_hover: StyleBoxFlat = dismiss_style.duplicate()
+	dismiss_hover.bg_color = Color(0.10, 0.05, 0.05, 0.85)
+	dismiss_btn.add_theme_stylebox_override("hover", dismiss_hover)
+	dismiss_btn.add_theme_color_override("font_color", L4_RED_DIM)
+	dismiss_btn.pressed.connect(_on_dismiss_layer_4_summary)
+	panel.add_child(dismiss_btn)
+
+	# Fade in
+	panel.modulate = Color(1, 1, 1, 0)
+	_level_scene.create_tween().tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.5)
+
+
+## Dismiss the Layer 4 summary panel and allow continued play.
+func _on_dismiss_layer_4_summary() -> void:
+	if _level_scene == null:
+		return
+	var hud: CanvasLayer = _level_scene.hud_layer
+	var panel = hud.get_node_or_null("Layer4SummaryPanel")
+	if panel and panel.visible:
+		var tw: Tween = _level_scene.create_tween()
+		tw.tween_property(panel, "modulate", Color(1, 1, 1, 0), 0.3)
+		tw.tween_callback(panel.queue_free)
+	# Show persistent exit button
+	HudBuilder.show_post_completion_exit_button(hud, _on_return_to_map)
+
+
 # ── Query API ────────────────────────────────────────────────────────
 
 ## Check if the current layer is complete.
@@ -1024,6 +1749,8 @@ func is_layer_complete() -> bool:
 			return inverse_pair_mgr != null and inverse_pair_mgr.is_complete()
 		LayerMode.LAYER_3_SUBGROUPS:
 			return keyring_assembly_mgr != null and keyring_assembly_mgr.is_complete()
+		LayerMode.LAYER_4_NORMAL:
+			return conjugation_cracking_mgr != null and conjugation_cracking_mgr.is_complete()
 		_:
 			return false
 
@@ -1037,5 +1764,7 @@ func get_layer_display_name() -> String:
 			return "Слой 2: Обратные"
 		LayerMode.LAYER_3_SUBGROUPS:
 			return "Слой 3: Группы"
+		LayerMode.LAYER_4_NORMAL:
+			return "Слой 4: Нормальные"
 		_:
 			return "Слой %d" % layer_number

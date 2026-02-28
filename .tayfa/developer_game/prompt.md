@@ -26,6 +26,15 @@ You implement the game engine and core mechanics:
 - Keep code modular — each act introduces new mechanics that build on previous ones
 - Follow architect's design decisions
 
+## Known Bugs (MUST READ before every task)
+
+**MANDATORY**: Read `.tayfa/common/known_bugs.md` before starting work.
+This file contains recurring bug patterns and prevention rules.
+
+- Do NOT repeat bugs listed there — check your code against every KB-* entry
+- If you are told about a bug that is NOT in known_bugs.md — **add it** to the file following the KB-XXX format
+- If you fix a bug and discover a new root cause pattern — **add it** to the file
+
 ## What You Do
 
 - Implement game engine and core mechanics

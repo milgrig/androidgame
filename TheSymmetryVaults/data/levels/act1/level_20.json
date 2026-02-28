@@ -722,6 +722,174 @@
       "filtered": true,
       "full_subgroup_count": 16,
       "filter_strategy": "pedagogical_top10"
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "hard",
+      "auto_complete": false,
+      "classify_count": 9,
+      "normal_count": 2,
+      "cracked_count": 7,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "r3"
+          ],
+          "generators": [
+            "r3"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s0"
+          ],
+          "generators": [
+            "s0"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s0",
+            "g_inv": "r5",
+            "result": "s2"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s1"
+          ],
+          "generators": [
+            "s1"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s1",
+            "g_inv": "r5",
+            "result": "s5"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s2"
+          ],
+          "generators": [
+            "s2"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s2",
+            "g_inv": "r5",
+            "result": "s4"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s3"
+          ],
+          "generators": [
+            "s3"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s3",
+            "g_inv": "r5",
+            "result": "s1"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s4"
+          ],
+          "generators": [
+            "s4"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s4",
+            "g_inv": "r5",
+            "result": "s0"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s5"
+          ],
+          "generators": [
+            "s5"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s5",
+            "g_inv": "r5",
+            "result": "s3"
+          }
+        },
+        {
+          "order": 3,
+          "elements": [
+            "e",
+            "r2",
+            "r4"
+          ],
+          "generators": [
+            "r2"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e",
+            "s0",
+            "s5",
+            "r3"
+          ],
+          "generators": [
+            "s0",
+            "s5"
+          ],
+          "is_normal": false,
+          "min_attempts": 12,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s0",
+            "g_inv": "r5",
+            "result": "s2"
+          }
+        }
+      ]
     }
   }
 }

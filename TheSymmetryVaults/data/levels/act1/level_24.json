@@ -957,6 +957,165 @@
       "filtered": true,
       "full_subgroup_count": 33,
       "filter_strategy": "pedagogical_top10"
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "hard",
+      "auto_complete": false,
+      "classify_count": 9,
+      "normal_count": 3,
+      "cracked_count": 6,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "r2_id"
+          ],
+          "generators": [
+            "r2_id"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sh_id"
+          ],
+          "generators": [
+            "sh_id"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1_id",
+            "h": "sh_id",
+            "g_inv": "r3_id",
+            "result": "sv_id"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sv_id"
+          ],
+          "generators": [
+            "sv_id"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1_id",
+            "h": "sv_id",
+            "g_inv": "r3_id",
+            "result": "sh_id"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sd_id"
+          ],
+          "generators": [
+            "sd_id"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1_id",
+            "h": "sd_id",
+            "g_inv": "r3_id",
+            "result": "sa_id"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sa_id"
+          ],
+          "generators": [
+            "sa_id"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1_id",
+            "h": "sa_id",
+            "g_inv": "r3_id",
+            "result": "sd_id"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "e_flip"
+          ],
+          "generators": [
+            "e_flip"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "r2_flip"
+          ],
+          "generators": [
+            "r2_flip"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sh_flip"
+          ],
+          "generators": [
+            "sh_flip"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1_id",
+            "h": "sh_flip",
+            "g_inv": "r3_id",
+            "result": "sv_flip"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e_id",
+            "sv_flip"
+          ],
+          "generators": [
+            "sv_flip"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "r1_id",
+            "h": "sv_flip",
+            "g_inv": "r3_id",
+            "result": "sh_flip"
+          }
+        }
+      ]
     }
   }
 }

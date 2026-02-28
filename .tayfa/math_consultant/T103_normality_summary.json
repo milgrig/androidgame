@@ -1,0 +1,46 @@
+{
+  "total_levels": 24,
+  "difficulty_distribution": {
+    "TRIVIAL": 7,
+    "EASY": 4,
+    "MEDIUM": 9,
+    "HARD": 3,
+    "SPECIAL": 1
+  },
+  "difficulty_groups": {
+    "TRIVIAL": [
+      1,
+      2,
+      3,
+      7,
+      8,
+      10,
+      16
+    ],
+    "EASY": [
+      4,
+      6,
+      11,
+      17
+    ],
+    "MEDIUM": [
+      5,
+      9,
+      12,
+      14,
+      15,
+      18,
+      19,
+      22,
+      23
+    ],
+    "HARD": [
+      13,
+      20,
+      24
+    ],
+    "SPECIAL": [
+      21
+    ]
+  }
+}

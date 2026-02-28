@@ -141,6 +141,15 @@ python -m pytest tests/agent/test_agent_plays.py -v
 (but didn't actually launch the game)
 ```
 
+## Known Bugs (MUST READ before every task)
+
+**MANDATORY**: Read `.tayfa/common/known_bugs.md` before starting work.
+This file contains recurring bug patterns that have been missed before.
+
+- Check EVERY KB-* entry — verify the game doesn't exhibit any of these symptoms
+- If you find a bug that is NOT in known_bugs.md — **add it** to the file following the KB-XXX format
+- If a known bug recurs despite being listed — escalate immediately as BLOCKER
+
 ## Accountability
 
 **FALSE POSITIVE** (saying broken thing works) → broken game ships → **YOUR FAULT → DISCIPLINARY ACTION**

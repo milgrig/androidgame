@@ -20,6 +20,9 @@ extends Control
 ## Emitted when the player clicks a discovered key button.
 signal key_pressed(key_idx: int)
 
+## Emitted when the player clicks the "⊕" button to add a key to the keyring (Layer 3).
+signal key_add_to_keyring(key_idx: int)
+
 ## Emitted on mouse enter (key_idx >= 0) or mouse leave (key_idx == -1).
 signal key_hovered(key_idx: int)
 
@@ -70,6 +73,11 @@ var _pair_data: Dictionary = {}
 var _pair_overlay: Control = null
 ## Whether Layer 2 pairing mode is active
 var _layer2_active: bool = false
+
+## Whether Layer 3 keyring mode is active (shows ⊕ buttons)
+var _layer3_active: bool = false
+## sym_ids currently in the active keyring slot (for ⊕/− display)
+var _active_keyring_sym_ids: Array = []
 
 ## Layer 2 green colors
 const L2_PAIR_COLOR := Color(0.2, 0.85, 0.4, 0.7)
@@ -287,6 +295,38 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(lbl)
 
+	# Layer 3: append "⊕" button for adding keys to the active keyring
+	if _layer3_active:
+		var add_btn: Button = Button.new()
+		add_btn.name = "AddToKeyring"
+		add_btn.text = "⊕"
+		add_btn.custom_minimum_size = Vector2(22, btn_size.y - 4)
+		add_btn.flat = true
+		add_btn.focus_mode = Control.FOCUS_NONE
+		add_btn.mouse_filter = Control.MOUSE_FILTER_STOP
+		add_btn.add_theme_font_size_override("font_size", font_sz + 2)
+		# Gold accent styling
+		var add_style: StyleBoxFlat = StyleBoxFlat.new()
+		add_style.bg_color = Color(0.95, 0.80, 0.20, 0.12)
+		add_style.border_color = Color(0.95, 0.80, 0.20, 0.4)
+		for p in ["border_width_left", "border_width_right",
+					"border_width_top", "border_width_bottom"]:
+			add_style.set(p, 1)
+		for p in ["corner_radius_top_left", "corner_radius_top_right",
+					"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+			add_style.set(p, 2)
+		add_btn.add_theme_stylebox_override("normal", add_style)
+		var add_hover: StyleBoxFlat = add_style.duplicate()
+		add_hover.bg_color = Color(0.95, 0.80, 0.20, 0.25)
+		add_hover.border_color = Color(0.95, 0.80, 0.20, 0.7)
+		add_btn.add_theme_stylebox_override("hover", add_hover)
+		var add_pressed: StyleBoxFlat = add_style.duplicate()
+		add_pressed.bg_color = Color(0.95, 0.80, 0.20, 0.35)
+		add_btn.add_theme_stylebox_override("pressed", add_pressed)
+		add_btn.add_theme_color_override("font_color", Color(0.95, 0.80, 0.20, 1.0))
+		add_btn.pressed.connect(_on_add_to_keyring_pressed.bind(idx))
+		hbox.add_child(add_btn)
+
 	# Apply visual state (discovered / locked / current)
 	_apply_button_state(btn, idx, color, is_discovered, is_current)
 
@@ -456,3 +496,44 @@ func _on_key_mouse_entered(key_idx: int) -> void:
 
 func _on_key_mouse_exited() -> void:
 	key_hovered.emit(-1)
+
+
+func _on_add_to_keyring_pressed(key_idx: int) -> void:
+	key_add_to_keyring.emit(key_idx)
+
+
+# ── Layer 3 keyring mode ────────────────────────────────────────────
+
+## Enable Layer 3 mode — shows ⊕ buttons next to each key.
+## Call before rebuild() so the buttons are created.
+func enable_layer3_mode() -> void:
+	_layer3_active = true
+
+
+## Disable Layer 3 mode — hides ⊕ buttons.
+func disable_layer3_mode() -> void:
+	_layer3_active = false
+	_active_keyring_sym_ids.clear()
+
+
+## Update the ⊕/− display on each key's add-to-keyring button.
+## active_sym_ids: sym_ids currently in the active keyring slot.
+## room_state: for mapping sym_ids to room indices.
+func update_layer3_keyring_state(active_sym_ids: Array, room_state: RoomState) -> void:
+	if not _layer3_active:
+		return
+	_active_keyring_sym_ids = active_sym_ids
+	for i in range(_buttons.size()):
+		var btn = _buttons[i]
+		if btn == null or not is_instance_valid(btn):
+			continue
+		var add_btn = _find_child_by_name(btn, "AddToKeyring")
+		if add_btn == null:
+			continue
+		var sym_id: String = room_state.get_room_sym_id(i) if room_state else ""
+		if sym_id in active_sym_ids:
+			add_btn.text = "−"
+			add_btn.add_theme_color_override("font_color", Color(1.0, 0.6, 0.2, 1.0))
+		else:
+			add_btn.text = "⊕"
+			add_btn.add_theme_color_override("font_color", Color(0.95, 0.80, 0.20, 1.0))

@@ -45,6 +45,11 @@ var home_visible: bool = false
 ## Fading transition edges: {from: int, to: int, key: int, color: Color, alpha: float}
 var _fading_edges: Array = []
 
+## Layer 3 subgroup highlight: array of room indices (keys from subgroup mapped to rooms).
+## When non-empty, these rooms glow gold and all internal transitions are drawn.
+var _subgroup_rooms: Array = []  # Array[int] — room indices in the highlighted subgroup
+var _subgroup_sym_ids: Array = []  # Array[String] — sym_ids for transition drawing
+
 
 # --- Public API ---
 
@@ -217,6 +222,32 @@ func set_highlight_key(key_idx: int) -> void:
 	set_hover_key(key_idx)
 
 
+## Highlight a subgroup on the map: show its rooms with gold glow
+## and draw all internal transitions (cosets / orbits).
+## sym_ids: the sym_ids of the subgroup elements.
+## If empty, clears the highlight.
+func highlight_subgroup(sym_ids: Array) -> void:
+	_subgroup_sym_ids = sym_ids
+	_subgroup_rooms.clear()
+	if room_state == null or sym_ids.is_empty():
+		queue_redraw()
+		return
+	# Map sym_ids to room indices
+	for sid in sym_ids:
+		for i in range(room_state.perm_ids.size()):
+			if room_state.perm_ids[i] == sid:
+				_subgroup_rooms.append(i)
+				break
+	queue_redraw()
+
+
+## Clear the subgroup highlight.
+func clear_subgroup_highlight() -> void:
+	_subgroup_rooms.clear()
+	_subgroup_sym_ids.clear()
+	queue_redraw()
+
+
 # --- Drawing ---
 
 func _process(delta: float) -> void:
@@ -239,6 +270,9 @@ func _draw() -> void:
 
 	var n: int = room_state.group_order
 
+	# --- Layer 3 subgroup highlight (below everything) ---
+	_draw_subgroup_highlight(n)
+
 	# --- Fading transition edges ---
 	_draw_fading_edges(n)
 
@@ -247,6 +281,81 @@ func _draw() -> void:
 
 	# --- Room nodes ---
 	_draw_room_nodes(n)
+
+
+## Draw the subgroup highlight: gold glow on subgroup rooms + internal transitions.
+func _draw_subgroup_highlight(n: int) -> void:
+	if _subgroup_rooms.is_empty() or room_state == null:
+		return
+
+	var gold: Color = Color(0.95, 0.80, 0.20, 1.0)
+	var gold_dim: Color = Color(0.95, 0.80, 0.20, 0.3)
+	var gold_edge: Color = Color(0.95, 0.80, 0.20, 0.45)
+
+	var subgroup_set: Dictionary = {}  # room_idx -> true for O(1) lookup
+	for r in _subgroup_rooms:
+		subgroup_set[r] = true
+
+	# Draw internal transitions: for each subgroup room, apply each subgroup key
+	# and draw the resulting edge if both endpoints are in the subgroup.
+	var drawn_edges: Dictionary = {}  # "from_to" -> true to avoid duplicates
+	for from_room in _subgroup_rooms:
+		if from_room < 0 or from_room >= n or from_room >= positions.size():
+			continue
+		for key_room in _subgroup_rooms:
+			if key_room < 0 or key_room >= n:
+				continue
+			var to_room: int = room_state.cayley_table[from_room][key_room]
+			if not subgroup_set.has(to_room):
+				continue
+			if from_room == to_room:
+				continue
+			# Avoid drawing duplicate edges in both directions
+			var edge_key: String = "%d_%d" % [mini(from_room, to_room), maxi(from_room, to_room)]
+			if drawn_edges.has(edge_key):
+				continue
+			drawn_edges[edge_key] = true
+
+			if to_room >= positions.size():
+				continue
+			var p1: Vector2 = positions[from_room]
+			var p2: Vector2 = positions[to_room]
+			var delta: Vector2 = p2 - p1
+			var length: float = delta.length()
+			if length < 1.0:
+				continue
+			var normal: Vector2 = Vector2(-delta.y, delta.x) / length * 10.0
+			var mid: Vector2 = (p1 + p2) / 2.0
+			var control: Vector2 = mid + normal
+
+			# Draw curved edge in gold
+			var prev: Vector2 = p1
+			for s in range(1, 11):
+				var t: float = float(s) / 10.0
+				var pt: Vector2 = (1.0 - t) * (1.0 - t) * p1 + 2.0 * (1.0 - t) * t * control + t * t * p2
+				draw_line(prev, pt, gold_edge, 1.8, true)
+				prev = pt
+
+	# Draw gold glow rings around subgroup rooms
+	var sz: float = _get_node_size(n)
+	var half: float = sz / 2.0
+	for room_idx in _subgroup_rooms:
+		if room_idx < 0 or room_idx >= n or room_idx >= positions.size():
+			continue
+		var pos: Vector2 = positions[room_idx]
+		# Outer glow (3 rings)
+		for g in range(3):
+			var grow: float = 4.0 + float(g) * 3.5
+			var glow_rect: Rect2 = Rect2(
+				pos.x - half - grow, pos.y - half - grow,
+				sz + grow * 2, sz + grow * 2
+			)
+			var ga: Color = gold_dim
+			ga.a = 0.25 - float(g) * 0.07
+			draw_rect(glow_rect, ga, true)
+		# Gold border
+		var rect: Rect2 = Rect2(pos.x - half - 1, pos.y - half - 1, sz + 2, sz + 2)
+		draw_rect(rect, gold, false, 1.5)
 
 
 func _draw_fading_edges(n: int) -> void:

@@ -456,6 +456,46 @@
         }
       ],
       "filtered": false
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "easy",
+      "auto_complete": false,
+      "classify_count": 2,
+      "normal_count": 2,
+      "cracked_count": 0,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "r4"
+          ],
+          "generators": [
+            "r4"
+          ],
+          "is_normal": true,
+          "min_attempts": 6,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e",
+            "r2",
+            "r4",
+            "r6"
+          ],
+          "generators": [
+            "r2"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        }
+      ]
     }
   }
 }

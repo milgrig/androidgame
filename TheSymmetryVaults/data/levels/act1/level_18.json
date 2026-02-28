@@ -307,6 +307,86 @@
         }
       ],
       "filtered": false
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "medium",
+      "auto_complete": false,
+      "classify_count": 4,
+      "normal_count": 1,
+      "cracked_count": 3,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s0"
+          ],
+          "generators": [
+            "s0"
+          ],
+          "is_normal": false,
+          "min_attempts": 4,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s0",
+            "g_inv": "r2",
+            "result": "s1"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s1"
+          ],
+          "generators": [
+            "s1"
+          ],
+          "is_normal": false,
+          "min_attempts": 4,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s1",
+            "g_inv": "r2",
+            "result": "s2"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "s2"
+          ],
+          "generators": [
+            "s2"
+          ],
+          "is_normal": false,
+          "min_attempts": 4,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "s2",
+            "g_inv": "r2",
+            "result": "s0"
+          }
+        },
+        {
+          "order": 3,
+          "elements": [
+            "e",
+            "r1",
+            "r2"
+          ],
+          "generators": [
+            "r1"
+          ],
+          "is_normal": true,
+          "min_attempts": 6,
+          "conjugation_witness": null
+        }
+      ]
     }
   }
 }

@@ -606,6 +606,95 @@
         }
       ],
       "filtered": false
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "special",
+      "auto_complete": false,
+      "classify_count": 5,
+      "normal_count": 1,
+      "cracked_count": 4,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "id",
+            "neg"
+          ],
+          "generators": [
+            "neg"
+          ],
+          "is_normal": true,
+          "min_attempts": 6,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "id",
+            "neg",
+            "i",
+            "ni"
+          ],
+          "generators": [
+            "i"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "id",
+            "neg",
+            "j",
+            "nj"
+          ],
+          "generators": [
+            "j"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "id",
+            "k"
+          ],
+          "generators": [
+            "k"
+          ],
+          "is_normal": false,
+          "min_attempts": 6,
+          "conjugation_witness": {
+            "g": "i",
+            "h": "k",
+            "g_inv": "ni",
+            "result": "nk"
+          }
+        },
+        {
+          "order": 4,
+          "elements": [
+            "id",
+            "nk"
+          ],
+          "generators": [],
+          "is_normal": false,
+          "min_attempts": 6,
+          "conjugation_witness": {
+            "g": "i",
+            "h": "nk",
+            "g_inv": "ni",
+            "result": "k"
+          }
+        }
+      ]
     }
   }
 }

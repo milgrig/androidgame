@@ -557,14 +557,14 @@ func _on_back_pressed() -> void:
 
 
 ## Determine the best layer to enter for a hall.
-## Logic: if Layer 1 is completed and Layer 2 is available/in_progress, go to Layer 2.
-## Otherwise, go to Layer 1 (or the highest available uncompleted layer).
+## Logic: find the highest available/in_progress layer.
+## Checks layers 5 down to 1 so the player enters the most advanced unlocked layer.
 func _determine_target_layer(hall_id: String) -> int:
 	if _progression == null:
 		return 1
 
-	# Check each layer from 2 down to 1
-	for layer in range(2, 0, -1):
+	# Check each layer from 5 down to 1
+	for layer in range(5, 0, -1):
 		var layer_state: String = _progression.get_hall_layer_state(hall_id, layer)
 		if layer_state == "available" or layer_state == "in_progress":
 			return layer
@@ -830,7 +830,7 @@ func _get_overall_progress_text() -> String:
 
 
 func _get_prev_wing_id(wing_id: String) -> String:
-	var wing: WingData = _hall_tree.get_wing(wing_id)
+	var wing: HallTreeData.WingData = _hall_tree.get_wing(wing_id)
 	if wing == null:
 		return ""
 	for w in _hall_tree.wings:
