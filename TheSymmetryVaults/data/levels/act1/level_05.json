@@ -440,6 +440,150 @@
         }
       ],
       "filtered": false
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "medium",
+      "auto_complete": false,
+      "classify_count": 8,
+      "normal_count": 4,
+      "cracked_count": 4,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "r2"
+          ],
+          "generators": [
+            "r2"
+          ],
+          "is_normal": true,
+          "min_attempts": 6,
+          "conjugation_witness": null
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "sh"
+          ],
+          "generators": [
+            "sh"
+          ],
+          "is_normal": false,
+          "min_attempts": 6,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "sh",
+            "g_inv": "r3",
+            "result": "sv"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "sv"
+          ],
+          "generators": [
+            "sv"
+          ],
+          "is_normal": false,
+          "min_attempts": 6,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "sv",
+            "g_inv": "r3",
+            "result": "sh"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "sd"
+          ],
+          "generators": [
+            "sd"
+          ],
+          "is_normal": false,
+          "min_attempts": 6,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "sd",
+            "g_inv": "r3",
+            "result": "sa"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "e",
+            "sa"
+          ],
+          "generators": [
+            "sa"
+          ],
+          "is_normal": false,
+          "min_attempts": 6,
+          "conjugation_witness": {
+            "g": "r1",
+            "h": "sa",
+            "g_inv": "r3",
+            "result": "sd"
+          }
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e",
+            "r1",
+            "r2",
+            "r3"
+          ],
+          "generators": [
+            "r1"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e",
+            "sh",
+            "r2",
+            "sv"
+          ],
+          "generators": [
+            "sh",
+            "r2"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        },
+        {
+          "order": 4,
+          "elements": [
+            "e",
+            "sd",
+            "sa",
+            "r2"
+          ],
+          "generators": [
+            "sd",
+            "sa"
+          ],
+          "is_normal": true,
+          "min_attempts": 10,
+          "conjugation_witness": null
+        }
+      ]
     }
   }
 }

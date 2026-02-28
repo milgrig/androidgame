@@ -389,6 +389,164 @@
         }
       ],
       "filtered": false
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "medium",
+      "auto_complete": false,
+      "classify_count": 8,
+      "normal_count": 1,
+      "cracked_count": 7,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "even_perm_0",
+            "even_perm_3"
+          ],
+          "generators": [
+            "even_perm_3"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_1",
+            "h": "even_perm_3",
+            "g_inv": "even_perm_2",
+            "result": "even_perm_8"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "even_perm_0",
+            "even_perm_8"
+          ],
+          "generators": [
+            "even_perm_8"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_1",
+            "h": "even_perm_8",
+            "g_inv": "even_perm_2",
+            "result": "even_perm_11"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "even_perm_0",
+            "even_perm_11"
+          ],
+          "generators": [
+            "even_perm_11"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_1",
+            "h": "even_perm_11",
+            "g_inv": "even_perm_2",
+            "result": "even_perm_3"
+          }
+        },
+        {
+          "order": 3,
+          "elements": [
+            "even_perm_0",
+            "even_perm_1",
+            "even_perm_2"
+          ],
+          "generators": [
+            "even_perm_1"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_3",
+            "h": "even_perm_1",
+            "g_inv": "even_perm_3",
+            "result": "even_perm_10"
+          }
+        },
+        {
+          "order": 3,
+          "elements": [
+            "even_perm_0",
+            "even_perm_4",
+            "even_perm_6"
+          ],
+          "generators": [
+            "even_perm_4"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_1",
+            "h": "even_perm_4",
+            "g_inv": "even_perm_2",
+            "result": "even_perm_7"
+          }
+        },
+        {
+          "order": 3,
+          "elements": [
+            "even_perm_0",
+            "even_perm_5",
+            "even_perm_9"
+          ],
+          "generators": [
+            "even_perm_5"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_1",
+            "h": "even_perm_5",
+            "g_inv": "even_perm_2",
+            "result": "even_perm_6"
+          }
+        },
+        {
+          "order": 3,
+          "elements": [
+            "even_perm_0",
+            "even_perm_7",
+            "even_perm_10"
+          ],
+          "generators": [
+            "even_perm_7"
+          ],
+          "is_normal": false,
+          "min_attempts": 10,
+          "conjugation_witness": {
+            "g": "even_perm_1",
+            "h": "even_perm_7",
+            "g_inv": "even_perm_2",
+            "result": "even_perm_9"
+          }
+        },
+        {
+          "order": 4,
+          "elements": [
+            "even_perm_0",
+            "even_perm_3",
+            "even_perm_8",
+            "even_perm_11"
+          ],
+          "generators": [
+            "even_perm_3",
+            "even_perm_8"
+          ],
+          "is_normal": true,
+          "min_attempts": 12,
+          "conjugation_witness": null
+        }
+      ]
     }
   }
 }

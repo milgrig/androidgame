@@ -113,6 +113,32 @@ All task messages go in:
 Before starting work, study:
 - `.tayfa/common/Rules/teamwork.md` — workflow and handoff formats
 - `.tayfa/common/Rules/employees.md` — employee list
+- `.tayfa/common/known_bugs.md` — known bug patterns and lessons learned
+
+---
+
+## 5.1. Known Bugs & Lessons Learned
+
+The file **`.tayfa/common/known_bugs.md`** contains recurring bug patterns discovered across sprints.
+
+### Before every task:
+- **Read** `known_bugs.md` — check your work against every KB-* entry
+- Do NOT repeat listed bugs — they have already been fixed before
+
+### When you fix a bug:
+1. Check if the bug pattern is already in `known_bugs.md`
+2. If **NOT** — **add a new entry** following the KB-XXX format:
+   ```markdown
+   ## KB-XXX: Short Title
+
+   **Symptom:** What the user sees
+   **Root Cause:** Why it happens
+   **Prevention:** Steps to avoid it
+   **Recurred:** How many times / which sprints
+   ```
+3. Use the next available KB number (e.g., if last is KB-005, add KB-006)
+
+### This is mandatory — not optional. The goal is to prevent the same bug from happening twice.
 
 ---
 

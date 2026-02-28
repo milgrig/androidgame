@@ -15,6 +15,10 @@ extends Control
 ## Emitted when a key is tapped inside a FILLING slot (to remove it).
 signal key_removed(sym_id: String)
 
+## Emitted when a locked slot is tapped (to show subgroup on map).
+## elements: the sym_ids of the subgroup. Empty array = deselect.
+signal slot_selected(elements: Array)
+
 
 # --- Constants ---
 
@@ -57,6 +61,9 @@ var _scroll: ScrollContainer = null
 
 ## Slot list container
 var _slot_list: VBoxContainer = null
+
+## Currently selected locked slot index (-1 = none)
+var _selected_slot: int = -1
 
 
 # --- Setup ---
@@ -424,6 +431,11 @@ func lock_slot(slot_index: int, elements: Array) -> void:
 			if child is Button:
 				child.disabled = true
 
+	# Make locked slot clickable (to highlight subgroup on room map)
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	if not slot.gui_input.is_connected(_on_locked_slot_clicked):
+		slot.gui_input.connect(_on_locked_slot_clicked.bind(slot_index, elements))
+
 	# Play glow animation
 	_play_slot_glow(slot_index)
 
@@ -558,6 +570,52 @@ func _play_slot_glow(slot_index: int) -> void:
 ## Handle dot button press (remove key from active slot).
 func _on_dot_pressed(sym_id: String) -> void:
 	key_removed.emit(sym_id)
+
+
+## Handle locked slot click — toggle selection and emit signal for room map.
+func _on_locked_slot_clicked(event: InputEvent, slot_index: int, elements: Array) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb: InputEventMouseButton = event as InputEventMouseButton
+	if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+		return
+
+	# Toggle: deselect if already selected, otherwise select new
+	if _selected_slot == slot_index:
+		_deselect_slot()
+		slot_selected.emit([])
+	else:
+		_deselect_slot()  # deselect previous
+		_selected_slot = slot_index
+		_apply_selected_style(slot_index)
+		slot_selected.emit(elements)
+
+
+## Apply a bright gold "selected" border to a locked slot.
+func _apply_selected_style(slot_index: int) -> void:
+	if slot_index < 0 or slot_index >= _slots.size():
+		return
+	var slot: Panel = _slots[slot_index]
+	var s: StyleBoxFlat = StyleBoxFlat.new()
+	s.bg_color = Color(0.12, 0.10, 0.03, 0.95)
+	s.border_color = Color(1.0, 0.90, 0.30, 0.9)
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		s.set(prop, 3)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		s.set(prop, 5)
+	# Outer glow via shadow
+	s.shadow_color = Color(0.95, 0.80, 0.20, 0.3)
+	s.shadow_size = 6
+	slot.add_theme_stylebox_override("panel", s)
+
+
+## Deselect the currently selected slot, restoring its locked style.
+func _deselect_slot() -> void:
+	if _selected_slot >= 0 and _selected_slot < _slots.size():
+		_update_slot_visual(_selected_slot, SlotState.LOCKED)
+	_selected_slot = -1
 
 
 ## Find the scene root for creating tweens.

@@ -842,6 +842,180 @@
       "filtered": true,
       "full_subgroup_count": 30,
       "filter_strategy": "pedagogical_top10"
+    },
+    "layer_4": {
+      "title": "Нормальные подгруппы",
+      "instruction": "Выберите подгруппу и проверьте: сохраняется ли она при сопряжении?\nНажмите ключ g, затем ⊕ у ключа h из подгруппы.\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат выходит за пределы подгруппы — она взломана!",
+      "subtitle": "Не все подгруппы равноценны — нормальные сохраняются при сопряжении",
+      "difficulty": "hard",
+      "auto_complete": false,
+      "classify_count": 9,
+      "normal_count": 0,
+      "cracked_count": 9,
+      "subgroups": [
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_1"
+          ],
+          "generators": [
+            "perm_1"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_2",
+            "h": "perm_1",
+            "g_inv": "perm_2",
+            "result": "perm_5"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_2"
+          ],
+          "generators": [
+            "perm_2"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_1",
+            "h": "perm_2",
+            "g_inv": "perm_1",
+            "result": "perm_5"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_5"
+          ],
+          "generators": [
+            "perm_5"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_1",
+            "h": "perm_5",
+            "g_inv": "perm_1",
+            "result": "perm_2"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_6"
+          ],
+          "generators": [
+            "perm_6"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_2",
+            "h": "perm_6",
+            "g_inv": "perm_2",
+            "result": "perm_14"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_7"
+          ],
+          "generators": [
+            "perm_7"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_2",
+            "h": "perm_7",
+            "g_inv": "perm_2",
+            "result": "perm_16"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_14"
+          ],
+          "generators": [
+            "perm_14"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_1",
+            "h": "perm_14",
+            "g_inv": "perm_1",
+            "result": "perm_21"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_16"
+          ],
+          "generators": [
+            "perm_16"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_1",
+            "h": "perm_16",
+            "g_inv": "perm_1",
+            "result": "perm_23"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_21"
+          ],
+          "generators": [
+            "perm_21"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_1",
+            "h": "perm_21",
+            "g_inv": "perm_1",
+            "result": "perm_14"
+          }
+        },
+        {
+          "order": 2,
+          "elements": [
+            "perm_0",
+            "perm_23"
+          ],
+          "generators": [
+            "perm_23"
+          ],
+          "is_normal": false,
+          "min_attempts": 11,
+          "conjugation_witness": {
+            "g": "perm_1",
+            "h": "perm_23",
+            "g_inv": "perm_1",
+            "result": "perm_16"
+          }
+        }
+      ]
     }
   }
 }

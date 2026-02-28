@@ -128,6 +128,7 @@ func _setup_scene_structure() -> void:
 	# Connect KeyBar signals
 	_key_bar.key_pressed.connect(_on_key_bar_key_pressed)
 	_key_bar.key_hovered.connect(_on_key_bar_key_hovered)
+	_key_bar.key_add_to_keyring.connect(_on_key_bar_add_to_keyring)
 	# Connect RoomMapPanel signals
 	_room_map.room_clicked.connect(_on_room_map_clicked)
 	_room_map.room_hovered.connect(_on_room_map_hovered)
@@ -233,7 +234,7 @@ func _clear_level() -> void:
 	var sp = hud_layer.get_node_or_null("SettingsPopup")
 	if sp: sp.queue_free()
 	# Clean up layer summary panels
-	for panel_name in ["Layer2SummaryPanel", "Layer3SummaryPanel"]:
+	for panel_name in ["Layer2SummaryPanel", "Layer3SummaryPanel", "Layer4SummaryPanel"]:
 		var lp = hud_layer.get_node_or_null(panel_name)
 		if lp: lp.queue_free()
 
@@ -343,13 +344,6 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	if _room_state.group_order == 0: return
 	if key_idx < 0 or key_idx >= _room_state.group_order: return
 
-	# Layer 3: tap-to-add key to active keyring slot (no crystal movement)
-	if _current_layer == 3:
-		var sym_id: String = _room_state.get_room_sym_id(key_idx)
-		if sym_id != "":
-			_layer_controller.on_key_tapped_layer3(sym_id)
-		return
-
 	# Get the permutation for this key (already rebased in RoomState)
 	var key_perm: Permutation = _room_state.get_room_perm(key_idx)
 	if key_perm == null: return
@@ -403,6 +397,11 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	# Layer 2: notify controller about key press for inverse pair detection
 	if _current_layer == 2:
 		_layer_controller.on_key_pressed(key_idx, from_room, to_room)
+	# Layer 4: key press selects "g" conjugator for conjugation test
+	if _current_layer == 4:
+		var sym_id: String = _room_state.get_room_sym_id(key_idx)
+		if sym_id != "":
+			_layer_controller.on_conjugator_selected(sym_id)
 
 ## Phase 2 of key application animation: move crystals along arcs.
 func _key_apply_phase2(n: int, active_perm: Permutation, pm: Dictionary,
@@ -446,6 +445,23 @@ func _key_apply_finalize() -> void:
 	var p: Permutation = Permutation.from_array(_shuffle_mgr.current_arrangement)
 	_validate_permutation(p); _update_status_label()
 	_swap_mgr.repeat_animating = false
+
+## Handle ⊕ button press from KeyBar — add/remove key to active keyring (Layer 3)
+## or select h target for conjugation test (Layer 4).
+func _on_key_bar_add_to_keyring(key_idx: int) -> void:
+	_notify_echo_activity()
+	_dismiss_instruction_panel()
+	if _room_state.group_order == 0: return
+	if key_idx < 0 or key_idx >= _room_state.group_order: return
+	# Block during animation
+	if _swap_mgr and _swap_mgr.repeat_animating: return
+	var sym_id: String = _room_state.get_room_sym_id(key_idx)
+	if sym_id == "": return
+	if _current_layer == 3:
+		_layer_controller.on_key_tapped_layer3(sym_id)
+	elif _current_layer == 4:
+		_layer_controller.on_target_selected(sym_id)
+
 
 ## Handle key hover from KeyBar. key_idx == -1 means hover ended.
 func _on_key_bar_key_hovered(key_idx: int) -> void:
@@ -589,6 +605,9 @@ func _hide_settings_popup() -> void:
 	var p = hud_layer.get_node_or_null("SettingsPopup")
 	if p: p.visible = false
 func _show_instruction_panel() -> void:
+	if _current_layer == 4:
+		_show_layer_4_instruction_panel()
+		return
 	if _current_layer == 3:
 		_show_layer_3_instruction_panel()
 		return
@@ -628,7 +647,7 @@ func _show_layer_3_instruction_panel() -> void:
 	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_3", {})
 	_s.call("InstrTitle", "Слой 3 — %s" % meta.get("title", ""))
 	_s.call("InstrGoal", layer_config.get("title", "Брелки — наборы ключей"))
-	_s.call("InstrBody", layer_config.get("instruction", "Нажимайте ключи внизу, чтобы добавить их в брелок.\nНайдите все наборы ключей, которые образуют группу.\n\nГруппа — набор, замкнутый по композиции и обратным."))
+	_s.call("InstrBody", layer_config.get("instruction", "Нажмите ключ — кристаллы покажут его действие.\nНажмите ⊕ рядом с ключом — добавить его в брелок.\n\nНайдите все наборы ключей, замкнутые по композиции."))
 	var inm = p.get_node_or_null("InstrNewMechanic")
 	if inm: inm.text = layer_config.get("subtitle", "Некоторые ключи естественно группируются"); inm.visible = true
 	# Apply gold theme to instruction panel
@@ -636,6 +655,25 @@ func _show_layer_3_instruction_panel() -> void:
 	if title: title.add_theme_color_override("font_color", Color(0.95, 0.80, 0.20, 1.0))
 	var goal = p.get_node_or_null("InstrGoal")
 	if goal: goal.add_theme_color_override("font_color", Color(0.85, 0.72, 0.18, 1.0))
+	p.visible = true; p.modulate = Color(1, 1, 1, 1)
+	_instruction_panel_visible = true
+
+func _show_layer_4_instruction_panel() -> void:
+	var p = hud_layer.get_node_or_null("InstructionPanel")
+	if p == null: return
+	var _s: Callable = func(n: String, t: String) -> void: var l = p.get_node_or_null(n); if l: l.text = t
+	var meta: Dictionary = level_data.get("meta", {})
+	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_4", {})
+	_s.call("InstrTitle", "Слой 4 — %s" % meta.get("title", ""))
+	_s.call("InstrGoal", layer_config.get("title", "Нормальные подгруппы"))
+	_s.call("InstrBody", layer_config.get("instruction", "Выберите подгруппу из списка слева.\nВыберите g (ключ) и h (элемент подгруппы).\nСистема вычислит g·h·g⁻¹.\n\nЕсли результат вышел за пределы подгруппы — она взломана!\nЕсли все сопряжения остаются внутри — подгруппа нормальная."))
+	var inm = p.get_node_or_null("InstrNewMechanic")
+	if inm: inm.text = layer_config.get("subtitle", "Не все подгруппы равноценны"); inm.visible = true
+	# Apply red theme to instruction panel
+	var title_node = p.get_node_or_null("InstrTitle")
+	if title_node: title_node.add_theme_color_override("font_color", Color(0.9, 0.35, 0.3, 1.0))
+	var goal = p.get_node_or_null("InstrGoal")
+	if goal: goal.add_theme_color_override("font_color", Color(0.8, 0.3, 0.25, 1.0))
 	p.visible = true; p.modulate = Color(1, 1, 1, 1)
 	_instruction_panel_visible = true
 
