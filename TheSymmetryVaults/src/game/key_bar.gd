@@ -58,6 +58,7 @@ var _panel: PanelContainer
 var _scroll: ScrollContainer        # only created when >24 keys
 var _flow: HFlowContainer
 var _buttons: Array = []             # Array[Button]
+var _wrappers: Array = []            # Array[VBoxContainer] — wrappers holding btn + reflection
 
 # ── State (cached for efficient updates) ─────────────────────────────
 
@@ -134,15 +135,19 @@ func rebuild(room_state: RoomState) -> void:
 		# Placeholder keeps indices aligned so _buttons[i] == room i.
 		if i == 0:
 			_buttons.append(null)
+			_wrappers.append(null)
 			continue
 
 		var color: Color = room_state.colors[i] if i < room_state.colors.size() else Color.WHITE
 		var is_discovered: bool = room_state.is_discovered(i)
 		var is_current: bool = (i == _current_room)
 
-		var btn: Button = _make_key_button(i, color, is_discovered, is_current,
+		var wrapper: Control = _make_key_button(i, color, is_discovered, is_current,
 				btn_size, font_sz, dot_sz)
-		_flow.add_child(btn)
+		_flow.add_child(wrapper)
+		_wrappers.append(wrapper)
+		# Extract actual Button from wrapper for _buttons array
+		var btn: Button = wrapper.get_node("Key_%d" % i) if wrapper else null
 		_buttons.append(btn)
 
 
@@ -276,7 +281,13 @@ func _ensure_scroll(need_scroll: bool) -> void:
 # ── Internal: button creation ────────────────────────────────────────
 
 func _make_key_button(idx: int, color: Color, is_discovered: bool,
-		is_current: bool, btn_size: Vector2, font_sz: int, dot_sz: int) -> Button:
+		is_current: bool, btn_size: Vector2, font_sz: int, dot_sz: int) -> Control:
+	# T113: Wrap button + optional mirror reflection in a VBoxContainer
+	var wrapper: VBoxContainer = VBoxContainer.new()
+	wrapper.name = "KeyWrap_%d" % idx
+	wrapper.add_theme_constant_override("separation", 0)
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
 	var btn: Button = Button.new()
 	btn.name = "Key_%d" % idx
 	btn.custom_minimum_size = btn_size
@@ -311,45 +322,7 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(lbl)
 
-	# T113: Mirror key indicator (Layer 3+) — show ↔ mirror_dot mirror_num
-	if _mirror_pair_map.has(idx):
-		var minfo: Dictionary = _mirror_pair_map[idx]
-		var mirror_idx: int = minfo["mirror_idx"]
-		var mirror_color: Color = minfo["mirror_color"]
-		var is_self_inv: bool = minfo["is_self_inverse"]
-
-		# Mirror arrow
-		var arrow_lbl: Label = Label.new()
-		arrow_lbl.name = "MirrorArrow"
-		arrow_lbl.text = "↻" if is_self_inv else "↔"
-		arrow_lbl.add_theme_font_size_override("font_size", maxi(font_sz - 3, 8))
-		arrow_lbl.add_theme_color_override("font_color",
-			Color(1.0, 0.85, 0.3, 0.6) if is_self_inv else Color(0.2, 0.85, 0.4, 0.5))
-		arrow_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		hbox.add_child(arrow_lbl)
-
-		if not is_self_inv:
-			# Mirror key colored dot (smaller)
-			var m_dot: ColorRect = ColorRect.new()
-			m_dot.name = "MirrorDot"
-			var m_dot_sz: int = maxi(dot_sz - 4, 4)
-			m_dot.custom_minimum_size = Vector2(m_dot_sz, m_dot_sz)
-			m_dot.size = Vector2(m_dot_sz, m_dot_sz)
-			m_dot.color = mirror_color
-			m_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			hbox.add_child(m_dot)
-
-			# Mirror key number (smaller, dimmed)
-			var m_lbl: Label = Label.new()
-			m_lbl.name = "MirrorNum"
-			m_lbl.text = str(mirror_idx)
-			m_lbl.add_theme_font_size_override("font_size", maxi(font_sz - 3, 8))
-			m_lbl.add_theme_color_override("font_color",
-				Color(mirror_color.r, mirror_color.g, mirror_color.b, 0.6))
-			m_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			hbox.add_child(m_lbl)
-
-	# Layer 3 / Layer 4: append "⊕" button
+	# Layer 3 / Layer 4: append "⊕" button (top row only — NOT reflected)
 	if _layer3_active or _layer4_active:
 		var add_btn: Button = Button.new()
 		add_btn.name = "AddToKeyring"
@@ -392,7 +365,72 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 	btn.mouse_entered.connect(_on_key_mouse_entered.bind(idx))
 	btn.mouse_exited.connect(_on_key_mouse_exited)
 
-	return btn
+	wrapper.add_child(btn)
+
+	# T113: Water/mirror reflection — show the mirror key reflected below
+	if _mirror_pair_map.has(idx) and is_discovered:
+		var minfo: Dictionary = _mirror_pair_map[idx]
+		var mirror_idx: int = minfo["mirror_idx"]
+		var mirror_color: Color = minfo["mirror_color"]
+		var is_self_inv: bool = minfo["is_self_inverse"]
+
+		# Thin "water surface" separator line
+		var water_line: ColorRect = ColorRect.new()
+		water_line.name = "WaterLine"
+		water_line.custom_minimum_size = Vector2(0, 1)
+		water_line.color = Color(0.3, 0.5, 0.7, 0.25)
+		water_line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wrapper.add_child(water_line)
+
+		# Reflection container — holds mirrored dot + number, flipped vertically
+		var refl_height: int = int(btn_size.y * 0.6)
+		var refl_container: Control = Control.new()
+		refl_container.name = "Reflection"
+		refl_container.custom_minimum_size = Vector2(btn_size.x, refl_height)
+		refl_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wrapper.add_child(refl_container)
+
+		# Inner HBox for the reflected content — centered, manually positioned
+		var refl_hbox: HBoxContainer = HBoxContainer.new()
+		refl_hbox.name = "ReflContent"
+		refl_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+		refl_hbox.add_theme_constant_override("separation", 5)
+		refl_hbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		# Manual size — don't use anchors (they conflict with scale flip)
+		refl_hbox.size = Vector2(btn_size.x, refl_height)
+		refl_container.add_child(refl_hbox)
+
+		# Mirror dot — the mirror key's color (or same for self-inverse)
+		var r_color: Color = color if is_self_inv else mirror_color
+		var r_dot_sz: int = maxi(dot_sz - 2, 6)
+		var refl_dot: ColorRect = ColorRect.new()
+		refl_dot.name = "ReflDot"
+		refl_dot.custom_minimum_size = Vector2(r_dot_sz, r_dot_sz)
+		refl_dot.size = Vector2(r_dot_sz, r_dot_sz)
+		refl_dot.color = r_color
+		refl_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		refl_hbox.add_child(refl_dot)
+
+		# Mirror number label
+		var refl_lbl: Label = Label.new()
+		refl_lbl.name = "ReflNum"
+		refl_lbl.text = str(idx) if is_self_inv else str(mirror_idx)
+		var r_font_sz: int = maxi(font_sz - 2, 8)
+		refl_lbl.add_theme_font_size_override("font_size", r_font_sz)
+		refl_lbl.add_theme_color_override("font_color",
+			Color(r_color.r, r_color.g, r_color.b, 0.7))
+		refl_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		refl_hbox.add_child(refl_lbl)
+
+		# Flip the reflection content vertically (water mirror effect)
+		refl_hbox.scale.y = -1.0
+		# Offset to compensate for the flip (pivot is top-left, so shift down)
+		refl_hbox.position.y = refl_height
+
+		# Fade out the reflection — lower alpha for "underwater" look
+		refl_container.modulate = Color(1, 1, 1, 0.35)
+
+	return wrapper
 
 
 ## Apply discovered/locked/current styling to a button.
@@ -460,9 +498,11 @@ func _apply_button_state(btn: Button, idx: int, color: Color,
 # ── Internal: helpers ────────────────────────────────────────────────
 
 func _clear_buttons() -> void:
-	for btn in _buttons:
-		if btn != null and is_instance_valid(btn):
-			btn.queue_free()
+	# Free wrappers (which contain buttons + reflections)
+	for w in _wrappers:
+		if w != null and is_instance_valid(w):
+			w.queue_free()
+	_wrappers.clear()
 	_buttons.clear()
 
 

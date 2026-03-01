@@ -446,6 +446,156 @@
           "conjugation_witness": null
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r2"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r2"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r3"
+              ]
+            },
+            {
+              "representative": "s0",
+              "elements": [
+                "s0",
+                "s2"
+              ]
+            },
+            {
+              "representative": "s1",
+              "elements": [
+                "s1",
+                "s3"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1",
+            "s0",
+            "s1"
+          ],
+          "quotient_order": 4,
+          "quotient_type": "Z4_or_Z2xZ2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r1",
+            "r2",
+            "r3"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r1",
+                "r2",
+                "r3"
+              ]
+            },
+            {
+              "representative": "s0",
+              "elements": [
+                "s0",
+                "s3",
+                "s2",
+                "s1"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "s0"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "s0",
+            "s2",
+            "r2"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "s0",
+                "s2",
+                "r2"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "s1",
+                "s3",
+                "r3"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "s1",
+            "r2",
+            "s3"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "s1",
+                "r2",
+                "s3"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "s2",
+                "r3",
+                "s0"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        }
+      ]
     }
   }
 }

@@ -50,6 +50,22 @@ var _fading_edges: Array = []
 var _subgroup_rooms: Array = []  # Array[int] — room indices in the highlighted subgroup
 var _subgroup_sym_ids: Array = []  # Array[String] — sym_ids for transition drawing
 
+## Layer 5 coset coloring state
+var _coset_coloring: Dictionary = {}   ## room_idx → Color (coset color for each room)
+var _coset_groups: Array = []          ## Array[Array[int]] — room indices grouped by coset
+var _coset_active: bool = false        ## Whether coset coloring mode is active
+
+## Layer 5 merge animation state
+var _merge_active: bool = false        ## Whether a merge animation is running
+var _merge_progress: float = 0.0       ## 0.0 → 1.0 animation progress
+var _merge_targets: Dictionary = {}    ## room_idx → target_pos (centroid of its coset)
+var _merge_original_pos: Array = []    ## Saved original positions before merge
+
+## Layer 5 quotient graph (shown after merge completes)
+var _quotient_graph_active: bool = false ## Whether to show the merged quotient graph
+var _quotient_nodes: Array = []          ## Array[{pos: Vector2, color: Color, label: String, rooms: Array}]
+var _quotient_edges: Array = []          ## Array[{from: int, to: int}] — indices into _quotient_nodes
+
 
 # --- Public API ---
 
@@ -248,6 +264,199 @@ func clear_subgroup_highlight() -> void:
 	queue_redraw()
 
 
+# --- Layer 5: Coset Coloring API ---
+
+## Set coset coloring: color each room by its coset class.
+## cosets: Array[{representative: String, elements: Array[String]}]
+## coset_colors: Array[Color] — one per coset (cycled if fewer than cosets)
+func set_coset_coloring(cosets: Array, coset_colors: Array = []) -> void:
+	_coset_coloring.clear()
+	_coset_groups.clear()
+	_coset_active = false
+
+	if cosets.is_empty() or room_state == null:
+		queue_redraw()
+		return
+
+	# Default palette if none provided
+	if coset_colors.is_empty():
+		coset_colors = _default_coset_colors()
+
+	for ci in range(cosets.size()):
+		var coset: Dictionary = cosets[ci]
+		var elements: Array = coset.get("elements", [])
+		var color: Color = coset_colors[ci % coset_colors.size()]
+
+		var room_indices: Array = []
+		for sid in elements:
+			var ridx: int = _sym_id_to_room_idx(sid)
+			if ridx >= 0:
+				_coset_coloring[ridx] = color
+				room_indices.append(ridx)
+
+		_coset_groups.append(room_indices)
+
+	_coset_active = true
+	queue_redraw()
+
+
+## Clear coset coloring and any merge/quotient state.
+func clear_coset_coloring() -> void:
+	_coset_coloring.clear()
+	_coset_groups.clear()
+	_coset_active = false
+	_merge_active = false
+	_merge_progress = 0.0
+	_merge_targets.clear()
+	_merge_original_pos.clear()
+	_quotient_graph_active = false
+	_quotient_nodes.clear()
+	_quotient_edges.clear()
+	queue_redraw()
+
+
+## Start the merge animation: rooms within each coset slide toward their centroid,
+## then the quotient graph is shown.
+## cosets: same format as set_coset_coloring
+## coset_colors: matching color array
+## quotient_table: {rep_a: {rep_b: rep_result}} — for drawing quotient edges
+func start_merge_animation(cosets: Array, coset_colors: Array,
+		quotient_table: Dictionary) -> void:
+	if room_state == null or positions.is_empty() or cosets.is_empty():
+		return
+
+	# Ensure coset coloring is active
+	if not _coset_active:
+		set_coset_coloring(cosets, coset_colors)
+
+	# Save original positions
+	_merge_original_pos = positions.duplicate()
+	_merge_targets.clear()
+
+	# Compute centroid for each coset and assign targets
+	for ci in range(_coset_groups.size()):
+		var group: Array = _coset_groups[ci]
+		if group.is_empty():
+			continue
+		var centroid: Vector2 = Vector2.ZERO
+		var count: int = 0
+		for ridx in group:
+			if ridx >= 0 and ridx < positions.size():
+				centroid += positions[ridx]
+				count += 1
+		if count > 0:
+			centroid /= float(count)
+		for ridx in group:
+			_merge_targets[ridx] = centroid
+
+	# Prepare quotient graph nodes (one per coset, at centroid position)
+	_quotient_nodes.clear()
+	_quotient_edges.clear()
+
+	if coset_colors.is_empty():
+		coset_colors = _default_coset_colors()
+
+	var rep_to_qnode: Dictionary = {}  # representative sym_id -> quotient node index
+	for ci in range(cosets.size()):
+		var coset: Dictionary = cosets[ci]
+		var rep: String = coset.get("representative", "")
+		var elements: Array = coset.get("elements", [])
+		var color: Color = coset_colors[ci % coset_colors.size()]
+
+		# Centroid position
+		var centroid: Vector2 = Vector2.ZERO
+		var count: int = 0
+		for sid in elements:
+			var ridx: int = _sym_id_to_room_idx(sid)
+			if ridx >= 0 and ridx < positions.size():
+				centroid += positions[ridx]
+				count += 1
+		if count > 0:
+			centroid /= float(count)
+
+		var room_indices: Array = []
+		for sid in elements:
+			var ridx: int = _sym_id_to_room_idx(sid)
+			if ridx >= 0:
+				room_indices.append(ridx)
+
+		# Label: representative name or coset index
+		var label: String = str(ci)
+		# Try getting the room index of the representative for display
+		var rep_ridx: int = _sym_id_to_room_idx(rep)
+		if rep_ridx > 0:
+			label = str(rep_ridx)
+		elif rep_ridx == 0:
+			label = "\u2302"  # ⌂ for home coset
+
+		_quotient_nodes.append({
+			"pos": centroid,
+			"color": color,
+			"label": label,
+			"rooms": room_indices,
+		})
+		rep_to_qnode[rep] = ci
+
+	# Build quotient edges from the multiplication table
+	# Edge from coset A to coset B if A * B != A and A * B != identity (to reduce clutter)
+	# Actually, draw all non-self non-identity products as edges
+	var drawn_qedges: Dictionary = {}
+	for rep_a in quotient_table:
+		if not rep_to_qnode.has(rep_a):
+			continue
+		var qi_a: int = rep_to_qnode[rep_a]
+		var row: Dictionary = quotient_table[rep_a]
+		for rep_b in row:
+			if not rep_to_qnode.has(rep_b):
+				continue
+			var qi_b: int = rep_to_qnode[rep_b]
+			var result_rep: String = row[rep_b]
+			if not rep_to_qnode.has(result_rep):
+				continue
+			var qi_result: int = rep_to_qnode[result_rep]
+			# Draw edge from qi_b to qi_result (applying coset A maps B→result)
+			if qi_b == qi_result:
+				continue
+			var edge_key: String = "%d_%d" % [mini(qi_b, qi_result), maxi(qi_b, qi_result)]
+			if drawn_qedges.has(edge_key):
+				continue
+			drawn_qedges[edge_key] = true
+			_quotient_edges.append({"from": qi_b, "to": qi_result})
+
+	# Start the merge animation
+	_merge_active = true
+	_merge_progress = 0.0
+	_quotient_graph_active = false
+
+
+## Helper: map sym_id to room index.
+func _sym_id_to_room_idx(sym_id: String) -> int:
+	if room_state == null:
+		return -1
+	for i in range(room_state.perm_ids.size()):
+		if room_state.perm_ids[i] == sym_id:
+			return i
+	return -1
+
+
+## Default coset color palette (matches QuotientPanel.COSET_COLORS).
+func _default_coset_colors() -> Array:
+	return [
+		Color(0.85, 0.45, 0.95, 0.9),
+		Color(0.40, 0.75, 1.00, 0.9),
+		Color(0.95, 0.65, 0.25, 0.9),
+		Color(0.40, 0.95, 0.55, 0.9),
+		Color(0.95, 0.45, 0.55, 0.9),
+		Color(0.70, 0.85, 0.30, 0.9),
+		Color(0.50, 0.55, 1.00, 0.9),
+		Color(0.95, 0.80, 0.30, 0.9),
+		Color(0.35, 0.85, 0.85, 0.9),
+		Color(0.90, 0.55, 0.70, 0.9),
+		Color(0.60, 0.95, 0.80, 0.9),
+		Color(0.80, 0.60, 0.40, 0.9),
+	]
+
+
 # --- Drawing ---
 
 func _process(delta: float) -> void:
@@ -263,6 +472,26 @@ func _process(delta: float) -> void:
 	if had_edges or not _fading_edges.is_empty():
 		queue_redraw()
 
+	# Layer 5: Merge animation tick
+	if _merge_active:
+		_merge_progress += delta * 0.7  # ~1.4 seconds total
+		if _merge_progress >= 1.0:
+			_merge_progress = 1.0
+			_merge_active = false
+			_quotient_graph_active = true
+
+		# Interpolate room positions toward coset centroids
+		for ridx in _merge_targets:
+			if ridx >= 0 and ridx < positions.size() and ridx < _merge_original_pos.size():
+				var orig: Vector2 = _merge_original_pos[ridx]
+				var target: Vector2 = _merge_targets[ridx]
+				# Ease-in-out curve
+				var t: float = _merge_progress
+				var eased: float = t * t * (3.0 - 2.0 * t)  # smoothstep
+				positions[ridx] = orig.lerp(target, eased)
+
+		queue_redraw()
+
 
 func _draw() -> void:
 	if room_state == null or positions.is_empty():
@@ -270,8 +499,18 @@ func _draw() -> void:
 
 	var n: int = room_state.group_order
 
+	# --- Layer 5 quotient graph (after merge completes) ---
+	if _quotient_graph_active:
+		_draw_quotient_graph()
+		return  # Only show the quotient graph, not the original map
+
+	# --- Layer 5 coset coloring (edges between cosets) ---
+	if _coset_active:
+		_draw_coset_edges(n)
+
 	# --- Layer 3 subgroup highlight (below everything) ---
-	_draw_subgroup_highlight(n)
+	if not _coset_active:
+		_draw_subgroup_highlight(n)
 
 	# --- Fading transition edges ---
 	_draw_fading_edges(n)
@@ -279,8 +518,161 @@ func _draw() -> void:
 	# --- Hover key preview ---
 	_draw_key_preview(n)
 
-	# --- Room nodes ---
+	# --- Room nodes (with coset coloring if active) ---
 	_draw_room_nodes(n)
+
+
+## Layer 5: Draw coset-aware edges.
+## Intra-coset edges: dashed, dim. Inter-coset edges: solid, bright.
+func _draw_coset_edges(n: int) -> void:
+	if not _coset_active or room_state == null:
+		return
+
+	# Build room_idx → coset_index map for O(1) lookup
+	var room_to_coset: Dictionary = {}
+	for ci in range(_coset_groups.size()):
+		for ridx in _coset_groups[ci]:
+			room_to_coset[ridx] = ci
+
+	# Draw edges for all key-transitions between discovered rooms
+	var drawn: Dictionary = {}  # edge_key -> true
+	for from_room in range(n):
+		if from_room >= positions.size():
+			continue
+		if not room_state.is_discovered(from_room):
+			continue
+		for key_room in range(1, n):  # skip identity
+			var to_room: int = room_state.cayley_table[from_room][key_room]
+			if from_room == to_room:
+				continue
+			if to_room >= positions.size() or not room_state.is_discovered(to_room):
+				continue
+			var edge_key: String = "%d_%d" % [mini(from_room, to_room), maxi(from_room, to_room)]
+			if drawn.has(edge_key):
+				continue
+			drawn[edge_key] = true
+
+			var p1: Vector2 = positions[from_room]
+			var p2: Vector2 = positions[to_room]
+			var delta: Vector2 = p2 - p1
+			var length: float = delta.length()
+			if length < 1.0:
+				continue
+
+			var same_coset: bool = (room_to_coset.get(from_room, -1) == room_to_coset.get(to_room, -2))
+
+			if same_coset:
+				# Intra-coset: dashed, dim, thin
+				var coset_color: Color = _coset_coloring.get(from_room, Color.WHITE)
+				coset_color.a = 0.15
+				_draw_dashed_line(p1, p2, coset_color, 1.0, 4.0, 3.0)
+			else:
+				# Inter-coset: solid, bright, thicker
+				var color_a: Color = _coset_coloring.get(from_room, Color.WHITE)
+				var color_b: Color = _coset_coloring.get(to_room, Color.WHITE)
+				# Blend colors
+				var edge_color: Color = Color(
+					(color_a.r + color_b.r) * 0.5,
+					(color_a.g + color_b.g) * 0.5,
+					(color_a.b + color_b.b) * 0.5,
+					0.5
+				)
+				# Curved line
+				var normal: Vector2 = Vector2(-delta.y, delta.x) / length * 8.0
+				var mid: Vector2 = (p1 + p2) / 2.0
+				var control: Vector2 = mid + normal
+				var prev: Vector2 = p1
+				for s in range(1, 9):
+					var t: float = float(s) / 8.0
+					var pt: Vector2 = (1.0 - t) * (1.0 - t) * p1 + 2.0 * (1.0 - t) * t * control + t * t * p2
+					draw_line(prev, pt, edge_color, 1.8, true)
+					prev = pt
+
+
+## Layer 5: Draw the quotient graph (after merge animation completes).
+## Shows coset nodes at centroid positions with colored squares and
+## edges between distinct cosets from the quotient multiplication table.
+func _draw_quotient_graph() -> void:
+	if _quotient_nodes.is_empty():
+		return
+
+	var count: int = _quotient_nodes.size()
+	var node_sz: float = 32.0 if count <= 6 else (24.0 if count <= 12 else 18.0)
+	var half: float = node_sz / 2.0
+
+	# --- Draw quotient edges first (below nodes) ---
+	for edge in _quotient_edges:
+		var fi: int = edge["from"]
+		var ti: int = edge["to"]
+		if fi < 0 or fi >= count or ti < 0 or ti >= count:
+			continue
+		var p1: Vector2 = _quotient_nodes[fi]["pos"]
+		var p2: Vector2 = _quotient_nodes[ti]["pos"]
+		var delta: Vector2 = p2 - p1
+		var length: float = delta.length()
+		if length < 1.0:
+			continue
+
+		var color_a: Color = _quotient_nodes[fi]["color"]
+		var color_b: Color = _quotient_nodes[ti]["color"]
+		var edge_color: Color = Color(
+			(color_a.r + color_b.r) * 0.5,
+			(color_a.g + color_b.g) * 0.5,
+			(color_a.b + color_b.b) * 0.5,
+			0.6
+		)
+
+		# Curved line
+		var normal: Vector2 = Vector2(-delta.y, delta.x) / length * 12.0
+		var mid: Vector2 = (p1 + p2) / 2.0
+		var control: Vector2 = mid + normal
+		var prev: Vector2 = p1
+		for s in range(1, 11):
+			var t: float = float(s) / 10.0
+			var pt: Vector2 = (1.0 - t) * (1.0 - t) * p1 + 2.0 * (1.0 - t) * t * control + t * t * p2
+			draw_line(prev, pt, edge_color, 2.5, true)
+			prev = pt
+
+	# --- Draw quotient nodes ---
+	for qi in range(count):
+		var qnode: Dictionary = _quotient_nodes[qi]
+		var pos: Vector2 = qnode["pos"]
+		var color: Color = qnode["color"]
+		var label: String = qnode["label"]
+
+		# Glow rings
+		var glow_col: Color = color
+		for g in range(3):
+			var grow: float = 5.0 + float(g) * 4.0
+			var glow_rect: Rect2 = Rect2(
+				pos.x - half - grow, pos.y - half - grow,
+				node_sz + grow * 2, node_sz + grow * 2
+			)
+			glow_col.a = 0.25 - float(g) * 0.07
+			draw_rect(glow_rect, glow_col, true)
+
+		# Filled square
+		var rect: Rect2 = Rect2(pos.x - half, pos.y - half, node_sz, node_sz)
+		draw_rect(rect, color, true)
+
+		# Bright border
+		var border_col: Color = Color(color.r, color.g, color.b, 1.0)
+		draw_rect(rect, border_col, false, 2.0)
+
+		# Label
+		var font: Font = ThemeDB.fallback_font
+		var font_size: int = 13 if node_sz >= 28.0 else (11 if node_sz >= 20.0 else 9)
+		var text_size: Vector2 = font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+		var text_pos: Vector2 = Vector2(pos.x - text_size.x / 2.0, pos.y + text_size.y / 3.0)
+		draw_string(font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.WHITE)
+
+	# --- Title label ---
+	var title_font: Font = ThemeDB.fallback_font
+	var title_text: String = "G/N  (%d элементов)" % count
+	var title_size: Vector2 = title_font.get_string_size(title_text, HORIZONTAL_ALIGNMENT_CENTER, -1, 14)
+	var title_pos: Vector2 = Vector2((panel_size.x - title_size.x) / 2.0, 18)
+	draw_string(title_font, title_pos, title_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14,
+		Color(0.65, 0.35, 0.90, 0.8))
 
 
 ## Draw the subgroup highlight: gold glow on subgroup rooms + internal transitions.
@@ -488,35 +880,59 @@ func _draw_room_nodes(n: int) -> void:
 			_draw_dashed_rect(rect, Color(0.2, 0.2, 0.2, 0.12), 0.5)
 			continue
 
-		var col: Color = room_state.colors[i] if i < room_state.colors.size() else Color.WHITE
+		# Use coset color if active, otherwise original room color
+		var col: Color
+		if _coset_active and _coset_coloring.has(i):
+			col = _coset_coloring[i]
+		else:
+			col = room_state.colors[i] if i < room_state.colors.size() else Color.WHITE
 		var rect: Rect2 = Rect2(pos.x - half, pos.y - half, sz, sz)
 
-		# Glow for current room
-		if is_current:
+		# During merge animation: fade individual rooms as they converge
+		var merge_alpha: float = 1.0
+		if _merge_active:
+			# After 60% progress, start fading out individual rooms
+			merge_alpha = clampf(1.0 - (_merge_progress - 0.6) / 0.4, 0.0, 1.0)
+
+		# Glow for current room (or coset glow)
+		if is_current and not _coset_active:
 			var glow_col: Color = col
-			glow_col.a = 0.3
+			glow_col.a = 0.3 * merge_alpha
 			for g in range(4):
 				var grow: float = 4.0 + float(g) * 4.0
 				var glow_rect: Rect2 = Rect2(rect.position - Vector2(grow, grow), rect.size + Vector2(grow * 2, grow * 2))
 				var ga: Color = glow_col
-				ga.a = 0.3 - float(g) * 0.065
+				ga.a = (0.3 - float(g) * 0.065) * merge_alpha
 				draw_rect(glow_rect, ga, true)
+		elif _coset_active and not _merge_active:
+			# Coset glow: subtle ring in coset color
+			var glow_col: Color = col
+			glow_col.a = 0.15
+			var glow_rect: Rect2 = Rect2(
+				pos.x - half - 3, pos.y - half - 3,
+				sz + 6, sz + 6)
+			draw_rect(glow_rect, glow_col, true)
 
 		# Fill
 		var fill_col: Color = col
-		if is_current:
-			fill_col.a = 1.0
+		if is_current and not _coset_active:
+			fill_col.a = 1.0 * merge_alpha
 		elif is_hover:
-			fill_col.a = 0.75
+			fill_col.a = 0.85 * merge_alpha
+		elif _coset_active:
+			fill_col.a = 0.80 * merge_alpha
 		else:
-			fill_col.a = 0.50
+			fill_col.a = 0.50 * merge_alpha
 
 		draw_rect(rect, fill_col, true)
 
 		# Outline
 		var outline_col: Color = col
-		outline_col.a = 1.0 if is_current else 0.35
-		var outline_width: float = 2.0 if is_current else 1.0
+		if _coset_active:
+			outline_col.a = 0.9 * merge_alpha
+		else:
+			outline_col.a = (1.0 if is_current else 0.35) * merge_alpha
+		var outline_width: float = 2.0 if (is_current or _coset_active) else 1.0
 		draw_rect(rect, outline_col, false, outline_width)
 
 		# Label (number or home symbol)

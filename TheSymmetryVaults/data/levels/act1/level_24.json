@@ -1079,6 +1079,238 @@
           }
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e_id",
+            "r2_id"
+          ],
+          "cosets": [
+            {
+              "representative": "e_id",
+              "elements": [
+                "e_id",
+                "r2_id"
+              ]
+            },
+            {
+              "representative": "r1_id",
+              "elements": [
+                "r1_id",
+                "r3_id"
+              ]
+            },
+            {
+              "representative": "sh_id",
+              "elements": [
+                "sh_id",
+                "sv_id"
+              ]
+            },
+            {
+              "representative": "sd_id",
+              "elements": [
+                "sd_id",
+                "sa_id"
+              ]
+            },
+            {
+              "representative": "e_flip",
+              "elements": [
+                "e_flip",
+                "r2_flip"
+              ]
+            },
+            {
+              "representative": "r1_flip",
+              "elements": [
+                "r1_flip",
+                "r3_flip"
+              ]
+            },
+            {
+              "representative": "sh_flip",
+              "elements": [
+                "sh_flip",
+                "sv_flip"
+              ]
+            },
+            {
+              "representative": "sd_flip",
+              "elements": [
+                "sd_flip",
+                "sa_flip"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e_id",
+            "r1_id",
+            "sh_id",
+            "sd_id",
+            "e_flip",
+            "r1_flip",
+            "sh_flip",
+            "sd_flip"
+          ],
+          "quotient_order": 8,
+          "quotient_type": "order8"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e_id",
+            "e_flip"
+          ],
+          "cosets": [
+            {
+              "representative": "e_id",
+              "elements": [
+                "e_id",
+                "e_flip"
+              ]
+            },
+            {
+              "representative": "r1_id",
+              "elements": [
+                "r1_id",
+                "r1_flip"
+              ]
+            },
+            {
+              "representative": "r2_id",
+              "elements": [
+                "r2_id",
+                "r2_flip"
+              ]
+            },
+            {
+              "representative": "r3_id",
+              "elements": [
+                "r3_id",
+                "r3_flip"
+              ]
+            },
+            {
+              "representative": "sh_id",
+              "elements": [
+                "sh_id",
+                "sh_flip"
+              ]
+            },
+            {
+              "representative": "sv_id",
+              "elements": [
+                "sv_id",
+                "sv_flip"
+              ]
+            },
+            {
+              "representative": "sd_id",
+              "elements": [
+                "sd_id",
+                "sd_flip"
+              ]
+            },
+            {
+              "representative": "sa_id",
+              "elements": [
+                "sa_id",
+                "sa_flip"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e_id",
+            "r1_id",
+            "r2_id",
+            "r3_id",
+            "sh_id",
+            "sv_id",
+            "sd_id",
+            "sa_id"
+          ],
+          "quotient_order": 8,
+          "quotient_type": "order8"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e_id",
+            "r2_flip"
+          ],
+          "cosets": [
+            {
+              "representative": "e_id",
+              "elements": [
+                "e_id",
+                "r2_flip"
+              ]
+            },
+            {
+              "representative": "r1_id",
+              "elements": [
+                "r1_id",
+                "r3_flip"
+              ]
+            },
+            {
+              "representative": "r2_id",
+              "elements": [
+                "r2_id",
+                "e_flip"
+              ]
+            },
+            {
+              "representative": "r3_id",
+              "elements": [
+                "r3_id",
+                "r1_flip"
+              ]
+            },
+            {
+              "representative": "sh_id",
+              "elements": [
+                "sh_id",
+                "sv_flip"
+              ]
+            },
+            {
+              "representative": "sv_id",
+              "elements": [
+                "sv_id",
+                "sh_flip"
+              ]
+            },
+            {
+              "representative": "sd_id",
+              "elements": [
+                "sd_id",
+                "sa_flip"
+              ]
+            },
+            {
+              "representative": "sa_id",
+              "elements": [
+                "sa_id",
+                "sd_flip"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e_id",
+            "r1_id",
+            "r2_id",
+            "r3_id",
+            "sh_id",
+            "sv_id",
+            "sd_id",
+            "sa_id"
+          ],
+          "quotient_order": 8,
+          "quotient_type": "order8"
+        }
+      ]
     }
   }
 }

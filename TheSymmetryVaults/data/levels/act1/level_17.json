@@ -469,6 +469,88 @@
           "conjugation_witness": null
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r4"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r4"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r5"
+              ]
+            },
+            {
+              "representative": "r2",
+              "elements": [
+                "r2",
+                "r6"
+              ]
+            },
+            {
+              "representative": "r3",
+              "elements": [
+                "r3",
+                "r7"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1",
+            "r2",
+            "r3"
+          ],
+          "quotient_order": 4,
+          "quotient_type": "Z4_or_Z2xZ2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r2",
+            "r4",
+            "r6"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r2",
+                "r4",
+                "r6"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r3",
+                "r5",
+                "r7"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        }
+      ]
     }
   }
 }

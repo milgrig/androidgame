@@ -20,8 +20,7 @@ enum LayerMode {
 	LAYER_2_INVERSE,     ## Mirror key pairing via ⊕ taps
 	LAYER_3_SUBGROUPS,   ## Keyring assembly — find all subgroups
 	LAYER_4_NORMAL,      ## Normal subgroup identification via conjugation cracking
-	## Future:
-	## LAYER_5_QUOTIENT,  ## Quotient group construction
+	LAYER_5_QUOTIENT,    ## Quotient group construction — factor by normal subgroups
 }
 
 # ── Signals ──────────────────────────────────────────────────────────
@@ -38,12 +37,14 @@ var layer_number: int = 1
 var inverse_pair_mgr: InversePairManager = null
 var keyring_assembly_mgr: KeyringAssemblyManager = null
 var conjugation_cracking_mgr: ConjugationCrackingManager = null
+var quotient_group_mgr: QuotientGroupManager = null
 var _level_scene = null  ## Weak reference to LevelScene (no type to avoid circular)
 var _room_state: RoomState = null
 var _hall_id: String = ""
 var _mirror_panel = null   ## MirrorPairsPanel for Layer 2 UI (T112)
 var _keyring_panel = null  ## KeyringPanel for Layer 3 UI
 var _cracking_panel = null  ## CrackingPanel for Layer 4 UI
+var _quotient_panel = null  ## QuotientPanel for Layer 5 UI
 
 ## Layer 4: conjugation test state
 var _selected_g: String = ""       ## Selected conjugator (g ∈ G)
@@ -72,6 +73,14 @@ const L4_RED_BG := Color(0.06, 0.02, 0.02, 0.8)
 const L4_RED_BORDER := Color(0.5, 0.15, 0.12, 0.7)
 const L4_RED_GLOW := Color(1.0, 0.4, 0.3, 0.9)
 
+# ── Layer 5 color scheme constants ───────────────────────────────────
+
+const L5_PURPLE := Color(0.65, 0.35, 0.90, 1.0)
+const L5_PURPLE_DIM := Color(0.45, 0.25, 0.65, 0.7)
+const L5_PURPLE_BG := Color(0.04, 0.02, 0.06, 0.8)
+const L5_PURPLE_BORDER := Color(0.35, 0.15, 0.50, 0.7)
+const L5_PURPLE_GLOW := Color(0.75, 0.45, 1.0, 0.9)
+
 
 # ── Setup ────────────────────────────────────────────────────────────
 
@@ -96,6 +105,9 @@ func setup(layer: int, level_data: Dictionary, level_scene) -> void:
 		4:
 			current_layer = LayerMode.LAYER_4_NORMAL
 			_setup_layer_4(level_data, level_scene)
+		5:
+			current_layer = LayerMode.LAYER_5_QUOTIENT
+			_setup_layer_5(level_data, level_scene)
 		_:
 			push_warning("LayerModeController: Layer %d not yet implemented" % layer)
 			current_layer = LayerMode.LAYER_1
@@ -111,6 +123,7 @@ func cleanup() -> void:
 	inverse_pair_mgr = null
 	keyring_assembly_mgr = null
 	conjugation_cracking_mgr = null
+	quotient_group_mgr = null
 	# Clean up Layer 2 mirror panel
 	if _mirror_panel != null and is_instance_valid(_mirror_panel):
 		_mirror_panel.cleanup()
@@ -125,6 +138,14 @@ func cleanup() -> void:
 		_cracking_panel.cleanup()
 		_cracking_panel.queue_free()
 	_cracking_panel = null
+	# Clean up Layer 5 quotient panel + coset coloring on room map
+	if _level_scene and _level_scene._room_map:
+		_level_scene._room_map.clear_coset_coloring()
+	if _quotient_panel != null and is_instance_valid(_quotient_panel):
+		if _quotient_panel.has_method("cleanup"):
+			_quotient_panel.cleanup()
+		_quotient_panel.queue_free()
+	_quotient_panel = null
 	_level_scene = null
 	_room_state = null
 	_selected_g = ""
@@ -682,9 +703,8 @@ func _setup_layer_3(level_data: Dictionary, level_scene) -> void:
 	# 4. Show all keys (T111: identity key excluded), enable Layer 3 ⊕ buttons
 	if level_scene._key_bar:
 		level_scene._key_bar.enable_layer3_mode()
-		level_scene._key_bar.rebuild(_room_state)
 
-	# 4b. T113: Load mirror pair data from level for display in key_bar
+	# 4b. T113: Load mirror pair data BEFORE rebuild (sets _mirror_pair_map + calls rebuild)
 	_load_mirror_data_to_keybar(level_data, level_scene)
 
 	# 5. Hide target preview and action buttons
@@ -1207,9 +1227,8 @@ func _setup_layer_4(level_data: Dictionary, level_scene) -> void:
 	# 4. Show all keys (T111: identity key excluded), enable g/h buttons
 	if level_scene._key_bar:
 		level_scene._key_bar.enable_layer4_mode()
-		level_scene._key_bar.rebuild(_room_state)
 
-	# 4b. T113: Load mirror pair data from level for display in key_bar
+	# 4b. T113: Load mirror pair data BEFORE rebuild (sets _mirror_pair_map + calls rebuild)
 	_load_mirror_data_to_keybar(level_data, level_scene)
 
 	# 5. Hide target preview and action buttons
@@ -2142,6 +2161,616 @@ func _on_dismiss_layer_4_summary() -> void:
 	HudBuilder.show_post_completion_exit_button(hud, _on_return_to_map)
 
 
+# ── Layer 5: Quotient Group Construction ─────────────────────────────
+
+func _setup_layer_5(level_data: Dictionary, level_scene) -> void:
+	_room_state = level_scene._room_state
+
+	# 1. Disable crystal dragging (graph is read-only on Layer 5)
+	for crystal in level_scene.crystals.values():
+		if crystal is CrystalNode:
+			crystal.set_draggable(false)
+
+	# 2. Reset crystals to identity (home) arrangement
+	var sm: ShuffleManager = level_scene._shuffle_mgr
+	sm.current_arrangement = sm.identity_arrangement.duplicate()
+	level_scene._swap_mgr.apply_arrangement_to_crystals()
+
+	# 3. Make ALL rooms discovered
+	for i in range(_room_state.group_order):
+		_room_state.discover_room(i)
+
+	# 4. Show all keys (reuse layer3 ⊕ mode for element selection)
+	if level_scene._key_bar:
+		level_scene._key_bar.enable_layer3_mode()
+
+	# 4b. Load mirror pair data BEFORE rebuild
+	_load_mirror_data_to_keybar(level_data, level_scene)
+
+	# 5. Hide target preview and action buttons
+	_hide_target_preview(level_scene)
+	_hide_action_buttons(level_scene)
+
+	# 6. Initialize QuotientGroupManager
+	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_5", {})
+	quotient_group_mgr = QuotientGroupManager.new()
+	quotient_group_mgr.setup(level_data, layer_config)
+
+	# 7. Connect QuotientGroupManager signals
+	quotient_group_mgr.quotient_constructed.connect(_on_quotient_constructed)
+	quotient_group_mgr.all_quotients_done.connect(_on_all_quotients_done)
+
+	# 8. Apply Layer 5 theme (purple accents)
+	_apply_layer_5_theme(level_scene)
+
+	# 9. Update counter for Layer 5 progress
+	_update_layer_5_counter()
+
+	# 10. Room map stays visible
+	if level_scene._room_map:
+		level_scene._room_map.home_visible = true
+		level_scene._room_map.queue_redraw()
+
+	# 11. Build quotient panel UI
+	_build_quotient_panel(level_scene)
+
+	# 12. Restore from save (if resuming)
+	var saved: Dictionary = {}
+	if GameManager.level_states.has(_hall_id):
+		var lp: Dictionary = GameManager.level_states[_hall_id].get("layer_progress", {})
+		saved = lp.get("layer_5", {})
+	if saved.get("status") == "in_progress":
+		quotient_group_mgr.restore_from_save(saved)
+		_update_layer_5_counter()
+		_refresh_quotient_panel()
+
+	# 13. Save "in_progress" state
+	GameManager.set_layer_progress(_hall_id, 5, quotient_group_mgr.save_state())
+
+	# 14. Auto-complete if no quotient groups to construct (prime-order groups, etc.)
+	if quotient_group_mgr.is_complete():
+		# Delay to allow UI to be fully built first
+		var timer: SceneTreeTimer = level_scene.get_tree().create_timer(0.5)
+		timer.timeout.connect(_on_layer_5_completed)
+
+
+## Layer 5 theme application — purple accents.
+func _apply_layer_5_theme(level_scene) -> void:
+	var hud = level_scene.hud_layer
+
+	# Level number label — add "Слой 5" indicator
+	var lvl_label = hud.get_node_or_null("LevelNumberLabel")
+	if lvl_label:
+		lvl_label.text += "  ·  Слой 5: Факторгруппы"
+		lvl_label.add_theme_color_override("font_color", L5_PURPLE_DIM)
+
+	# Map frame title → indicate Layer 5
+	var map_frame = hud.get_node_or_null("MapFrame")
+	if map_frame:
+		var map_title = map_frame.get_node_or_null("MapFrameTitle")
+		if map_title:
+			map_title.text = "Карта комнат — Факторгруппы"
+			map_title.add_theme_color_override("font_color", L5_PURPLE_DIM)
+
+	# KeyBar frame title → indicate quotient construction
+	var key_frame = hud.get_node_or_null("KeyBarFrame")
+	if key_frame:
+		var key_title = key_frame.get_node_or_null("KeyBarFrameTitle")
+		if key_title:
+			key_title.text = "Ключи — построение G/N"
+			key_title.add_theme_color_override("font_color", L5_PURPLE_DIM)
+
+	# Counter label → purple
+	var counter = hud.get_node_or_null("CounterLabel")
+	if counter:
+		counter.add_theme_color_override("font_color", L5_PURPLE_DIM)
+
+
+## Update the counter label for Layer 5 progress.
+func _update_layer_5_counter() -> void:
+	if _level_scene == null or quotient_group_mgr == null:
+		return
+	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
+	if cl:
+		var p: Dictionary = quotient_group_mgr.get_progress()
+		cl.text = "Факторгруппы: %d / %d" % [p["constructed"], p["total"]]
+
+
+## Save Layer 5 progress.
+func _save_layer_5_progress() -> void:
+	if quotient_group_mgr == null:
+		return
+	GameManager.set_layer_progress(_hall_id, 5, quotient_group_mgr.save_state())
+
+
+## Build the Layer 5 quotient panel — coset display + construction controls.
+## Uses 30% of the crystal zone width (same split as Layer 3/4).
+func _build_quotient_panel(level_scene) -> void:
+	var hud: CanvasLayer = level_scene.hud_layer
+	if quotient_group_mgr == null or _room_state == null:
+		return
+
+	# Get the current crystal zone rectangle
+	var crystal_rect: Rect2 = level_scene._crystal_rect
+	if crystal_rect.size == Vector2.ZERO:
+		return
+
+	# Split: quotient panel gets 30% of the crystal zone width
+	var panel_ratio: float = 0.30
+	var panel_w: float = floorf(crystal_rect.size.x * panel_ratio)
+	var crystal_new_w: float = crystal_rect.size.x - panel_w - 2
+
+	# Quotient panel rectangle (left side of old crystal zone)
+	var panel_rect: Rect2 = Rect2(
+		crystal_rect.position.x,
+		crystal_rect.position.y,
+		panel_w,
+		crystal_rect.size.y
+	)
+
+	# New crystal zone (right side, narrower)
+	var new_crystal_rect: Rect2 = Rect2(
+		crystal_rect.position.x + panel_w + 2,
+		crystal_rect.position.y,
+		crystal_new_w,
+		crystal_rect.size.y
+	)
+
+	# Resize crystal frame
+	var crystal_frame = hud.get_node_or_null("CrystalFrame")
+	if crystal_frame:
+		crystal_frame.position = new_crystal_rect.position
+		crystal_frame.size = new_crystal_rect.size
+
+	# Reposition crystal and edge containers
+	level_scene.crystal_container.position = new_crystal_rect.position
+	level_scene.edge_container.position = new_crystal_rect.position
+
+	# Reposition crystals to fit in the narrower zone
+	var nd: Array = level_scene.level_data.get("graph", {}).get("nodes", [])
+	var pm: Dictionary = ShuffleManager.build_positions_map(nd, new_crystal_rect.size)
+	var shuffle_mgr: ShuffleManager = level_scene._shuffle_mgr
+	for i in range(shuffle_mgr.current_arrangement.size()):
+		var cid: int = shuffle_mgr.current_arrangement[i]
+		if cid in level_scene.crystals and i in pm:
+			var crystal: CrystalNode = level_scene.crystals[cid]
+			crystal.position = pm[i]
+			crystal.set_home_position(pm[i])
+
+	# Update the stored crystal rect
+	level_scene._crystal_rect = new_crystal_rect
+
+	# Create the QuotientPanel (separate class, analogous to CrackingPanel)
+	_quotient_panel = QuotientPanel.new()
+	_quotient_panel.setup(hud, panel_rect, _room_state, quotient_group_mgr)
+	hud.add_child(_quotient_panel)
+
+	# Connect QuotientPanel signals
+	_quotient_panel.construct_requested.connect(_on_construct_quotient)
+	_quotient_panel.merge_requested.connect(_on_merge_quotient)
+	_quotient_panel.subgroup_selected.connect(_on_quotient_subgroup_selected)
+
+
+## Handle construct button press — compute and verify the quotient group.
+func _on_construct_quotient(subgroup_index: int) -> void:
+	if quotient_group_mgr == null:
+		return
+
+	var result: Dictionary = quotient_group_mgr.construct_quotient(subgroup_index)
+	if result.has("error"):
+		_show_quotient_error_feedback(result["error"], subgroup_index)
+		return
+
+	# Success — show feedback and update UI
+	_show_quotient_success_feedback(subgroup_index, result)
+	_update_layer_5_counter()
+	_save_layer_5_progress()
+	_refresh_quotient_panel()
+
+
+## Show success feedback after a quotient is constructed.
+func _show_quotient_success_feedback(subgroup_index: int, result: Dictionary) -> void:
+	if _level_scene == null:
+		return
+
+	# Play valid feedback animation
+	if _level_scene.feedback_fx:
+		_level_scene.feedback_fx.play_valid_feedback(
+			_level_scene.crystals.values(), _level_scene.edges)
+
+	# Show hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		var q_order: int = result.get("quotient_order", 0)
+		var q_type: String = result.get("quotient_type", "?")
+		hl.text = "G/N \u2245 %s  (порядок %d) \u2014 построена!" % [q_type, q_order]
+		var tw: Tween = _level_scene.create_tween()
+		tw.tween_property(hl, "theme_override_colors/font_color",
+			Color(0.4, 1.0, 0.5, 1.0), 0.3)
+		tw.tween_interval(3.0)
+		tw.tween_property(hl, "theme_override_colors/font_color",
+			L5_PURPLE_DIM, 1.0)
+
+	# Show coset coloring on the room map
+	if _level_scene._room_map and result.has("cosets"):
+		var cosets: Array = result["cosets"]
+		var coset_colors: Array = []
+		for ci in range(cosets.size()):
+			coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+		_level_scene._room_map.highlight_subgroup([])  # Clear old highlight
+		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+
+	# Show success glow on the panel entry
+	if _quotient_panel and _quotient_panel.has_method("show_construction_success"):
+		_quotient_panel.show_construction_success(subgroup_index)
+
+
+## Show error feedback when a quotient construction fails.
+func _show_quotient_error_feedback(error: String, subgroup_index: int) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+
+	var text: String = ""
+	match error:
+		"already_constructed":
+			text = "Эта факторгруппа уже построена"
+		"verification_failed":
+			text = "Ошибка верификации факторгруппы"
+		"invalid_index":
+			text = "Неверный индекс подгруппы"
+		_:
+			text = "Ошибка: %s" % error
+
+	hl.text = text
+	hl.add_theme_color_override("font_color", Color(1.0, 0.5, 0.3, 0.9))
+
+	# Show error flash on the panel entry
+	if _quotient_panel and _quotient_panel.has_method("show_construction_error"):
+		_quotient_panel.show_construction_error(subgroup_index)
+
+
+## Handle merge button press — trigger coset merge animation on map.
+func _on_merge_quotient(subgroup_index: int) -> void:
+	if quotient_group_mgr == null or _level_scene == null:
+		return
+	if not quotient_group_mgr.is_constructed(subgroup_index):
+		return
+
+	var cosets: Array = quotient_group_mgr.compute_cosets(subgroup_index)
+	var quotient_table: Dictionary = quotient_group_mgr.get_quotient_table(subgroup_index)
+
+	# Build coset color array matching QuotientPanel palette
+	var coset_colors: Array = []
+	for ci in range(cosets.size()):
+		coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+
+	# Clear subgroup highlight and start merge animation on room map
+	if _level_scene._room_map:
+		_level_scene._room_map.highlight_subgroup([])
+		_level_scene._room_map.start_merge_animation(cosets, coset_colors, quotient_table)
+
+	# Show merge hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		var construction: Dictionary = quotient_group_mgr.get_construction(subgroup_index)
+		var q_type: String = construction.get("quotient_type", "?")
+		var q_order: int = construction.get("quotient_order", 0)
+		hl.text = "Склейка: %d комнат \u2192 %d классов = G/N \u2245 %s" % [
+			_room_state.group_order if _room_state else 0, q_order, q_type]
+		hl.add_theme_color_override("font_color", L5_PURPLE)
+
+
+## Handle subgroup selection in the quotient panel — show coset coloring on map.
+func _on_quotient_subgroup_selected(index: int) -> void:
+	if _level_scene == null:
+		return
+
+	if index < 0:
+		# Deselected — clear coset coloring and map highlight
+		if _level_scene._room_map:
+			_level_scene._room_map.clear_coset_coloring()
+			_level_scene._room_map.highlight_subgroup([])
+		return
+
+	if quotient_group_mgr == null:
+		return
+
+	# Show the normal subgroup elements highlighted on the map
+	var ns_elements: Array = quotient_group_mgr.get_normal_subgroup_elements(index)
+
+	# If this quotient has been constructed, show full coset coloring on map
+	if quotient_group_mgr.is_constructed(index) and _level_scene._room_map:
+		var cosets: Array = quotient_group_mgr.compute_cosets(index)
+		var coset_colors: Array = []
+		for ci in range(cosets.size()):
+			coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+		_level_scene._room_map.highlight_subgroup([])  # Clear old highlight
+		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+	elif not ns_elements.is_empty() and _level_scene._room_map:
+		# Not yet constructed — just highlight the normal subgroup elements
+		_level_scene._room_map.clear_coset_coloring()
+		_level_scene._room_map.highlight_subgroup(ns_elements)
+
+	# Show hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		var ns_data: Array = quotient_group_mgr.get_normal_subgroups()
+		if index < ns_data.size():
+			var q_type: String = ns_data[index].get("quotient_type", "?")
+			var q_order: int = ns_data[index].get("quotient_order", 0)
+			hl.text = "N (пор. %d) \u2192 G/N \u2245 %s (пор. %d)" % [ns_elements.size(), q_type, q_order]
+			hl.add_theme_color_override("font_color", L5_PURPLE)
+
+
+## Refresh the quotient panel to reflect current state.
+func _refresh_quotient_panel() -> void:
+	if _quotient_panel == null or not is_instance_valid(_quotient_panel):
+		return
+	if not _quotient_panel.has_method("refresh"):
+		return
+	_quotient_panel.refresh()
+
+
+## Called when the player taps ⊕ on a key in Layer 5.
+## Highlights which coset the element belongs to (using selected subgroup, or first).
+func on_coset_action_layer5(sym_id: String) -> void:
+	if quotient_group_mgr == null or _level_scene == null:
+		return
+
+	var normal_subgroups: Array = quotient_group_mgr.get_normal_subgroups()
+	if normal_subgroups.is_empty():
+		return
+
+	# Use the selected subgroup from the panel, or default to 0
+	var sg_idx: int = 0
+	if _quotient_panel and _quotient_panel.has_method("get_selected_index"):
+		var sel: int = _quotient_panel.get_selected_index()
+		if sel >= 0:
+			sg_idx = sel
+
+	var coset_rep: String = quotient_group_mgr.find_coset_representative(sg_idx, sym_id)
+	if coset_rep == "":
+		return
+
+	var cosets: Array = quotient_group_mgr.compute_cosets(sg_idx)
+
+	# If quotient is constructed, show full coset coloring on map
+	if quotient_group_mgr.is_constructed(sg_idx) and _level_scene._room_map:
+		var coset_colors: Array = []
+		for ci in range(cosets.size()):
+			coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+		_level_scene._room_map.highlight_subgroup([])
+		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+	else:
+		# Not yet constructed — just highlight the coset elements
+		for coset in cosets:
+			if coset["representative"] == coset_rep:
+				if _level_scene._room_map:
+					_level_scene._room_map.highlight_subgroup(coset["elements"])
+				break
+
+	# Show hint about the coset
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		var elem_name: String = quotient_group_mgr.get_name(sym_id)
+		var rep_name: String = quotient_group_mgr.get_name(coset_rep)
+		for coset in cosets:
+			if coset["representative"] == coset_rep:
+				hl.text = "%s \u2208 %sN = {%s}" % [elem_name, rep_name, ", ".join(coset["elements"])]
+				hl.add_theme_color_override("font_color", L5_PURPLE)
+				break
+
+
+# ── Layer 5 Signal Handlers ──────────────────────────────────────────
+
+func _on_quotient_constructed(subgroup_index: int) -> void:
+	if _level_scene == null:
+		return
+	_update_layer_5_counter()
+	_save_layer_5_progress()
+
+	# Play construction feedback
+	if _level_scene.feedback_fx:
+		_level_scene.feedback_fx.play_completion_feedback(
+			_level_scene.crystals.values(), _level_scene.edges)
+
+
+func _on_all_quotients_done() -> void:
+	_on_layer_5_completed()
+
+
+func _on_layer_5_completed() -> void:
+	if _level_scene == null:
+		return
+
+	# Save layer progress as completed
+	_save_layer_5_progress()
+
+	# Play completion feedback
+	if _level_scene.feedback_fx:
+		_level_scene.feedback_fx.play_completion_feedback(
+			_level_scene.crystals.values(), _level_scene.edges)
+
+	# Update HUD
+	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
+	if cl:
+		var p: Dictionary = quotient_group_mgr.get_progress()
+		cl.text = "Все факторгруппы построены! (%d)" % p["total"]
+		cl.add_theme_color_override("font_color", L5_PURPLE)
+
+	# Show completion hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		hl.text = "Нормальные подгруппы позволяют строить новые, более простые группы"
+		hl.add_theme_color_override("font_color", L5_PURPLE)
+
+	# Show completion summary after a delay
+	var timer: SceneTreeTimer = _level_scene.get_tree().create_timer(1.5)
+	timer.timeout.connect(_show_layer_5_summary)
+
+	# Emit layer completed
+	layer_completed.emit(5, _hall_id)
+
+
+# ── Layer 5 Completion Summary ───────────────────────────────────────
+
+func _show_layer_5_summary() -> void:
+	if _level_scene == null:
+		return
+
+	var hud: CanvasLayer = _level_scene.hud_layer
+
+	var panel: Panel = Panel.new()
+	panel.name = "Layer5SummaryPanel"
+	var vp_size: Vector2 = Vector2(1280, 720)
+	if _level_scene.get_viewport():
+		var vr: Rect2 = _level_scene.get_viewport_rect()
+		if vr.size != Vector2.ZERO:
+			vp_size = vr.size
+	var pw: float = minf(vp_size.x * 0.6, 800.0)
+	var ph: float = minf(vp_size.y * 0.7, 500.0)
+	panel.position = Vector2((vp_size.x - pw) / 2.0, (vp_size.y - ph) / 2.0)
+	panel.size = Vector2(pw, ph)
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = L5_PURPLE_BG
+	style.border_color = L5_PURPLE
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		style.set(prop, 2)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		style.set(prop, 14)
+	panel.add_theme_stylebox_override("panel", style)
+	hud.add_child(panel)
+
+	var inner_w: float = pw - 40.0
+
+	# Title
+	var title: Label = Label.new()
+	title.text = "Слой 5 \u2014 Все факторгруппы построены!"
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", L5_PURPLE)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.position = Vector2(20, 20)
+	title.size = Vector2(inner_w, 30)
+	panel.add_child(title)
+
+	# Insight message
+	var insight: Label = Label.new()
+	insight.text = "Нормальные подгруппы позволяют строить новые, более простые группы"
+	insight.add_theme_font_size_override("font_size", 16)
+	insight.add_theme_color_override("font_color", Color(0.8, 0.7, 0.9, 0.9))
+	insight.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	insight.position = Vector2(20, 58)
+	insight.size = Vector2(inner_w, 25)
+	panel.add_child(insight)
+
+	# Divider
+	var div: Panel = Panel.new()
+	div.position = Vector2(60, 92)
+	div.size = Vector2(inner_w - 80, 1)
+	var div_style: StyleBoxFlat = StyleBoxFlat.new()
+	div_style.bg_color = L5_PURPLE_BORDER
+	div.add_theme_stylebox_override("panel", div_style)
+	panel.add_child(div)
+
+	# List constructed quotient groups
+	var normal_subgroups: Array = quotient_group_mgr.get_normal_subgroups() if quotient_group_mgr else []
+	var y_offset: int = 105
+	for i in range(normal_subgroups.size()):
+		var ns: Dictionary = normal_subgroups[i]
+		var ns_elements: Array = ns.get("normal_subgroup_elements", [])
+		var construction: Dictionary = quotient_group_mgr.get_construction(i)
+		var sg_label: Label = Label.new()
+		var elements_str: String = ", ".join(ns_elements)
+		if not construction.is_empty():
+			var q_type: String = construction.get("quotient_type", "?")
+			var q_order: int = construction.get("quotient_order", 0)
+			sg_label.text = "  \u2713 G/{%s} \u2245 %s  (порядок %d)" % [elements_str, q_type, q_order]
+			sg_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.9))
+		else:
+			sg_label.text = "  \u2026 G/{%s} \u2014 не построена" % elements_str
+			sg_label.add_theme_color_override("font_color", L5_PURPLE_DIM)
+		sg_label.add_theme_font_size_override("font_size", 14)
+		sg_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		sg_label.position = Vector2(20, y_offset)
+		sg_label.size = Vector2(inner_w, 22)
+		panel.add_child(sg_label)
+		y_offset += 26
+
+	# "Return to map" button
+	var btn: Button = Button.new()
+	btn.name = "ReturnToMapBtn"
+	btn.text = "ВЕРНУТЬСЯ НА КАРТУ"
+	btn.add_theme_font_size_override("font_size", 18)
+	var btn_w: float = minf(300.0, inner_w * 0.6)
+	btn.position = Vector2((pw - btn_w) / 2.0, ph - 60.0)
+	btn.size = Vector2(btn_w, 45)
+	btn.pressed.connect(_on_return_to_map)
+
+	var btn_style: StyleBoxFlat = StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.06, 0.03, 0.08, 0.9)
+	btn_style.border_color = L5_PURPLE
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		btn_style.set(prop, 2)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		btn_style.set(prop, 8)
+	btn.add_theme_stylebox_override("normal", btn_style)
+	var btn_hover: StyleBoxFlat = btn_style.duplicate()
+	btn_hover.bg_color = Color(0.10, 0.06, 0.12, 0.95)
+	btn.add_theme_stylebox_override("hover", btn_hover)
+	btn.add_theme_color_override("font_color", L5_PURPLE)
+	panel.add_child(btn)
+
+	# "Continue playing" dismiss button
+	var dismiss_btn: Button = Button.new()
+	dismiss_btn.name = "L5DismissBtn"
+	dismiss_btn.text = "Продолжить играть"
+	dismiss_btn.add_theme_font_size_override("font_size", 14)
+	var dismiss_w: float = minf(240.0, inner_w * 0.45)
+	dismiss_btn.position = Vector2((pw - dismiss_w) / 2.0, ph - 108.0)
+	dismiss_btn.size = Vector2(dismiss_w, 36)
+	var dismiss_style: StyleBoxFlat = StyleBoxFlat.new()
+	dismiss_style.bg_color = Color(0.05, 0.03, 0.06, 0.7)
+	dismiss_style.border_color = L5_PURPLE_BORDER
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		dismiss_style.set(prop, 1)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		dismiss_style.set(prop, 6)
+	dismiss_btn.add_theme_stylebox_override("normal", dismiss_style)
+	var dismiss_hover: StyleBoxFlat = dismiss_style.duplicate()
+	dismiss_hover.bg_color = Color(0.08, 0.05, 0.10, 0.85)
+	dismiss_btn.add_theme_stylebox_override("hover", dismiss_hover)
+	dismiss_btn.add_theme_color_override("font_color", L5_PURPLE_DIM)
+	dismiss_btn.pressed.connect(_on_dismiss_layer_5_summary)
+	panel.add_child(dismiss_btn)
+
+	# Fade in
+	panel.modulate = Color(1, 1, 1, 0)
+	_level_scene.create_tween().tween_property(panel, "modulate", Color(1, 1, 1, 1), 0.5)
+
+
+## Dismiss the Layer 5 summary panel and allow continued play.
+func _on_dismiss_layer_5_summary() -> void:
+	if _level_scene == null:
+		return
+	var hud: CanvasLayer = _level_scene.hud_layer
+	var panel = hud.get_node_or_null("Layer5SummaryPanel")
+	if panel and panel.visible:
+		var tw: Tween = _level_scene.create_tween()
+		tw.tween_property(panel, "modulate", Color(1, 1, 1, 0), 0.3)
+		tw.tween_callback(panel.queue_free)
+	# Show persistent exit button
+	HudBuilder.show_post_completion_exit_button(hud, _on_return_to_map)
+
+
 # ── Query API ────────────────────────────────────────────────────────
 
 ## Check if the current layer is complete.
@@ -2153,6 +2782,8 @@ func is_layer_complete() -> bool:
 			return keyring_assembly_mgr != null and keyring_assembly_mgr.is_complete()
 		LayerMode.LAYER_4_NORMAL:
 			return conjugation_cracking_mgr != null and conjugation_cracking_mgr.is_complete()
+		LayerMode.LAYER_5_QUOTIENT:
+			return quotient_group_mgr != null and quotient_group_mgr.is_complete()
 		_:
 			return false
 
@@ -2168,5 +2799,7 @@ func get_layer_display_name() -> String:
 			return "Слой 3: Группы"
 		LayerMode.LAYER_4_NORMAL:
 			return "Слой 4: Нормальные"
+		LayerMode.LAYER_5_QUOTIENT:
+			return "Слой 5: Факторгруппы"
 		_:
 			return "Слой %d" % layer_number

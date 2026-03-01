@@ -360,8 +360,11 @@ func _build_sg_slot(index: int, width: float, height: int, elements: Array,
 	dots.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	slot.add_child(dots)
 
-	# Add colored dot for each element
+	# Add colored dot for each element (T111: skip identity key)
 	for sym_id in elements:
+		var room_idx_check: int = _sym_id_to_room_idx(sym_id)
+		if room_idx_check == 0:
+			continue  # T111: identity key never shown in UI
 		var dot_btn: Button = Button.new()
 		dot_btn.name = "Dot_%s" % sym_id
 		dot_btn.custom_minimum_size = Vector2(20, 16)

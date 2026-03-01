@@ -595,6 +595,156 @@
           "conjugation_witness": null
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r180"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r180"
+              ]
+            },
+            {
+              "representative": "s_bc",
+              "elements": [
+                "s_bc",
+                "s_dg"
+              ]
+            },
+            {
+              "representative": "s_ab",
+              "elements": [
+                "s_ab",
+                "s_ad"
+              ]
+            },
+            {
+              "representative": "r90",
+              "elements": [
+                "r90",
+                "r270"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "s_bc",
+            "s_ab",
+            "r90"
+          ],
+          "quotient_order": 4,
+          "quotient_type": "Z4_or_Z2xZ2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r90",
+            "r270",
+            "r180"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r90",
+                "r270",
+                "r180"
+              ]
+            },
+            {
+              "representative": "s_bc",
+              "elements": [
+                "s_bc",
+                "s_ad",
+                "s_ab",
+                "s_dg"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "s_bc"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "s_bc",
+            "s_dg",
+            "r180"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "s_bc",
+                "s_dg",
+                "r180"
+              ]
+            },
+            {
+              "representative": "s_ab",
+              "elements": [
+                "s_ab",
+                "r90",
+                "r270",
+                "s_ad"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "s_ab"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "s_ab",
+            "s_ad",
+            "r180"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "s_ab",
+                "s_ad",
+                "r180"
+              ]
+            },
+            {
+              "representative": "s_bc",
+              "elements": [
+                "s_bc",
+                "r270",
+                "r90",
+                "s_dg"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "s_bc"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        }
+      ]
     }
   }
 }
