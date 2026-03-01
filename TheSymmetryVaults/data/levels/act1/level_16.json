@@ -358,6 +358,10 @@
       "normal_count": 0,
       "cracked_count": 0,
       "subgroups": []
+    },
+    "layer_5": {
+      "quotient_groups": [],
+      "message": "No non-trivial normal subgroups exist"
     }
   }
 }

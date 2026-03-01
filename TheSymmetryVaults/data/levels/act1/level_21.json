@@ -650,6 +650,54 @@
           }
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "id",
+            "neg"
+          ],
+          "cosets": [
+            {
+              "representative": "id",
+              "elements": [
+                "id",
+                "neg"
+              ]
+            },
+            {
+              "representative": "i",
+              "elements": [
+                "i",
+                "ni"
+              ]
+            },
+            {
+              "representative": "j",
+              "elements": [
+                "j",
+                "nj"
+              ]
+            },
+            {
+              "representative": "k",
+              "elements": [
+                "k",
+                "nk"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "id",
+            "i",
+            "j",
+            "k"
+          ],
+          "quotient_order": 4,
+          "quotient_type": "Z4_or_Z2xZ2"
+        }
+      ]
     }
   }
 }

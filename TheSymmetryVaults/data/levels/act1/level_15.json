@@ -515,6 +515,54 @@
           "conjugation_witness": null
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "even_perm_0",
+            "even_perm_3",
+            "even_perm_8",
+            "even_perm_11"
+          ],
+          "cosets": [
+            {
+              "representative": "even_perm_0",
+              "elements": [
+                "even_perm_0",
+                "even_perm_3",
+                "even_perm_8",
+                "even_perm_11"
+              ]
+            },
+            {
+              "representative": "even_perm_1",
+              "elements": [
+                "even_perm_1",
+                "even_perm_6",
+                "even_perm_10",
+                "even_perm_5"
+              ]
+            },
+            {
+              "representative": "even_perm_2",
+              "elements": [
+                "even_perm_2",
+                "even_perm_9",
+                "even_perm_4",
+                "even_perm_7"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "even_perm_0",
+            "even_perm_1",
+            "even_perm_2"
+          ],
+          "quotient_order": 3,
+          "quotient_type": "Z3"
+        }
+      ]
     }
   }
 }

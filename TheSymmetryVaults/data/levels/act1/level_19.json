@@ -589,6 +589,47 @@
           "conjugation_witness": null
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r1",
+            "r2",
+            "r3",
+            "r4"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r1",
+                "r2",
+                "r3",
+                "r4"
+              ]
+            },
+            {
+              "representative": "s0",
+              "elements": [
+                "s0",
+                "s4",
+                "s3",
+                "s2",
+                "s1"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "s0"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        }
+      ]
     }
   }
 }

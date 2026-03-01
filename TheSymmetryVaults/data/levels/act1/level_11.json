@@ -367,6 +367,77 @@
           "conjugation_witness": null
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r3"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r3"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r4"
+              ]
+            },
+            {
+              "representative": "r2",
+              "elements": [
+                "r2",
+                "r5"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1",
+            "r2"
+          ],
+          "quotient_order": 3,
+          "quotient_type": "Z3"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r2",
+            "r4"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r2",
+                "r4"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r3",
+                "r5"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1"
+          ],
+          "quotient_order": 2,
+          "quotient_type": "Z2"
+        }
+      ]
     }
   }
 }

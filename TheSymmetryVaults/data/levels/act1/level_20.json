@@ -858,6 +858,119 @@
           }
         }
       ]
+    },
+    "layer_5": {
+      "quotient_groups": [
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r3"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r3"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r4"
+              ]
+            },
+            {
+              "representative": "r2",
+              "elements": [
+                "r2",
+                "r5"
+              ]
+            },
+            {
+              "representative": "s0",
+              "elements": [
+                "s0",
+                "s5"
+              ]
+            },
+            {
+              "representative": "s1",
+              "elements": [
+                "s1",
+                "s4"
+              ]
+            },
+            {
+              "representative": "s2",
+              "elements": [
+                "s2",
+                "s3"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1",
+            "r2",
+            "s0",
+            "s1",
+            "s2"
+          ],
+          "quotient_order": 6,
+          "quotient_type": "Z6_or_S3"
+        },
+        {
+          "normal_subgroup_elements": [
+            "e",
+            "r2",
+            "r4"
+          ],
+          "cosets": [
+            {
+              "representative": "e",
+              "elements": [
+                "e",
+                "r2",
+                "r4"
+              ]
+            },
+            {
+              "representative": "r1",
+              "elements": [
+                "r1",
+                "r3",
+                "r5"
+              ]
+            },
+            {
+              "representative": "s0",
+              "elements": [
+                "s0",
+                "s4",
+                "s2"
+              ]
+            },
+            {
+              "representative": "s1",
+              "elements": [
+                "s1",
+                "s3",
+                "s5"
+              ]
+            }
+          ],
+          "coset_representatives": [
+            "e",
+            "r1",
+            "s0",
+            "s1"
+          ],
+          "quotient_order": 4,
+          "quotient_type": "Z4_or_Z2xZ2"
+        }
+      ]
     }
   }
 }
