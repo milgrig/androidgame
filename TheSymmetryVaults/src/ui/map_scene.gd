@@ -197,26 +197,8 @@ func _spawn_hall_nodes() -> void:
 		var node: HallNodeVisual = HALL_NODE_SCENE.instantiate()
 		node.position = pos
 
-		# Determine visual state from progression engine
-		var hall_state: HallProgressionEngine.HallState
-		if _progression:
-			hall_state = _progression.get_hall_state(hall_id)
-		else:
-			hall_state = HallProgressionEngine.HallState.LOCKED
-
-		# Map HallProgressionEngine.HallState -> HallNodeVisual.VisualState
-		var visual_state: HallNodeVisual.VisualState
-		match hall_state:
-			HallProgressionEngine.HallState.LOCKED:
-				visual_state = HallNodeVisual.VisualState.LOCKED
-			HallProgressionEngine.HallState.AVAILABLE:
-				visual_state = HallNodeVisual.VisualState.AVAILABLE
-			HallProgressionEngine.HallState.COMPLETED:
-				visual_state = HallNodeVisual.VisualState.COMPLETED
-			HallProgressionEngine.HallState.PERFECT:
-				visual_state = HallNodeVisual.VisualState.PERFECT
-			_:
-				visual_state = HallNodeVisual.VisualState.LOCKED
+		# Determine visual state from highest completed layer
+		var visual_state: HallNodeVisual.VisualState = _get_hall_visual_state(hall_id)
 
 		# Get hall name from level data (or use hall_id as fallback)
 		var display_name: String = _get_hall_display_name(hall_id)
@@ -224,11 +206,6 @@ func _spawn_hall_nodes() -> void:
 
 		node.setup(hall_id, display_name, display_group, visual_state)
 		node.hall_selected.connect(_on_hall_selected)
-
-		# Set layer badges for this hall
-		var badges: Array = _get_layer_badges(hall_id)
-		if badges.size() > 0:
-			node.set_layer_badges(badges)
 
 		_node_container.add_child(node)
 		_hall_nodes[hall_id] = node
@@ -514,15 +491,12 @@ func _create_legend() -> VBoxContainer:
 	container.add_theme_constant_override("separation", 2)
 
 	var items: Array = [
-		{"text": "Доступен", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.AVAILABLE]},
-		{"text": "Пройден", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.COMPLETED]},
-		{"text": "Идеально", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.PERFECT]},
 		{"text": "Закрыт", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LOCKED]},
+		{"text": "Доступен", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.AVAILABLE]},
+		{"text": "Слой 1", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_1]},
+		{"text": "Слой 2", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_2]},
+		{"text": "Слой 4", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_4]},
 	]
-
-	# Add layer legend if Layer 2 is unlocked
-	if _progression and _progression.is_layer_unlocked(2):
-		items.append({"text": "Слой 2", "color": HallNodeVisual.LAYER_COLORS[2]})
 
 	for item in items:
 		var row: HBoxContainer = HBoxContainer.new()
@@ -557,17 +531,28 @@ func _on_back_pressed() -> void:
 
 
 ## Determine the best layer to enter for a hall.
-## Logic: find the highest available/in_progress layer.
+## Logic: find the highest layer that still needs playing.
+## Priority: "in_progress" > "available" > replay highest completed.
 ## Checks layers 5 down to 1 so the player enters the most advanced unlocked layer.
 func _determine_target_layer(hall_id: String) -> int:
 	if _progression == null:
 		return 1
 
+	var highest_completed: int = 0
+
 	# Check each layer from 5 down to 1
 	for layer in range(5, 0, -1):
 		var layer_state: String = _progression.get_hall_layer_state(hall_id, layer)
+		# Prefer the highest available or in-progress layer (needs work)
 		if layer_state == "available" or layer_state == "in_progress":
 			return layer
+		# Track the highest completed layer for fallback
+		if (layer_state == "completed" or layer_state == "perfect") and layer > highest_completed:
+			highest_completed = layer
+
+	# If all unlocked layers are completed, re-enter the highest completed one
+	if highest_completed > 0:
+		return highest_completed
 
 	# Default: Layer 1
 	return 1
@@ -592,25 +577,8 @@ func enter_hall(hall_id: String, layer: int = 1) -> void:
 func refresh_states() -> void:
 	for hall_id in _hall_nodes:
 		var node: HallNodeVisual = _hall_nodes[hall_id]
-		var hall_state: HallProgressionEngine.HallState = _progression.get_hall_state(hall_id)
-		var visual_state: HallNodeVisual.VisualState
-		match hall_state:
-			HallProgressionEngine.HallState.LOCKED:
-				visual_state = HallNodeVisual.VisualState.LOCKED
-			HallProgressionEngine.HallState.AVAILABLE:
-				visual_state = HallNodeVisual.VisualState.AVAILABLE
-			HallProgressionEngine.HallState.COMPLETED:
-				visual_state = HallNodeVisual.VisualState.COMPLETED
-			HallProgressionEngine.HallState.PERFECT:
-				visual_state = HallNodeVisual.VisualState.PERFECT
-			_:
-				visual_state = HallNodeVisual.VisualState.LOCKED
+		var visual_state: HallNodeVisual.VisualState = _get_hall_visual_state(hall_id)
 		node.set_visual_state(visual_state)
-
-		# Update layer badges
-		var badges: Array = _get_layer_badges(hall_id)
-		if badges.size() > 0:
-			node.set_layer_badges(badges)
 
 	# Refresh gate visuals
 	_refresh_gate_visuals()
@@ -731,49 +699,33 @@ func _center_camera_on_available() -> void:
 
 ## --- Helper Methods ---
 
-## Get layer badge data for a hall. Returns array of {layer, state}.
-## Only includes badges for layers that are relevant (not all locked).
-func _get_layer_badges(hall_id: String) -> Array:
+## Determine the visual state for a hall based on the highest completed layer.
+## LOCKED → grey, AVAILABLE → blue, Layer 1 → green, Layer 2 → gold,
+## Layer 3 → gold, Layer 4 → red.
+func _get_hall_visual_state(hall_id: String) -> HallNodeVisual.VisualState:
 	if _progression == null:
-		return []
+		return HallNodeVisual.VisualState.LOCKED
 
-	var badges: Array = []
 	var hall_state: HallProgressionEngine.HallState = _progression.get_hall_state(hall_id)
 
-	# Layer 1 badge — always show for non-locked halls
-	if hall_state != HallProgressionEngine.HallState.LOCKED:
-		var l1_state: String
-		match hall_state:
-			HallProgressionEngine.HallState.AVAILABLE:
-				l1_state = "available"
-			HallProgressionEngine.HallState.COMPLETED:
-				l1_state = "completed"
-			HallProgressionEngine.HallState.PERFECT:
-				l1_state = "perfect"
-			_:
-				l1_state = "locked"
-		badges.append({"layer": 1, "state": l1_state})
+	if hall_state == HallProgressionEngine.HallState.LOCKED:
+		return HallNodeVisual.VisualState.LOCKED
 
-	# Layer 2+ badges — show if layer is globally unlocked
-	for layer in range(2, 6):
+	if hall_state == HallProgressionEngine.HallState.AVAILABLE:
+		return HallNodeVisual.VisualState.AVAILABLE
+
+	# Hall is completed (Layer 1 done). Check higher layers.
+	# Walk down from Layer 4 to find highest completed layer.
+	for layer in [4, 3, 2]:
 		var layer_state: String = _progression.get_hall_layer_state(hall_id, layer)
-		if layer_state == "locked":
-			# Only show locked badge if the previous layer is completed
-			# (so user can see "next layer coming")
-			if layer == 2 and (hall_state == HallProgressionEngine.HallState.COMPLETED or hall_state == HallProgressionEngine.HallState.PERFECT):
-				if _progression.is_layer_unlocked(layer):
-					badges.append({"layer": layer, "state": "available"})
-				else:
-					badges.append({"layer": layer, "state": "locked"})
-			break  # Don't show higher layers if this one is locked
-		else:
-			badges.append({"layer": layer, "state": layer_state})
+		if layer_state == "completed" or layer_state == "perfect":
+			match layer:
+				4: return HallNodeVisual.VisualState.LAYER_4
+				3: return HallNodeVisual.VisualState.LAYER_3
+				2: return HallNodeVisual.VisualState.LAYER_2
 
-	# Only return badges if there's more than just Layer 1
-	# (to avoid cluttering halls that only have Layer 1)
-	if badges.size() <= 1:
-		return []
-	return badges
+	# Only Layer 1 completed
+	return HallNodeVisual.VisualState.LAYER_1
 
 
 func _get_hall_display_name(hall_id: String) -> String:

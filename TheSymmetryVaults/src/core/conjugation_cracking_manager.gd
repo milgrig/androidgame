@@ -137,6 +137,11 @@ func test_conjugation(g_sym_id: String, h_sym_id: String) -> Dictionary:
 	if g_perm == null or h_perm == null:
 		return {"error": "invalid_sym_id"}
 
+	# T116: validate h is actually in the active subgroup H (defense-in-depth)
+	var sg_elements: Array = _target_subgroups[_active_subgroup_index].get("elements", [])
+	if not sg_elements.has(h_sym_id):
+		return {"error": "h_not_in_subgroup"}
+
 	# Compute conjugate: g · h · g⁻¹
 	var g_inv: Permutation = g_perm.inverse()
 	var conjugate: Permutation = g_perm.compose(h_perm).compose(g_inv)

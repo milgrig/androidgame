@@ -75,9 +75,10 @@ class InversePairManager:
             pair.is_self_inverse = (sym_id == inv_sym_id)
             pair.is_identity = perm.is_identity()
 
+            # T111: skip identity pair entirely — never shown in UI
             if pair.is_identity:
-                pair.paired = True
-                pair.revealed = True
+                processed.add(sym_id)
+                continue
 
             self.pairs.append(pair)
             processed.add(sym_id)
@@ -121,8 +122,9 @@ class InversePairManager:
         return all(pair.paired for pair in self.pairs)
 
     def get_progress(self) -> dict:
-        matched = sum(1 for p in self.pairs if not p.is_identity and p.paired)
-        total = sum(1 for p in self.pairs if not p.is_identity)
+        # T111: identity is never in pairs, no filter needed
+        matched = sum(1 for p in self.pairs if p.paired)
+        total = len(self.pairs)
         return {"matched": matched, "total": total}
 
     def compose_by_id(self, sym_a: str, sym_b: str) -> dict:
@@ -229,21 +231,19 @@ class TestInversePairManagerSetup(unittest.TestCase):
     """Test InversePairManager.setup() with known level data."""
 
     def test_z3_setup(self):
-        """Z3 (level 01): 3 automorphisms -> 1 identity pair + 1 mutual pair"""
+        """Z3 (level 01): 3 automorphisms -> 1 mutual pair (T111: identity excluded)"""
         data = load_level_json("level_01.json")
         mgr = InversePairManager()
         mgr.setup(data)
 
         # Z3: {e, r1, r2}
-        # e is self-inverse (identity), r1 and r2 are mutual inverses
-        # With bidirectional, we get 2 pairs: (e,e) and (r1,r2)
-        self.assertEqual(len(mgr.pairs), 2)
+        # T111: identity is excluded from pairs entirely
+        # With bidirectional, we get 1 pair: (r1,r2)
+        self.assertEqual(len(mgr.pairs), 1)
 
-        # Identity pair should be auto-paired
+        # No identity pair in list
         identity_pairs = [p for p in mgr.pairs if p.is_identity]
-        self.assertEqual(len(identity_pairs), 1)
-        self.assertTrue(identity_pairs[0].paired)
-        self.assertTrue(identity_pairs[0].revealed)
+        self.assertEqual(len(identity_pairs), 0)
 
         # Mutual pair should not be paired yet
         mutual_pairs = [p for p in mgr.pairs if not p.is_identity]
@@ -251,41 +251,40 @@ class TestInversePairManagerSetup(unittest.TestCase):
         self.assertFalse(mutual_pairs[0].paired)
 
     def test_z2_setup(self):
-        """Z2 (level 03): 2 automorphisms -> identity + 1 self-inverse"""
+        """Z2 (level 03): 2 automorphisms -> 1 self-inverse (T111: identity excluded)"""
         data = load_level_json("level_03.json")
         mgr = InversePairManager()
         mgr.setup(data)
 
         # Z2: {e, s}
-        # e is identity (auto-paired), s is self-inverse (s*s=e)
-        self.assertEqual(len(mgr.pairs), 2)
+        # T111: identity excluded, only s remains as self-inverse
+        self.assertEqual(len(mgr.pairs), 1)
 
         identity_pairs = [p for p in mgr.pairs if p.is_identity]
-        self.assertEqual(len(identity_pairs), 1)
-        self.assertTrue(identity_pairs[0].paired)
+        self.assertEqual(len(identity_pairs), 0)
 
-        self_inv_pairs = [p for p in mgr.pairs if p.is_self_inverse and not p.is_identity]
+        self_inv_pairs = [p for p in mgr.pairs if p.is_self_inverse]
         self.assertEqual(len(self_inv_pairs), 1)
         self.assertFalse(self_inv_pairs[0].paired)
 
     def test_s3_setup(self):
-        """S3 (level 09): 6 elements -> 1 mutual pair + 3 self-inverses + identity"""
+        """S3 (level 09): 6 elements -> 1 mutual pair + 3 self-inverses (T111: identity excluded)"""
         data = load_level_json("level_09.json")
         mgr = InversePairManager()
         mgr.setup(data)
 
         # S3 = {e, r1, r2, s01, s02, s12}
-        # e: identity (auto-paired)
+        # T111: identity excluded
         # r1 and r2: mutual inverses (1 pair in bidirectional mode)
         # s01, s02, s12: self-inverses (reflections, each order 2)
-        # Total pairs in bidirectional mode: 1 (identity) + 1 (r1<->r2) + 3 (self-inverse) = 5
-        self.assertEqual(len(mgr.pairs), 5)
+        # Total pairs in bidirectional mode: 1 (r1<->r2) + 3 (self-inverse) = 4
+        self.assertEqual(len(mgr.pairs), 4)
 
         identity_count = sum(1 for p in mgr.pairs if p.is_identity)
-        self_inv_count = sum(1 for p in mgr.pairs if p.is_self_inverse and not p.is_identity)
-        mutual_count = sum(1 for p in mgr.pairs if not p.is_self_inverse and not p.is_identity)
+        self_inv_count = sum(1 for p in mgr.pairs if p.is_self_inverse)
+        mutual_count = sum(1 for p in mgr.pairs if not p.is_self_inverse)
 
-        self.assertEqual(identity_count, 1)
+        self.assertEqual(identity_count, 0)
         self.assertEqual(self_inv_count, 3)
         self.assertEqual(mutual_count, 1)
 
@@ -295,8 +294,9 @@ class TestInversePairManagerSetup(unittest.TestCase):
         mgr = InversePairManager()
         mgr.setup(data, {"bidirectional_pairing": False})
 
-        # Z3 without bidirectional: e (1) + r1->r2 (1) + r2->r1 (1) = 3 pairs
-        self.assertEqual(len(mgr.pairs), 3)
+        # T111: identity excluded
+        # Z3 without bidirectional: r1->r2 (1) + r2->r1 (1) = 2 pairs
+        self.assertEqual(len(mgr.pairs), 2)
 
 
 class TestInversePairManagerPairing(unittest.TestCase):
@@ -378,15 +378,11 @@ class TestInversePairManagerPairing(unittest.TestCase):
         self.assertTrue(result["success"])
         self.assertTrue(result["is_self_inverse"])
 
-    def test_identity_auto_paired(self):
-        """Identity pair is automatically paired at setup."""
+    def test_identity_excluded_from_pairs(self):
+        """T111: Identity is excluded from pairs entirely."""
         mgr = self._setup_z3()
-        identity_pair = next(p for p in mgr.pairs if p.is_identity)
-        self.assertTrue(identity_pair.paired)
-        # Trying to pair it again should say already_paired
-        result = mgr.try_pair(identity_pair.key_sym_id, identity_pair.inverse_sym_id)
-        self.assertFalse(result["success"])
-        self.assertEqual(result["reason"], "already_paired")
+        identity_pairs = [p for p in mgr.pairs if p.is_identity]
+        self.assertEqual(len(identity_pairs), 0)
 
 
 class TestInversePairManagerCompletion(unittest.TestCase):
@@ -579,27 +575,25 @@ class TestInversePairManagerAllLevels(unittest.TestCase):
                 continue
 
             group_order = data["meta"]["group_order"]
-            # All automorphisms should be covered by pairs
+            # T111: identity is excluded from pairs, so covered = group_order - 1
             covered_ids = set()
             for pair in mgr.pairs:
                 covered_ids.add(pair.key_sym_id)
                 if not pair.is_self_inverse:
                     covered_ids.add(pair.inverse_sym_id)
-            self.assertEqual(len(covered_ids), group_order,
-                f"{filename}: pairs cover {len(covered_ids)} sym_ids, expected {group_order}")
+            self.assertEqual(len(covered_ids), group_order - 1,
+                f"{filename}: pairs cover {len(covered_ids)} sym_ids, expected {group_order - 1} (identity excluded)")
 
-    def test_identity_always_auto_paired(self):
-        """Identity is always auto-paired in every level."""
+    def test_identity_excluded_from_all_levels(self):
+        """T111: Identity is excluded from pairs in every level."""
         for filename in get_all_act1_level_files():
             data = load_level_json(filename)
             mgr = InversePairManager()
             mgr.setup(data)
 
             identity_pairs = [p for p in mgr.pairs if p.is_identity]
-            self.assertEqual(len(identity_pairs), 1,
-                f"{filename}: expected exactly 1 identity pair")
-            self.assertTrue(identity_pairs[0].paired,
-                f"{filename}: identity should be auto-paired")
+            self.assertEqual(len(identity_pairs), 0,
+                f"{filename}: identity should not be in pairs (T111)")
 
     def test_all_levels_completable(self):
         """All levels can be completed by pairing each key with its correct inverse."""
@@ -625,9 +619,10 @@ class TestInversePairManagerAllLevels(unittest.TestCase):
         # Z4: 3 pairs (identity + 1 self-inverse r2 + 1 mutual r1<->r3)
         # V4: 4 pairs (identity + 3 self-inverses)
         # S3: 5 pairs (identity + 1 mutual + 3 self-inverses)
+        # T111: identity excluded from pairs
         expected = {
-            "level_01.json": 2,   # Z3
-            "level_03.json": 2,   # Z2
+            "level_01.json": 1,   # Z3 (only r1<->r2)
+            "level_03.json": 1,   # Z2 (only s self-inverse)
         }
 
         for filename, expected_pairs in expected.items():
@@ -657,16 +652,16 @@ class TestInversePairTypes(unittest.TestCase):
                     self.assertTrue(perm.compose(perm).is_identity(),
                         f"{filename}: reflection {auto['id']} is not self-inverse (order != 2)")
 
-    def test_identity_is_self_inverse(self):
-        """Identity element is self-inverse (e*e = e) in every group."""
+    def test_identity_not_in_pairs(self):
+        """T111: Identity is excluded from pairs in every group."""
         for filename in get_all_act1_level_files():
             data = load_level_json(filename)
             mgr = InversePairManager()
             mgr.setup(data)
 
-            identity_pair = next(p for p in mgr.pairs if p.is_identity)
-            self.assertTrue(identity_pair.is_self_inverse)
-            self.assertEqual(identity_pair.key_sym_id, identity_pair.inverse_sym_id)
+            identity_pairs = [p for p in mgr.pairs if p.is_identity]
+            self.assertEqual(len(identity_pairs), 0,
+                f"{filename}: identity should not be in pairs")
 
     def test_cyclic_rotations_mutual_inverses(self):
         """In Zn, rotation by k and rotation by n-k are mutual inverses."""
@@ -1050,12 +1045,12 @@ class TestTryPairBySymIds(unittest.TestCase):
 class TestIsPaired(unittest.TestCase):
     """Test is_paired() query method."""
 
-    def test_identity_is_paired(self):
-        """Identity is auto-paired at setup."""
+    def test_identity_not_in_pairs(self):
+        """T111: Identity is excluded from pairs, is_paired returns False."""
         data = load_level_json("level_01.json")
         mgr = InversePairManager()
         mgr.setup(data)
-        self.assertTrue(mgr.is_paired("e"))
+        self.assertFalse(mgr.is_paired("e"))
 
     def test_unpaired_returns_false(self):
         """Unpaired key returns False."""
@@ -1100,13 +1095,13 @@ class TestGetInverseSymId(unittest.TestCase):
         inv = mgr.get_inverse_sym_id("r2")
         self.assertEqual(inv, "r1")
 
-    def test_identity_self_inverse(self):
-        """Identity's inverse is itself."""
+    def test_identity_not_in_pairs(self):
+        """T111: Identity excluded from pairs, get_inverse_sym_id returns empty."""
         data = load_level_json("level_01.json")
         mgr = InversePairManager()
         mgr.setup(data)
         inv = mgr.get_inverse_sym_id("e")
-        self.assertEqual(inv, "e")
+        self.assertEqual(inv, "")
 
     def test_self_inverse_element(self):
         """Self-inverse element returns itself."""
@@ -1144,12 +1139,12 @@ class TestIsSelfInverseSym(unittest.TestCase):
         sid = self_inv[0].key_sym_id
         self.assertTrue(mgr.is_self_inverse_sym(sid))
 
-    def test_identity_is_self_inverse(self):
-        """Identity is self-inverse."""
+    def test_identity_not_in_pairs(self):
+        """T111: Identity excluded from pairs, is_self_inverse_sym returns False."""
         data = load_level_json("level_01.json")
         mgr = InversePairManager()
         mgr.setup(data)
-        self.assertTrue(mgr.is_self_inverse_sym("e"))
+        self.assertFalse(mgr.is_self_inverse_sym("e"))
 
     def test_unknown_returns_false(self):
         """Unknown sym_id returns False."""

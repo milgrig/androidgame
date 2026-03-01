@@ -411,7 +411,7 @@ func _on_check_subgroup() -> void:
 			msg += "Нет Тождества (e) — «ничего не делать» тоже ключ! Добавьте его в набор."
 		elif reasons.has("missing_inverse"):
 			var inv_example: String = _get_inverse_example_text()
-			msg += "Не у всех ключей есть обратный. %s Каждый ключ должен иметь ОТМЕНУ!" % inv_example
+			msg += "Не у всех ключей есть зеркальный. %s Каждый ключ должен иметь ОТМЕНУ!" % inv_example
 		elif reasons.has("not_closed_composition"):
 			var closure_example: String = _get_closure_example_text()
 			msg += "Набор НЕ ЗАМКНУТ. %s Попробуйте добавить недостающий ключ!" % closure_example

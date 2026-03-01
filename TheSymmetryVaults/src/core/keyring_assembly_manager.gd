@@ -69,11 +69,21 @@ func setup(level_data: Dictionary, layer_config: Dictionary = {}) -> void:
 
 	# Parse target subgroups from layer config
 	_target_subgroups = layer_config.get("subgroups", [])
-	_total_count = layer_config.get("subgroup_count", _target_subgroups.size())
 
 	# If no target subgroups provided in layer config, compute them
 	if _target_subgroups.is_empty() and not _sym_id_to_perm.is_empty():
 		_compute_target_subgroups()
+
+	# T114: filter out trivial {e} and full group G — only proper non-trivial subgroups
+	var group_size: int = _all_sym_ids.size()
+	var filtered_targets: Array = []
+	for sg in _target_subgroups:
+		var elems: Array = sg.get("elements", [])
+		if elems.size() <= 1 or elems.size() >= group_size:
+			continue
+		filtered_targets.append(sg)
+	_target_subgroups = filtered_targets
+	_total_count = _target_subgroups.size()
 
 
 ## Compute target subgroups from the group's automorphisms using SubgroupChecker.
@@ -100,13 +110,16 @@ func _compute_target_subgroups() -> void:
 				elem_ids.append(sid)
 		elem_ids.sort()
 
-		var is_trivial: bool = (elem_ids.size() == 1) or (elem_ids.size() == group.size())
+		# T114: skip trivial {e} and full group G
+		if elem_ids.size() <= 1 or elem_ids.size() >= group.size():
+			continue
+
 		var is_normal: bool = SubgroupChecker.is_normal(elements_perms, group)
 
 		_target_subgroups.append({
 			"elements": elem_ids,
 			"order": elem_ids.size(),
-			"is_trivial": is_trivial,
+			"is_trivial": false,
 			"is_normal": is_normal,
 		})
 
@@ -151,27 +164,25 @@ func get_active_keys() -> Array[String]:
 # --- Validation ---
 
 ## Validate the current active keyring.
+## T111: identity is auto-included (player never adds it manually).
 ## Returns: {is_subgroup: bool, is_duplicate: bool, is_new: bool}
 func validate_current() -> Dictionary:
 	if _active_slot_keys.is_empty():
 		return {"is_subgroup": false, "is_duplicate": false, "is_new": false}
 
+	# T111: build the full key set including identity (auto-injected)
+	var full_keys: Array[String] = _active_slot_keys.duplicate()
+	var identity_sym_id: String = _find_identity_sym_id()
+	if identity_sym_id != "" and not full_keys.has(identity_sym_id):
+		full_keys.append(identity_sym_id)
+
 	# Convert sym_ids to Permutations
 	var perms: Array = []  ## Array[Permutation]
-	for sid in _active_slot_keys:
+	for sid in full_keys:
 		var p: Permutation = _sym_id_to_perm.get(sid, null)
 		if p == null:
 			return {"is_subgroup": false, "is_duplicate": false, "is_new": false}
 		perms.append(p)
-
-	# Check 1: Contains identity?
-	var has_identity: bool = false
-	for p in perms:
-		if p.is_identity():
-			has_identity = true
-			break
-	if not has_identity:
-		return {"is_subgroup": false, "is_duplicate": false, "is_new": false}
 
 	# Check 2: Closure under composition (∀a,b ∈ H: a∘b ∈ H)
 	for a in perms:
@@ -196,8 +207,13 @@ func validate_current() -> Dictionary:
 		if not found:
 			return {"is_subgroup": false, "is_duplicate": false, "is_new": false}
 
-	# It's a valid subgroup! Check if it's a duplicate.
-	var sig: String = _subgroup_signature_from_sym_ids(_active_slot_keys)
+	# It's a valid subgroup! T114: reject trivial {e} and full group G
+	var group_size: int = _all_sym_ids.size()
+	if full_keys.size() <= 1 or full_keys.size() >= group_size:
+		return {"is_subgroup": false, "is_duplicate": false, "is_new": false}
+
+	# Check if it's a duplicate.
+	var sig: String = _subgroup_signature_from_sym_ids(full_keys)
 	var is_dup: bool = _found_signatures.has(sig)
 
 	return {"is_subgroup": true, "is_duplicate": is_dup, "is_new": not is_dup}
@@ -212,9 +228,14 @@ func auto_validate() -> Dictionary:
 	if result["is_subgroup"]:
 		if result["is_new"]:
 			# New subgroup found!
-			var sig: String = _subgroup_signature_from_sym_ids(_active_slot_keys)
+			# T111: include identity in the recorded subgroup elements
+			var full_keys: Array[String] = _active_slot_keys.duplicate()
+			var identity_sym_id: String = _find_identity_sym_id()
+			if identity_sym_id != "" and not full_keys.has(identity_sym_id):
+				full_keys.append(identity_sym_id)
+			var sig: String = _subgroup_signature_from_sym_ids(full_keys)
 			_found_signatures.append(sig)
-			var found_elements: Array[String] = _active_slot_keys.duplicate()
+			var found_elements: Array[String] = full_keys.duplicate()
 			found_elements.sort()
 			_found_subgroups.append(found_elements)
 			_found_count += 1
@@ -371,5 +392,13 @@ static func _subgroup_signature_from_perms(perms: Array) -> String:
 func _find_sym_id_for_perm(perm: Permutation) -> String:
 	for sym_id in _sym_id_to_perm:
 		if _sym_id_to_perm[sym_id].equals(perm):
+			return sym_id
+	return ""
+
+
+## T111: find the sym_id of the identity element in this group.
+func _find_identity_sym_id() -> String:
+	for sym_id in _sym_id_to_perm:
+		if _sym_id_to_perm[sym_id].is_identity():
 			return sym_id
 	return ""

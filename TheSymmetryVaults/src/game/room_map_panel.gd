@@ -135,15 +135,15 @@ func compute_layout() -> void:
 		positions[i] = Vector2(cx + r * cos(angle), cy + r * sin(angle))
 
 	# --- Force-directed relaxation (200 iterations) ---
-	var margin: float = 30.0
+	var margin: float = 40.0
 	for _iter in range(200):
 		var forces: Array = []
 		forces.resize(n)
 		for i in range(n):
 			forces[i] = Vector2.ZERO
 
-		# Repulsion between all pairs
-		var repulsion: float = 800.0
+		# Repulsion between all pairs (scaled up for larger node sizes)
+		var repulsion: float = 2400.0
 		for i in range(n):
 			for j in range(i + 1, n):
 				var delta: Vector2 = positions[j] - positions[i]
@@ -390,7 +390,7 @@ func _draw_fading_edges(n: int) -> void:
 		for s in range(1, segments + 1):
 			var t: float = float(s) / float(segments)
 			var pt: Vector2 = (1.0 - t) * (1.0 - t) * p1 + 2.0 * (1.0 - t) * t * control + t * t * p2
-			draw_line(prev, pt, edge_color, 2.5 * alpha, true)
+			draw_line(prev, pt, edge_color, 3.0 * alpha, true)
 			prev = pt
 
 		# Arrow at t=0.78 — skip when too faint to avoid degenerate polygon
@@ -402,7 +402,7 @@ func _draw_fading_edges(n: int) -> void:
 			if tlen > 0.0:
 				var tdir: Vector2 = tangent / tlen
 				var tnorm: Vector2 = Vector2(-tdir.y, tdir.x)
-				var sz: float = 5.0 * alpha
+				var sz: float = 7.0 * alpha
 				var pts: PackedVector2Array = PackedVector2Array([
 					arrow_pos + tdir * sz,
 					arrow_pos - tnorm * sz * 0.6,
@@ -440,11 +440,11 @@ func _draw_key_preview(n: int) -> void:
 		if from_room >= positions.size() or to_room >= positions.size():
 			continue
 
-		# Previously traversed edges are brighter (0.35 vs 0.2)
+		# Previously traversed edges are brighter (0.45 vs 0.25)
 		var edge_key: String = "%d_%d" % [from_room, to_room]
 		var key_color: Color = base_color
-		key_color.a = 0.35 if traversed.has(edge_key) else 0.2
-		var line_w: float = 1.5 if traversed.has(edge_key) else 1.0
+		key_color.a = 0.45 if traversed.has(edge_key) else 0.25
+		var line_w: float = 2.0 if traversed.has(edge_key) else 1.5
 
 		var p1: Vector2 = positions[from_room]
 		var p2: Vector2 = positions[to_room]
@@ -467,7 +467,7 @@ func _draw_key_preview(n: int) -> void:
 func _draw_room_nodes(n: int) -> void:
 	var sz: float = _get_node_size(n)
 	var half: float = sz / 2.0
-	var show_labels_always: bool = n <= 16
+	var show_labels_always: bool = n <= 24
 
 	for i in range(n):
 		if i >= positions.size():
@@ -494,12 +494,12 @@ func _draw_room_nodes(n: int) -> void:
 		# Glow for current room
 		if is_current:
 			var glow_col: Color = col
-			glow_col.a = 0.25
-			for g in range(3):
-				var grow: float = 3.0 + float(g) * 3.0
+			glow_col.a = 0.3
+			for g in range(4):
+				var grow: float = 4.0 + float(g) * 4.0
 				var glow_rect: Rect2 = Rect2(rect.position - Vector2(grow, grow), rect.size + Vector2(grow * 2, grow * 2))
 				var ga: Color = glow_col
-				ga.a = 0.25 - float(g) * 0.07
+				ga.a = 0.3 - float(g) * 0.065
 				draw_rect(glow_rect, ga, true)
 
 		# Fill
@@ -507,37 +507,43 @@ func _draw_room_nodes(n: int) -> void:
 		if is_current:
 			fill_col.a = 1.0
 		elif is_hover:
-			fill_col.a = 0.67
+			fill_col.a = 0.75
 		else:
-			fill_col.a = 0.33
+			fill_col.a = 0.50
 
 		draw_rect(rect, fill_col, true)
 
 		# Outline
 		var outline_col: Color = col
-		outline_col.a = 1.0 if is_current else 0.27
-		var outline_width: float = 1.5 if is_current else 0.5
+		outline_col.a = 1.0 if is_current else 0.35
+		var outline_width: float = 2.0 if is_current else 1.0
 		draw_rect(rect, outline_col, false, outline_width)
 
 		# Label (number or home symbol)
 		if show_labels_always or is_current or is_hover:
 			var font: Font = ThemeDB.fallback_font
-			var font_size: int = 8 if sz > 9.0 else 6
+			var font_size: int = 12 if sz >= 20.0 else (10 if sz >= 14.0 else 8)
 			var label_text: String = "\u2302" if i == 0 else str(i)  # ⌂ for home
-			var label_col: Color = Color.WHITE if is_current else (Color(0.8, 0.8, 0.8, 0.9) if is_hover else Color(0.47, 0.47, 0.47, 0.8))
+			var label_col: Color = Color.WHITE if is_current else (Color(0.85, 0.85, 0.85, 0.9) if is_hover else Color(0.55, 0.55, 0.6, 0.85))
 			var text_size: Vector2 = font.get_string_size(label_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-			var text_pos: Vector2 = Vector2(pos.x - text_size.x / 2.0, pos.y + half + 3.0 + font_size * 0.8)
+			# Draw label INSIDE the room square (centered)
+			var text_pos: Vector2 = Vector2(pos.x - text_size.x / 2.0, pos.y + text_size.y / 3.0)
 			draw_string(font, text_pos, label_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_col)
 
 
 ## Get the node square size based on total room count.
+## Sizes scaled up significantly for readability (especially on mobile).
 func _get_node_size(n: int) -> float:
-	if n > 16:
-		return 7.0
+	if n > 24:
+		return 16.0
+	elif n > 16:
+		return 20.0
 	elif n > 12:
-		return 9.0
+		return 24.0
+	elif n > 6:
+		return 28.0
 	else:
-		return 11.0
+		return 32.0
 
 
 ## Draw a dashed rectangle outline.
@@ -603,7 +609,7 @@ func _hit_test(local_pos: Vector2) -> int:
 	var n: int = room_state.group_order
 	var sz: float = _get_node_size(n)
 	var half: float = sz / 2.0
-	var hit_margin: float = 4.0  # extra pixels for easier clicking
+	var hit_margin: float = 6.0  # extra pixels for easier clicking
 
 	for i in range(n):
 		if i >= positions.size():

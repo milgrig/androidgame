@@ -2,22 +2,26 @@ class_name HallNodeVisual
 extends Node2D
 ## Visual representation of a single hall on the world map.
 ##
-## Displays a crystal-shaped node with 4 visual states:
-## - LOCKED:    Grey, lock icon, no interaction
-## - AVAILABLE: Bright blue, pulsing glow, clickable
-## - COMPLETED: Green checkmark, golden tint, clickable
-## - PERFECT:   Gold shimmer, star icon, clickable
+## Crystal color reflects the highest completed layer:
+## - LOCKED:      Grey, no interaction
+## - AVAILABLE:   Blue (pulsing), clickable
+## - LAYER_1:     Green  — Layer 1 completed
+## - LAYER_2:     Gold   — Layer 2 completed
+## - LAYER_3:     Orange — Layer 3 completed
+## - LAYER_4:     Red    — Layer 4 completed
 ##
 ## Emits hall_selected(hall_id) when clicked.
 
 signal hall_selected(hall_id: String)
 
-## States mirror HallProgressionEngine.HallState
+## Visual states — crystal color reflects highest completed layer
 enum VisualState {
 	LOCKED,
 	AVAILABLE,
-	COMPLETED,
-	PERFECT,
+	LAYER_1,     ## Green  — completed Layer 1
+	LAYER_2,     ## Gold   — completed Layer 2
+	LAYER_3,     ## Orange — completed Layer 3
+	LAYER_4,     ## Red    — completed Layer 4
 }
 
 ## --- Data ---
@@ -26,16 +30,11 @@ var hall_name: String = ""
 var group_name: String = ""
 var state: VisualState = VisualState.LOCKED
 
-## Layer badge data: Array of {layer: int, state: String, color: Color}
-var _layer_badges: Array = []
-
 ## --- Visual components (created in _ready) ---
 var _crystal_shape: Node2D      ## Custom-drawn crystal polygon
 var _label: Label               ## Hall name label
 var _state_icon: Label          ## Unicode icon for state
-var _hover_panel: Panel         ## Tooltip panel on hover
 var _area: Area2D               ## Click detection area
-var _badge_container: Node2D    ## Container for layer badge dots
 
 ## --- Animation state ---
 var _pulse_time: float = 0.0
@@ -51,51 +50,38 @@ const HOVER_SCALE := 1.15
 const STATE_COLORS := {
 	VisualState.LOCKED:    Color(0.25, 0.25, 0.35, 0.5),
 	VisualState.AVAILABLE: Color(0.4, 0.65, 1.0, 1.0),
-	VisualState.COMPLETED: Color(0.35, 0.85, 0.45, 1.0),
-	VisualState.PERFECT:   Color(1.0, 0.85, 0.3, 1.0),
+	VisualState.LAYER_1:   Color(0.35, 0.85, 0.45, 1.0),
+	VisualState.LAYER_2:   Color(1.0, 0.85, 0.3, 1.0),
+	VisualState.LAYER_3:   Color(1.0, 0.6, 0.2, 1.0),
+	VisualState.LAYER_4:   Color(0.9, 0.35, 0.3, 1.0),
 }
 
 const STATE_GLOW_COLORS := {
 	VisualState.LOCKED:    Color(0.15, 0.15, 0.2, 0.0),
 	VisualState.AVAILABLE: Color(0.3, 0.5, 1.0, 0.4),
-	VisualState.COMPLETED: Color(0.3, 0.7, 0.4, 0.25),
-	VisualState.PERFECT:   Color(1.0, 0.8, 0.2, 0.35),
+	VisualState.LAYER_1:   Color(0.3, 0.7, 0.4, 0.25),
+	VisualState.LAYER_2:   Color(1.0, 0.8, 0.2, 0.3),
+	VisualState.LAYER_3:   Color(1.0, 0.55, 0.15, 0.3),
+	VisualState.LAYER_4:   Color(0.9, 0.3, 0.2, 0.3),
 }
 
 const STATE_ICONS := {
-	VisualState.LOCKED:    "🔒",   # Lock
-	VisualState.AVAILABLE: "✨",    # Sparkles
-	VisualState.COMPLETED: "✔",    # Checkmark
-	VisualState.PERFECT:   "⭐",    # Star
+	VisualState.LOCKED:    "🔒",
+	VisualState.AVAILABLE: "✨",
+	VisualState.LAYER_1:   "✔",
+	VisualState.LAYER_2:   "✔",
+	VisualState.LAYER_3:   "✔",
+	VisualState.LAYER_4:   "✔",
 }
 
 const STATE_EDGE_COLORS := {
 	VisualState.LOCKED:    Color(0.3, 0.3, 0.4, 0.3),
 	VisualState.AVAILABLE: Color(0.5, 0.7, 1.0, 0.8),
-	VisualState.COMPLETED: Color(0.4, 0.8, 0.5, 0.7),
-	VisualState.PERFECT:   Color(1.0, 0.9, 0.4, 0.8),
+	VisualState.LAYER_1:   Color(0.4, 0.8, 0.5, 0.7),
+	VisualState.LAYER_2:   Color(1.0, 0.9, 0.4, 0.8),
+	VisualState.LAYER_3:   Color(1.0, 0.65, 0.3, 0.8),
+	VisualState.LAYER_4:   Color(0.9, 0.4, 0.3, 0.8),
 }
-
-## Layer badge colors (by layer number)
-const LAYER_COLORS := {
-	1: Color(0.4, 0.65, 1.0, 1.0),   # Blue  — Layer 1
-	2: Color(0.2, 0.85, 0.4, 1.0),   # Green — Layer 2
-	3: Color(1.0, 0.85, 0.3, 1.0),   # Gold  — Layer 3
-	4: Color(0.9, 0.35, 0.3, 1.0),   # Red   — Layer 4
-	5: Color(0.7, 0.4, 0.9, 1.0),    # Purple— Layer 5
-}
-
-## Layer badge state icons
-const LAYER_STATE_ICONS := {
-	"locked":      "🔒",
-	"available":   "·",
-	"in_progress": "▶",
-	"completed":   "✓",
-	"perfect":     "⭐",
-}
-
-const BADGE_RADIUS := 6.0
-const BADGE_GAP := 16.0
 
 
 func _ready() -> void:
@@ -110,11 +96,6 @@ func _process(delta: float) -> void:
 		var pulse: float = sin(_pulse_time * 2.5) * 0.08 + 1.0
 		_crystal_shape.scale = _base_scale * pulse
 
-	# Gold shimmer for PERFECT state
-	if state == VisualState.PERFECT:
-		var shimmer: float = sin(_pulse_time * 3.0) * 0.04 + 1.0
-		_crystal_shape.scale = _base_scale * shimmer
-
 	# Hover scale interpolation
 	var target_scale: float = HOVER_SCALE if _is_hovered else 1.0
 	var current: float = scale.x
@@ -122,8 +103,6 @@ func _process(delta: float) -> void:
 	scale = Vector2(new_val, new_val)
 
 	_crystal_shape.queue_redraw()
-	if _badge_container and not _layer_badges.is_empty():
-		_badge_container.queue_redraw()
 
 
 ## Initialize this node with hall data.
@@ -132,13 +111,6 @@ func setup(p_hall_id: String, p_hall_name: String, p_group_name: String, p_state
 	hall_name = p_hall_name
 	group_name = p_group_name
 	set_visual_state(p_state)
-
-
-## Set layer badges. badges = Array of {layer: int, state: String}
-## state is one of: "locked", "available", "in_progress", "completed", "perfect"
-func set_layer_badges(badges: Array) -> void:
-	_layer_badges = badges
-	_update_badge_visuals()
 
 
 ## Update the visual state.
@@ -194,13 +166,6 @@ func _build_visuals() -> void:
 	_area.mouse_entered.connect(_on_mouse_entered)
 	_area.mouse_exited.connect(_on_mouse_exited)
 
-	# Layer badge container (below crystal, above label)
-	_badge_container = Node2D.new()
-	_badge_container.name = "BadgeContainer"
-	_badge_container.position = Vector2(0, CRYSTAL_RADIUS + 2)
-	add_child(_badge_container)
-	_badge_container.draw.connect(_draw_layer_badges)
-
 	_update_visuals()
 
 
@@ -212,65 +177,9 @@ func _update_visuals() -> void:
 		_label.text = hall_name
 		var alpha: float = 0.5 if state == VisualState.LOCKED else 0.9
 		_label.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85, alpha))
-		# Shift label down if badges are present
-		if _layer_badges.size() > 0:
-			_label.position.y = CRYSTAL_RADIUS + 18
 
 	if _crystal_shape:
 		_crystal_shape.queue_redraw()
-
-	_update_badge_visuals()
-
-
-func _update_badge_visuals() -> void:
-	if _badge_container:
-		_badge_container.queue_redraw()
-
-
-func _draw_layer_badges() -> void:
-	## Draw small colored circle badges for each layer below the crystal.
-	if _layer_badges.is_empty():
-		return
-
-	var total: int = _layer_badges.size()
-	var total_width: float = (total - 1) * BADGE_GAP
-	var start_x: float = -total_width / 2.0
-
-	for i in range(total):
-		var badge: Dictionary = _layer_badges[i]
-		var layer_num: int = badge.get("layer", 1)
-		var badge_state: String = badge.get("state", "locked")
-		var color: Color = LAYER_COLORS.get(layer_num, Color.WHITE)
-		var x: float = start_x + i * BADGE_GAP
-		var center: Vector2 = Vector2(x, 0)
-
-		# Draw based on state
-		match badge_state:
-			"locked":
-				# Gray dot with padlock feel
-				_badge_container.draw_circle(center, BADGE_RADIUS, Color(0.3, 0.3, 0.35, 0.4))
-				_badge_container.draw_arc(center, BADGE_RADIUS, 0, TAU, 12, Color(0.4, 0.4, 0.45, 0.3), 1.0)
-			"available":
-				# Pulsing colored dot
-				var pulse_alpha: float = sin(_pulse_time * 3.0) * 0.2 + 0.7
-				var pulse_color: Color = Color(color.r, color.g, color.b, pulse_alpha)
-				_badge_container.draw_circle(center, BADGE_RADIUS, pulse_color)
-				_badge_container.draw_arc(center, BADGE_RADIUS, 0, TAU, 12, color, 1.5)
-			"in_progress":
-				# Half-filled colored dot
-				_badge_container.draw_circle(center, BADGE_RADIUS, Color(color.r, color.g, color.b, 0.4))
-				# Draw a partial fill (left half)
-				_badge_container.draw_arc(center, BADGE_RADIUS, PI * 0.5, PI * 1.5, 8, color, 2.0)
-			"completed":
-				# Solid colored dot with checkmark
-				_badge_container.draw_circle(center, BADGE_RADIUS, color)
-				# Small inner dot for "completed" effect
-				_badge_container.draw_circle(center, BADGE_RADIUS * 0.4, Color(1, 1, 1, 0.6))
-			"perfect":
-				# Bright colored dot with star effect
-				_badge_container.draw_circle(center, BADGE_RADIUS, color)
-				_badge_container.draw_circle(center, BADGE_RADIUS * 0.5, Color(1, 1, 1, 0.8))
-				_badge_container.draw_arc(center, BADGE_RADIUS * 1.3, 0, TAU, 12, Color(color.r, color.g, color.b, 0.3), 1.0)
 
 
 func _draw_crystal() -> void:

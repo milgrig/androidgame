@@ -220,8 +220,8 @@ func _build_level() -> void:
 		_layer_controller.layer_completed.connect(_on_layer_completed)
 
 func _clear_level() -> void:
-	_layer_controller.cleanup()
-	_door_mgr.cleanup()
+	if _layer_controller: _layer_controller.cleanup()
+	if _door_mgr: _door_mgr.cleanup()
 	if echo_hint_system: echo_hint_system.cleanup(); echo_hint_system.queue_free(); echo_hint_system = null
 	for c in crystals.values(): c.queue_free()
 	crystals.clear()
@@ -289,12 +289,11 @@ func _validate_permutation(perm: Permutation, show_invalid: bool = false) -> voi
 			symmetry_found.emit(r["sym_id"], perm.mapping)
 			feedback_fx.play_valid_feedback(crystals.values(), edges)
 			_swap_mgr.set_active_repeat_key_latest(key_ring)
-			# Reveal Home on the map and KeyBar after first correct permutation found
+			# Reveal Home on the map after first correct permutation found
+			# T111: key_bar never shows identity key; only map shows Home room.
 			if _room_map and not _room_map.home_visible:
 				_room_map.home_visible = true
 				_room_map.queue_redraw()
-			if _key_bar and not _key_bar.home_visible:
-				_key_bar.reveal_home(_room_state)
 			# Discover the corresponding room in RoomState
 			var room_idx: int = _room_state.find_room_for_perm(perm, _validation_mgr.rebase_inverse)
 			if room_idx >= 0:
@@ -347,10 +346,9 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	# Get the permutation for this key (already rebased in RoomState)
 	var key_perm: Permutation = _room_state.get_room_perm(key_idx)
 	if key_perm == null: return
-	# Identity key — just glow, no movement
+	# T111: identity key (index 0) is never shown in key_bar.
+	# Guard kept for safety (e.g. programmatic call).
 	if key_perm.is_identity():
-		for crystal in crystals.values():
-			if crystal is CrystalNode: crystal.play_glow()
 		return
 	# Record transition in room state
 	var from_room: int = _room_state.current_room
@@ -394,14 +392,7 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	if _room_map: _room_map.queue_redraw()
 	if _key_bar: _key_bar.update_state(_room_state)
 	_update_counter()
-	# Layer 2: notify controller about key press for inverse pair detection
-	if _current_layer == 2:
-		_layer_controller.on_key_pressed(key_idx, from_room, to_room)
-	# Layer 4: key press selects "g" conjugator for conjugation test
-	if _current_layer == 4:
-		var sym_id: String = _room_state.get_room_sym_id(key_idx)
-		if sym_id != "":
-			_layer_controller.on_conjugator_selected(sym_id)
+	# Layer 2 T112: key-press detection removed — inverse pairing now uses ⊕ taps
 
 ## Phase 2 of key application animation: move crystals along arcs.
 func _key_apply_phase2(n: int, active_perm: Permutation, pm: Dictionary,
@@ -457,10 +448,13 @@ func _on_key_bar_add_to_keyring(key_idx: int) -> void:
 	if _swap_mgr and _swap_mgr.repeat_animating: return
 	var sym_id: String = _room_state.get_room_sym_id(key_idx)
 	if sym_id == "": return
-	if _current_layer == 3:
+	if _current_layer == 2:
+		_layer_controller.on_key_tapped_layer2(sym_id)
+	elif _current_layer == 3:
 		_layer_controller.on_key_tapped_layer3(sym_id)
 	elif _current_layer == 4:
-		_layer_controller.on_target_selected(sym_id)
+		# Route ⊕ press to g or h handler based on CrackingPanel's active mode
+		_layer_controller.on_layer4_add_pressed(sym_id)
 
 
 ## Handle key hover from KeyBar. key_idx == -1 means hover ended.
@@ -627,8 +621,8 @@ func _show_layer_2_instruction_panel() -> void:
 	var meta: Dictionary = level_data.get("meta", {})
 	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_2", {})
 	_s.call("InstrTitle", "Слой 2 — %s" % meta.get("title", ""))
-	_s.call("InstrGoal", layer_config.get("title", "Обратные ключи"))
-	_s.call("InstrBody", layer_config.get("instruction", "Нажимайте ключи и наблюдайте за перемещениями по комнатам.\n\nЕсли после двух нажатий вы вернулись в ту же комнату — эти ключи обратные друг другу!"))
+	_s.call("InstrGoal", layer_config.get("title", "Зеркальные ключи"))
+	_s.call("InstrBody", layer_config.get("instruction", "Нажмите ⊕ на ключе, чтобы проверить — является ли он зеркальным для другого.\n\nЗеркальный ключ — тот, который отменяет действие первого."))
 	var inm = p.get_node_or_null("InstrNewMechanic")
 	if inm: inm.text = layer_config.get("subtitle", "Каждое действие можно отменить"); inm.visible = true
 	# Apply green theme to instruction panel
