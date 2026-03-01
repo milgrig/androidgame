@@ -449,7 +449,7 @@ static func rebuild_key_buttons(hud_layer: CanvasLayer, key_ring: KeyRing,
 ##                     target_rect, target_preview}.
 
 ## Height of the bottom row (keys + hints).
-const BOTTOM_ROW_HEIGHT := 100
+const BOTTOM_ROW_HEIGHT := 130
 
 ## Border style constants for zone frames.
 const FRAME_BORDER_COLOR := Color(0.2, 0.28, 0.45, 0.7)

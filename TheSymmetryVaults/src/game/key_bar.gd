@@ -20,7 +20,8 @@ extends Control
 ## Emitted when the player clicks a discovered key button.
 signal key_pressed(key_idx: int)
 
-## Emitted when the player clicks the "⊕" button to add a key to the keyring (Layer 3).
+## Emitted when the player clicks the "⊕" button next to a key.
+## Layer 3: add/remove key from keyring. Layer 4: select g or h (depending on mode).
 signal key_add_to_keyring(key_idx: int)
 
 ## Emitted on mouse enter (key_idx >= 0) or mouse leave (key_idx == -1).
@@ -38,18 +39,18 @@ const HOME_GLYPH := "\u2302"  # ⌂
 
 # ── Layout thresholds ────────────────────────────────────────────────
 
-const COMPACT_THRESHOLD := 12   # > 12 keys → compact mode
-const SCROLL_THRESHOLD  := 24   # > 24 keys → scroll mode
+const COMPACT_THRESHOLD := 8    # > 8 keys → compact mode (larger buttons need less room)
+const SCROLL_THRESHOLD  := 16   # > 16 keys → scroll mode
 
-# Button sizes per tier
-const BTN_SIZE_NORMAL  := Vector2(48, 28)
-const BTN_SIZE_COMPACT := Vector2(38, 24)
-const BTN_GAP_NORMAL   := 4
-const BTN_GAP_COMPACT  := 3
-const BTN_FONT_NORMAL  := 10
-const BTN_FONT_COMPACT := 9
-const DOT_SIZE_NORMAL  := 8
-const DOT_SIZE_COMPACT := 6
+# Button sizes per tier — sized for readability and touch targets
+const BTN_SIZE_NORMAL  := Vector2(64, 36)
+const BTN_SIZE_COMPACT := Vector2(52, 30)
+const BTN_GAP_NORMAL   := 5
+const BTN_GAP_COMPACT  := 4
+const BTN_FONT_NORMAL  := 14
+const BTN_FONT_COMPACT := 12
+const DOT_SIZE_NORMAL  := 12
+const DOT_SIZE_COMPACT := 10
 
 # ── Nodes ────────────────────────────────────────────────────────────
 
@@ -63,8 +64,9 @@ var _buttons: Array = []             # Array[Button]
 var _total_keys: int = 0
 var _current_room: int = -1
 
-## Whether Home (key 0) is visible. Set to false at level start;
-## becomes true after the first correct permutation is discovered.
+## Whether Home (key 0) is visible in the bar.
+## T111: identity key is NEVER shown in key_bar — kept for compatibility
+## but rebuild() always skips index 0 regardless of this flag.
 var home_visible: bool = false
 
 ## Layer 2 pairing state: room_index -> {partner: int, is_self_inverse: bool}
@@ -76,6 +78,8 @@ var _layer2_active: bool = false
 
 ## Whether Layer 3 keyring mode is active (shows ⊕ buttons)
 var _layer3_active: bool = false
+## Whether Layer 4 conjugation mode is active (shows g and h buttons)
+var _layer4_active: bool = false
 ## sym_ids currently in the active keyring slot (for ⊕/− display)
 var _active_keyring_sym_ids: Array = []
 
@@ -84,6 +88,10 @@ const L2_PAIR_COLOR := Color(0.2, 0.85, 0.4, 0.7)
 const L2_SELF_COLOR := Color(1.0, 0.85, 0.3, 0.7)
 const L2_PAIRED_BORDER := Color(0.2, 0.85, 0.4, 0.5)
 const L2_SELF_BORDER := Color(1.0, 0.85, 0.3, 0.5)
+
+## T113: Mirror key data for display on Layer 3+
+## Maps room_idx → {mirror_idx: int, mirror_color: Color, is_self_inverse: bool}
+var _mirror_pair_map: Dictionary = {}
 
 
 # ── Lifecycle ────────────────────────────────────────────────────────
@@ -122,9 +130,10 @@ func rebuild(room_state: RoomState) -> void:
 	_flow.add_theme_constant_override("v_separation", btn_gap)
 
 	for i in range(_total_keys):
-		# Hide Home (key 0) until home_visible is set
-		if i == 0 and not home_visible:
-			_buttons.append(null)  # placeholder to keep indices aligned
+		# T111: NEVER show identity key (index 0) in the key bar.
+		# Placeholder keeps indices aligned so _buttons[i] == room i.
+		if i == 0:
+			_buttons.append(null)
 			continue
 
 		var color: Color = room_state.colors[i] if i < room_state.colors.size() else Color.WHITE
@@ -152,14 +161,10 @@ func update_state(room_state: RoomState) -> void:
 		_apply_button_state(btn, i, room_state.colors[i], is_discovered, is_current)
 
 
-## Reveal the Home key (index 0). Call when the first correct
-## permutation is found — mirrors RoomMapPanel.home_visible logic.
-## Triggers a full rebuild to insert the Home button.
-func reveal_home(room_state: RoomState) -> void:
-	if home_visible:
-		return
-	home_visible = true
-	rebuild(room_state)
+## T111: reveal_home is now a no-op. Identity key is never shown.
+## Kept for API compatibility so callers don't crash.
+func reveal_home(_room_state: RoomState) -> void:
+	pass
 
 
 ## Update Layer 2 pairing visualization on existing buttons.
@@ -197,6 +202,17 @@ func update_layer2_pairs(room_state: RoomState, pair_mgr: InversePairManager) ->
 			var info: Dictionary = _pair_data[i]
 			var is_self_inv: bool = info["is_self_inverse"]
 			_apply_paired_style(btn, i, room_state, is_self_inv)
+
+
+## T113: Set mirror pair data for display on Layer 3+.
+## mirror_map: {room_idx: {mirror_idx: int, mirror_color: Color, is_self_inverse: bool}}
+func set_mirror_pairs(mirror_map: Dictionary) -> void:
+	_mirror_pair_map = mirror_map
+
+
+## T113: Clear mirror pair data.
+func clear_mirror_pairs() -> void:
+	_mirror_pair_map.clear()
 
 
 ## Clear Layer 2 pairing state and restore default button styles.
@@ -295,8 +311,46 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hbox.add_child(lbl)
 
-	# Layer 3: append "⊕" button for adding keys to the active keyring
-	if _layer3_active:
+	# T113: Mirror key indicator (Layer 3+) — show ↔ mirror_dot mirror_num
+	if _mirror_pair_map.has(idx):
+		var minfo: Dictionary = _mirror_pair_map[idx]
+		var mirror_idx: int = minfo["mirror_idx"]
+		var mirror_color: Color = minfo["mirror_color"]
+		var is_self_inv: bool = minfo["is_self_inverse"]
+
+		# Mirror arrow
+		var arrow_lbl: Label = Label.new()
+		arrow_lbl.name = "MirrorArrow"
+		arrow_lbl.text = "↻" if is_self_inv else "↔"
+		arrow_lbl.add_theme_font_size_override("font_size", maxi(font_sz - 3, 8))
+		arrow_lbl.add_theme_color_override("font_color",
+			Color(1.0, 0.85, 0.3, 0.6) if is_self_inv else Color(0.2, 0.85, 0.4, 0.5))
+		arrow_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hbox.add_child(arrow_lbl)
+
+		if not is_self_inv:
+			# Mirror key colored dot (smaller)
+			var m_dot: ColorRect = ColorRect.new()
+			m_dot.name = "MirrorDot"
+			var m_dot_sz: int = maxi(dot_sz - 4, 4)
+			m_dot.custom_minimum_size = Vector2(m_dot_sz, m_dot_sz)
+			m_dot.size = Vector2(m_dot_sz, m_dot_sz)
+			m_dot.color = mirror_color
+			m_dot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			hbox.add_child(m_dot)
+
+			# Mirror key number (smaller, dimmed)
+			var m_lbl: Label = Label.new()
+			m_lbl.name = "MirrorNum"
+			m_lbl.text = str(mirror_idx)
+			m_lbl.add_theme_font_size_override("font_size", maxi(font_sz - 3, 8))
+			m_lbl.add_theme_color_override("font_color",
+				Color(mirror_color.r, mirror_color.g, mirror_color.b, 0.6))
+			m_lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			hbox.add_child(m_lbl)
+
+	# Layer 3 / Layer 4: append "⊕" button
+	if _layer3_active or _layer4_active:
 		var add_btn: Button = Button.new()
 		add_btn.name = "AddToKeyring"
 		add_btn.text = "⊕"
@@ -305,10 +359,10 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 		add_btn.focus_mode = Control.FOCUS_NONE
 		add_btn.mouse_filter = Control.MOUSE_FILTER_STOP
 		add_btn.add_theme_font_size_override("font_size", font_sz + 2)
-		# Gold accent styling
+		var accent: Color = Color(0.95, 0.80, 0.20, 1.0)
 		var add_style: StyleBoxFlat = StyleBoxFlat.new()
-		add_style.bg_color = Color(0.95, 0.80, 0.20, 0.12)
-		add_style.border_color = Color(0.95, 0.80, 0.20, 0.4)
+		add_style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
+		add_style.border_color = Color(accent.r, accent.g, accent.b, 0.4)
 		for p in ["border_width_left", "border_width_right",
 					"border_width_top", "border_width_bottom"]:
 			add_style.set(p, 1)
@@ -317,15 +371,18 @@ func _make_key_button(idx: int, color: Color, is_discovered: bool,
 			add_style.set(p, 2)
 		add_btn.add_theme_stylebox_override("normal", add_style)
 		var add_hover: StyleBoxFlat = add_style.duplicate()
-		add_hover.bg_color = Color(0.95, 0.80, 0.20, 0.25)
-		add_hover.border_color = Color(0.95, 0.80, 0.20, 0.7)
+		add_hover.bg_color = Color(accent.r, accent.g, accent.b, 0.25)
+		add_hover.border_color = Color(accent.r, accent.g, accent.b, 0.7)
 		add_btn.add_theme_stylebox_override("hover", add_hover)
 		var add_pressed: StyleBoxFlat = add_style.duplicate()
-		add_pressed.bg_color = Color(0.95, 0.80, 0.20, 0.35)
+		add_pressed.bg_color = Color(accent.r, accent.g, accent.b, 0.35)
 		add_btn.add_theme_stylebox_override("pressed", add_pressed)
-		add_btn.add_theme_color_override("font_color", Color(0.95, 0.80, 0.20, 1.0))
+		add_btn.add_theme_color_override("font_color", accent)
 		add_btn.pressed.connect(_on_add_to_keyring_pressed.bind(idx))
 		hbox.add_child(add_btn)
+		# Layer 4: hide by default until mode (g/h) is chosen
+		if _layer4_active:
+			add_btn.visible = false
 
 	# Apply visual state (discovered / locked / current)
 	_apply_button_state(btn, idx, color, is_discovered, is_current)
@@ -473,7 +530,7 @@ func _apply_paired_style(btn: Button, idx: int, room_state: RoomState,
 		var mark: Label = Label.new()
 		mark.name = indicator_name
 		mark.text = "\u21BB" if is_self_inverse else "\u2713"  # ↻ or ✓
-		mark.add_theme_font_size_override("font_size", 9)
+		mark.add_theme_font_size_override("font_size", 12)
 		mark.add_theme_color_override("font_color", pair_accent)
 		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		hbox.add_child(mark)
@@ -514,6 +571,65 @@ func enable_layer3_mode() -> void:
 func disable_layer3_mode() -> void:
 	_layer3_active = false
 	_active_keyring_sym_ids.clear()
+
+
+# ── Layer 4 conjugation mode ────────────────────────────────────────
+
+## Enable Layer 4 mode — shows "g" and "h" buttons next to each key.
+## Call before rebuild() so the buttons are created.
+func enable_layer4_mode() -> void:
+	_layer4_active = true
+
+
+## Disable Layer 4 mode.
+func disable_layer4_mode() -> void:
+	_layer4_active = false
+	_layer4_mode = ""
+	_layer4_subgroup_sym_ids.clear()
+
+
+## Layer 4 current input mode: "g", "h", or "" (none)
+var _layer4_mode: String = ""
+## Layer 4 active subgroup element sym_ids (for filtering ⊕ visibility)
+var _layer4_subgroup_sym_ids: Array = []
+
+
+## Update Layer 4 ⊕ button visibility based on the active input mode.
+## mode: "g" → show ⊕ for keys NOT in subgroup; "h" → show ⊕ for keys IN subgroup; "" → hide all
+## subgroup_sym_ids: sym_ids of the elements in the active subgroup H
+## room_state: for mapping sym_ids to room indices
+func update_layer4_add_buttons(mode: String, subgroup_sym_ids: Array, room_state: RoomState) -> void:
+	if not _layer4_active:
+		return
+	_layer4_mode = mode
+	_layer4_subgroup_sym_ids = subgroup_sym_ids
+
+	for i in range(_buttons.size()):
+		var btn = _buttons[i]
+		if btn == null or not is_instance_valid(btn):
+			continue
+		var add_btn = _find_child_by_name(btn, "AddToKeyring")
+		if add_btn == null:
+			continue
+
+		if mode == "" or room_state == null:
+			# No mode selected — hide all ⊕
+			add_btn.visible = false
+			continue
+
+		var sym_id: String = room_state.get_room_sym_id(i) if room_state else ""
+		var is_in_subgroup: bool = subgroup_sym_ids.has(sym_id)
+
+		if mode == "g":
+			# Show ⊕ for keys NOT in subgroup H
+			add_btn.visible = not is_in_subgroup
+			if add_btn.visible:
+				add_btn.add_theme_color_override("font_color", Color(0.4, 0.65, 1.0, 1.0))  # Blue for g
+		elif mode == "h":
+			# Show ⊕ for keys IN subgroup H
+			add_btn.visible = is_in_subgroup
+			if add_btn.visible:
+				add_btn.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 1.0))  # Green for h
 
 
 ## Update the ⊕/− display on each key's add-to-keyring button.

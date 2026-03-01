@@ -302,7 +302,7 @@ func _build_failure_reason(result: Dictionary) -> Dictionary:
 	if reasons.has("missing_inverse"):
 		var example: String = _get_inverse_example()
 		return {"reason": "no_inverses",
-				"message": "Не у всех ключей есть обратный. %s Каждый ключ должен иметь ОТМЕНУ в наборе!" % example}
+				"message": "Не у всех ключей есть зеркальный. %s Каждый ключ должен иметь ОТМЕНУ в наборе!" % example}
 
 	if reasons.has("not_closed_composition"):
 		var example: String = _get_closure_example()
@@ -369,7 +369,7 @@ func _get_inverse_example() -> String:
 
 		if not found_inv and not key.is_identity():
 			var key_name: String = _get_key_display_name(i)
-			var inv_name: String = "обратный ключ"
+			var inv_name: String = "зеркальный ключ"
 			for p in range(key_ring.count()):
 				if key_ring.get_key(p).equals(inv):
 					inv_name = _get_key_display_name(p)

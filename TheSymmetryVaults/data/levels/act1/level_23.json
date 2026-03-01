@@ -552,17 +552,8 @@
     "layer_3": {
       "title": "Группы — брелки",
       "instruction": "Соберите все брелки — наборы ключей, образующие группу",
-      "subgroup_count": 8,
+      "subgroup_count": 6,
       "subgroups": [
-        {
-          "order": 1,
-          "elements": [
-            "e"
-          ],
-          "generators": [],
-          "is_trivial": true,
-          "is_normal": true
-        },
         {
           "order": 2,
           "elements": [
@@ -636,27 +627,6 @@
             "r1"
           ],
           "is_trivial": false,
-          "is_normal": true
-        },
-        {
-          "order": 10,
-          "elements": [
-            "e",
-            "r1",
-            "r2",
-            "r3",
-            "r4",
-            "s0",
-            "s1",
-            "s2",
-            "s3",
-            "s4"
-          ],
-          "generators": [
-            "r1",
-            "s0"
-          ],
-          "is_trivial": true,
           "is_normal": true
         }
       ],

@@ -82,10 +82,10 @@ func setup(level_data: Dictionary, layer_config: Dictionary = {}) -> void:
 		pair.is_self_inverse = (sym_id == inv_sym_id)
 		pair.is_identity = perm.is_identity()
 
-		# Auto-pair identity
+		# T111: skip identity pair entirely — never shown in UI
 		if pair.is_identity:
-			pair.paired = true
-			pair.revealed = true
+			processed[sym_id] = true
+			continue
 
 		pairs.append(pair)
 
@@ -156,15 +156,13 @@ func is_complete() -> bool:
 
 
 ## Get progress: {matched: int, total: int}
-## total excludes identity (which is auto-paired).
+## T111: identity is never in pairs, so no filter needed.
 func get_progress() -> Dictionary:
 	var matched: int = 0
-	var total: int = 0
+	var total: int = pairs.size()
 	for pair in pairs:
-		if not pair.is_identity:
-			total += 1
-			if pair.paired:
-				matched += 1
+		if pair.paired:
+			matched += 1
 	return {"matched": matched, "total": total}
 
 

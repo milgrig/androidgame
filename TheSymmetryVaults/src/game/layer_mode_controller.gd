@@ -1,27 +1,23 @@
 ## LayerModeController — Orchestrates layer-specific behavior within LevelScene.
 ##
-## Layer 2 REDESIGN: reuses the SAME UI as Layer 1 (room map + key bar + crystal view).
-## Player discovers inverse pairs by pressing keys and observing when they
-## return to the same room. No separate pairing panel.
-##
-## Gameplay flow:
-##   1. All keys visible from start (already discovered in Layer 1)
-##   2. Crystal dragging disabled — player navigates via keys only
-##   3. Player presses key A → moves to room X
-##   4. Player presses key B → returns to the starting room
-##   5. System detects: A then B returned to start → A and B are an inverse pair!
-##   6. Keys A and B are visually paired in the KeyBar
-##   7. Self-inverse: pressing key C takes you somewhere, pressing C again returns
+## Layer 2 T112 REDESIGN: Uses split-screen layout matching Layer 3.
+## Left panel (MirrorPairsPanel) shows slots: [key] ↔ [???].
+## Player taps ⊕ on a key in the KeyBar to try it as the mirror candidate.
+## System validates: compose(key, candidate) == identity?
+## Correct → slot locks green. Wrong → bounce back (red flash).
+## Self-inverse: player taps the SAME key → slot locks yellow.
 ##
 ## Future layers (3-5) will add new modes here.
 class_name LayerModeController
 extends RefCounted
 
+const CrackingPanelScript = preload("res://src/ui/cracking_panel.gd")
+
 # ── Layer mode enum ──────────────────────────────────────────────────
 
 enum LayerMode {
 	LAYER_1,             ## Default: crystal swapping, key discovery
-	LAYER_2_INVERSE,     ## Inverse key pairing via key presses
+	LAYER_2_INVERSE,     ## Mirror key pairing via ⊕ taps
 	LAYER_3_SUBGROUPS,   ## Keyring assembly — find all subgroups
 	LAYER_4_NORMAL,      ## Normal subgroup identification via conjugation cracking
 	## Future:
@@ -45,12 +41,9 @@ var conjugation_cracking_mgr: ConjugationCrackingManager = null
 var _level_scene = null  ## Weak reference to LevelScene (no type to avoid circular)
 var _room_state: RoomState = null
 var _hall_id: String = ""
+var _mirror_panel = null   ## MirrorPairsPanel for Layer 2 UI (T112)
 var _keyring_panel = null  ## KeyringPanel for Layer 3 UI
 var _cracking_panel = null  ## CrackingPanel for Layer 4 UI
-
-## Key-press tracking for pair detection
-var _prev_key_idx: int = -1       ## The previous key pressed (-1 = none)
-var _room_before_prev: int = -1   ## Room the player was in BEFORE pressing _prev_key_idx
 
 ## Layer 4: conjugation test state
 var _selected_g: String = ""       ## Selected conjugator (g ∈ G)
@@ -110,12 +103,19 @@ func setup(layer: int, level_data: Dictionary, level_scene) -> void:
 
 ## Clean up all layer-specific resources.
 func cleanup() -> void:
-	# Disable Layer 3 mode on KeyBar if active
+	# Disable Layer 3/4 mode on KeyBar if active; clear mirror data
 	if _level_scene and _level_scene._key_bar:
 		_level_scene._key_bar.disable_layer3_mode()
+		_level_scene._key_bar.disable_layer4_mode()
+		_level_scene._key_bar.clear_mirror_pairs()
 	inverse_pair_mgr = null
 	keyring_assembly_mgr = null
 	conjugation_cracking_mgr = null
+	# Clean up Layer 2 mirror panel
+	if _mirror_panel != null and is_instance_valid(_mirror_panel):
+		_mirror_panel.cleanup()
+		_mirror_panel.queue_free()
+	_mirror_panel = null
 	if _keyring_panel != null and is_instance_valid(_keyring_panel):
 		_keyring_panel.cleanup()
 		_keyring_panel.queue_free()
@@ -127,13 +127,11 @@ func cleanup() -> void:
 	_cracking_panel = null
 	_level_scene = null
 	_room_state = null
-	_prev_key_idx = -1
-	_room_before_prev = -1
 	_selected_g = ""
 	_selected_h = ""
 
 
-# ── Layer 2: Inverse Key Pairing via Key Presses ────────────────────
+# ── Layer 2: Inverse Key Pairing via ⊕ Tap (T112 Mirror Panel) ──────
 
 func _setup_layer_2(level_data: Dictionary, level_scene) -> void:
 	_room_state = level_scene._room_state
@@ -153,9 +151,10 @@ func _setup_layer_2(level_data: Dictionary, level_scene) -> void:
 	for i in range(_room_state.group_order):
 		_room_state.discover_room(i)
 
-	# 4. Show Home key immediately
+	# 4. Show all keys and enable Layer 3 ⊕ buttons (reused for Layer 2 tap mode)
 	if level_scene._key_bar:
 		level_scene._key_bar.home_visible = true
+		level_scene._key_bar.enable_layer3_mode()
 		level_scene._key_bar.rebuild(_room_state)
 
 	# 5. Hide target preview (every key application is valid in Layer 2)
@@ -179,70 +178,88 @@ func _setup_layer_2(level_data: Dictionary, level_scene) -> void:
 	# 10. Update counter for Layer 2 progress
 	_update_layer_2_counter()
 
-	# 11. Reset key-press tracking
-	_prev_key_idx = -1
-	_room_before_prev = -1
-
-	# 12. Room map stays visible — update it with all rooms discovered
+	# 11. Room map stays visible — update it with all rooms discovered
 	if level_scene._room_map:
 		level_scene._room_map.home_visible = true
 		level_scene._room_map.queue_redraw()
+
+	# 12. Build MirrorPairsPanel UI — split the crystal zone (like Layer 3)
+	_build_mirror_panel(level_scene)
 
 	# 13. Save "in_progress" state
 	GameManager.set_layer_progress(_hall_id, 2, {"status": "in_progress"})
 
 
-## Called by LevelScene when a key is pressed during Layer 2.
-## key_idx: the room index of the key pressed (0 = identity/Home)
-## room_before: the room the player was in BEFORE this key press
-## room_after: the room the player is in AFTER this key press
-func on_key_pressed(key_idx: int, room_before: int, room_after: int) -> void:
-	if inverse_pair_mgr == null or _room_state == null:
+## T112: Called by LevelScene when a ⊕ key is tapped during Layer 2.
+## sym_id: the sym_id of the tapped key
+func on_key_tapped_layer2(sym_id: String) -> void:
+	if inverse_pair_mgr == null or _mirror_panel == null:
 		return
 
-	# Identity key press — reset tracking (doesn't form meaningful pairs)
-	if key_idx == 0:
-		_prev_key_idx = -1
-		_room_before_prev = -1
-		return
+	# Delegate to the MirrorPairsPanel — it tries ALL unpaired slots
+	var result: Dictionary = _mirror_panel.try_place_candidate_any(sym_id)
 
-	if _prev_key_idx == -1:
-		# First key press in a potential pair — record it
-		_prev_key_idx = key_idx
-		_room_before_prev = room_before
+	if result["success"]:
+		var pair_idx: int = result["pair_index"]
+		var is_self_inv: bool = result["is_self_inverse"]
+
+		# Emit pair_found signal (use pair_idx for both since we work with sym_ids now)
+		pair_found.emit(pair_idx, pair_idx, is_self_inv)
+
+		# Update KeyBar pairing visualization
+		_update_key_bar_pairing()
+
+		# Show feedback in HintLabel
+		_show_pair_found_feedback(sym_id, is_self_inv)
+
+		# Update counter
+		_update_layer_2_counter()
 	else:
-		# Second key press — check if we returned to the starting room
-		if room_after == _room_before_prev:
-			# Player returned to the room they started from!
-			# Keys _prev_key_idx and key_idx are inverse pair candidates
-			var sym_a: String = _room_state.get_room_sym_id(_prev_key_idx)
-			var sym_b: String = _room_state.get_room_sym_id(key_idx)
-
-			if sym_a != "" and sym_b != "":
-				var result: Dictionary = inverse_pair_mgr.try_pair_by_sym_ids(sym_a, sym_b)
-				if result["success"]:
-					var is_self_inv: bool = result["is_self_inverse"]
-					pair_found.emit(_prev_key_idx, key_idx, is_self_inv)
-
-					# Update KeyBar pairing visualization
-					_update_key_bar_pairing()
-
-					# Show feedback message
-					_show_pair_feedback(_prev_key_idx, key_idx, is_self_inv)
-
-		# Reset tracking — start fresh for next potential pair
-		# (Whether we found a pair or not, reset after 2 presses)
-		_prev_key_idx = key_idx
-		_room_before_prev = room_before
-
-
-## Reset key-press tracking (e.g., when player uses Reset button)
-func reset_tracking() -> void:
-	_prev_key_idx = -1
-	_room_before_prev = -1
+		# Wrong guess — mirror panel already showed red flash
+		_show_wrong_guess_feedback(sym_id)
 
 
 # ── UI Helpers ───────────────────────────────────────────────────────
+
+## T113: Load mirror pair data from level_data and pass to key_bar.
+## Creates a temporary InversePairManager to compute all inverse pairs,
+## then builds mirror_map for key_bar display on Layer 3+.
+func _load_mirror_data_to_keybar(level_data: Dictionary, level_scene) -> void:
+	if level_scene._key_bar == null or _room_state == null:
+		return
+
+	# Create temporary InversePairManager to get all pairs
+	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_2", {})
+	var temp_mgr: InversePairManager = InversePairManager.new()
+	temp_mgr.setup(level_data, layer_config)
+
+	# Build mirror_map: room_idx → {mirror_idx, mirror_color, is_self_inverse}
+	var mirror_map: Dictionary = {}
+	var pairs: Array = temp_mgr.get_pairs()
+	for pair in pairs:
+		var key_idx: int = _sym_id_to_room_idx(pair.key_sym_id)
+		var inv_idx: int = _sym_id_to_room_idx(pair.inverse_sym_id)
+		if key_idx < 0 or inv_idx < 0:
+			continue
+		var inv_color: Color = _room_state.colors[inv_idx] if inv_idx < _room_state.colors.size() else Color.WHITE
+		var key_color: Color = _room_state.colors[key_idx] if key_idx < _room_state.colors.size() else Color.WHITE
+		mirror_map[key_idx] = {
+			"mirror_idx": inv_idx,
+			"mirror_color": inv_color,
+			"is_self_inverse": pair.is_self_inverse
+		}
+		# Bidirectional: also store the reverse mapping
+		if not pair.is_self_inverse:
+			mirror_map[inv_idx] = {
+				"mirror_idx": key_idx,
+				"mirror_color": key_color,
+				"is_self_inverse": false
+			}
+
+	level_scene._key_bar.set_mirror_pairs(mirror_map)
+	# Rebuild to apply the mirror indicators
+	level_scene._key_bar.rebuild(_room_state)
+
 
 func _hide_target_preview(level_scene) -> void:
 	## Hide the target preview (not relevant for Layer 2)
@@ -269,7 +286,7 @@ func _apply_layer_2_theme(level_scene) -> void:
 	# Level number label — add "Слой 2" indicator
 	var lvl_label = hud.get_node_or_null("LevelNumberLabel")
 	if lvl_label:
-		lvl_label.text += "  ·  Слой 2: Обратные"
+		lvl_label.text += "  ·  Слой 2: Зеркальные"
 		lvl_label.add_theme_color_override("font_color", L2_GREEN_DIM)
 
 	# Map frame title → indicate Layer 2
@@ -277,7 +294,7 @@ func _apply_layer_2_theme(level_scene) -> void:
 	if map_frame:
 		var map_title = map_frame.get_node_or_null("MapFrameTitle")
 		if map_title:
-			map_title.text = "Карта комнат — Обратные"
+			map_title.text = "Карта комнат — Зеркальные"
 			map_title.add_theme_color_override("font_color", L2_GREEN_DIM)
 
 	# KeyBar frame title → indicate inverse pairing
@@ -285,7 +302,7 @@ func _apply_layer_2_theme(level_scene) -> void:
 	if key_frame:
 		var key_title = key_frame.get_node_or_null("KeyBarFrameTitle")
 		if key_title:
-			key_title.text = "Ключи — найдите обратные пары"
+			key_title.text = "Ключи — найдите зеркальные пары"
 			key_title.add_theme_color_override("font_color", L2_GREEN_DIM)
 
 	# Counter label → green
@@ -301,7 +318,7 @@ func _update_layer_2_counter() -> void:
 	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
 	if cl:
 		var p: Dictionary = inverse_pair_mgr.get_progress()
-		cl.text = "Обратные пары: %d / %d" % [p["matched"], p["total"]]
+		cl.text = "Зеркальные пары: %d / %d" % [p["matched"], p["total"]]
 
 
 func _update_key_bar_pairing() -> void:
@@ -313,24 +330,86 @@ func _update_key_bar_pairing() -> void:
 	_level_scene._key_bar.update_layer2_pairs(_room_state, inverse_pair_mgr)
 
 
-func _show_pair_feedback(key_a_idx: int, key_b_idx: int, is_self_inverse: bool) -> void:
-	## Show a hint message when a pair is found.
+## T112: Build MirrorPairsPanel — split the crystal zone like Layer 3.
+func _build_mirror_panel(level_scene) -> void:
+	var hud: CanvasLayer = level_scene.hud_layer
+	if inverse_pair_mgr == null or _room_state == null:
+		return
+
+	# Get the current crystal zone rectangle
+	var crystal_rect: Rect2 = level_scene._crystal_rect
+	if crystal_rect.size == Vector2.ZERO:
+		return
+
+	# Split: mirror panel gets 30% of the crystal zone width (same as Layer 3)
+	var mirror_ratio: float = 0.30
+	var mirror_w: float = floorf(crystal_rect.size.x * mirror_ratio)
+	var crystal_new_w: float = crystal_rect.size.x - mirror_w - 2  # 2px gap
+
+	# Mirror panel rectangle (left side of old crystal zone)
+	var mirror_rect: Rect2 = Rect2(
+		crystal_rect.position.x,
+		crystal_rect.position.y,
+		mirror_w,
+		crystal_rect.size.y
+	)
+
+	# New crystal zone (right side, narrower)
+	var new_crystal_rect: Rect2 = Rect2(
+		crystal_rect.position.x + mirror_w + 2,
+		crystal_rect.position.y,
+		crystal_new_w,
+		crystal_rect.size.y
+	)
+
+	# Resize crystal frame
+	var crystal_frame = hud.get_node_or_null("CrystalFrame")
+	if crystal_frame:
+		crystal_frame.position = new_crystal_rect.position
+		crystal_frame.size = new_crystal_rect.size
+
+	# Reposition crystal and edge containers
+	level_scene.crystal_container.position = new_crystal_rect.position
+	level_scene.edge_container.position = new_crystal_rect.position
+
+	# Reposition crystals to fit in the narrower zone
+	var nd: Array = level_scene.level_data.get("graph", {}).get("nodes", [])
+	var pm: Dictionary = ShuffleManager.build_positions_map(nd, new_crystal_rect.size)
+	var sm: ShuffleManager = level_scene._shuffle_mgr
+	for i in range(sm.current_arrangement.size()):
+		var cid: int = sm.current_arrangement[i]
+		if cid in level_scene.crystals and i in pm:
+			var crystal: CrystalNode = level_scene.crystals[cid]
+			crystal.position = pm[i]
+			crystal.set_home_position(pm[i])
+
+	# Update the stored crystal rect
+	level_scene._crystal_rect = new_crystal_rect
+
+	# Create the MirrorPairsPanel
+	var MirrorPairsPanelScript = preload("res://src/ui/mirror_pairs_panel.gd")
+	_mirror_panel = MirrorPairsPanelScript.new()
+	_mirror_panel.setup(hud, mirror_rect, _room_state, inverse_pair_mgr)
+	hud.add_child(_mirror_panel)
+
+
+## T112: Show feedback when a pair is correctly found.
+func _show_pair_found_feedback(sym_id: String, is_self_inverse: bool) -> void:
 	if _level_scene == null:
 		return
 	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
 	if hl == null:
 		return
 
-	var name_a: String = _room_state.get_room_name(key_a_idx)
-	var name_b: String = _room_state.get_room_name(key_b_idx)
+	var name: String = _get_sym_name(sym_id)
 	var text: String
 	var color: Color
 
 	if is_self_inverse:
-		text = "↻ %s — сам себе обратный!" % name_a
+		text = "↻ %s — сам себе зеркальный!" % name
 		color = Color(1.0, 0.85, 0.3, 0.9)
 	else:
-		text = "Пара найдена: %s ↔ %s" % [name_a, name_b]
+		text = "✓ Зеркальная пара найдена!"
 		color = L2_GREEN
 
 	hl.text = text
@@ -338,6 +417,32 @@ func _show_pair_feedback(key_a_idx: int, key_b_idx: int, is_self_inverse: bool) 
 	tw.tween_property(hl, "theme_override_colors/font_color", color, 0.3)
 	tw.tween_interval(3.0)
 	tw.tween_property(hl, "theme_override_colors/font_color", Color(0.5, 0.8, 0.5, 0.5), 1.0)
+
+
+## T112: Show feedback when a wrong guess is made.
+func _show_wrong_guess_feedback(sym_id: String) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+
+	var name: String = _get_sym_name(sym_id)
+	hl.text = "✗ %s — не зеркальный" % name
+	var tw: Tween = _level_scene.create_tween()
+	tw.tween_property(hl, "theme_override_colors/font_color", Color(1.0, 0.35, 0.3, 0.9), 0.2)
+	tw.tween_interval(2.0)
+	tw.tween_property(hl, "theme_override_colors/font_color", Color(0.5, 0.8, 0.5, 0.5), 0.8)
+
+
+## Helper: get display name for a sym_id.
+func _get_sym_name(sym_id: String) -> String:
+	if _room_state == null:
+		return sym_id
+	for i in range(_room_state.perm_ids.size()):
+		if _room_state.perm_ids[i] == sym_id:
+			return _room_state.get_room_name(i)
+	return sym_id
 
 
 # ── Signal Handlers ──────────────────────────────────────────────────
@@ -348,6 +453,10 @@ func _on_pair_matched(_pair_index: int, _key_sym_id: String, _inverse_sym_id: St
 
 	# Update counter
 	_update_layer_2_counter()
+
+	# Update mirror panel progress
+	if _mirror_panel:
+		_mirror_panel.update_progress()
 
 	# Play valid feedback on crystals
 	if _level_scene.feedback_fx:
@@ -379,7 +488,7 @@ func _on_layer_2_completed() -> void:
 	# Update HUD
 	var cl = _level_scene.hud_layer.get_node_or_null("CounterLabel")
 	if cl:
-		cl.text = "Все обратные пары найдены!"
+		cl.text = "Все зеркальные пары найдены!"
 		cl.add_theme_color_override("font_color", L2_GREEN)
 
 	# Show completion hint
@@ -432,7 +541,7 @@ func _show_layer_2_summary() -> void:
 
 	# Title
 	var title: Label = Label.new()
-	title.text = "Слой 2 — Обратные ключи завершён!"
+	title.text = "Слой 2 — Зеркальные ключи завершён!"
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", L2_GREEN)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -459,16 +568,13 @@ func _show_layer_2_summary() -> void:
 	div.add_theme_stylebox_override("panel", div_style)
 	panel.add_child(div)
 
-	# List all pairs
+	# List all pairs (T111: identity pair is never in the list)
 	var pairs: Array = inverse_pair_mgr.get_pairs()
 	var y_offset: int = 105
 	for pair in pairs:
 		var pair_label: Label = Label.new()
-		if pair.is_identity:
-			pair_label.text = "  %s ↔ %s  (тождество)" % [pair.key_name, pair.inverse_name]
-			pair_label.add_theme_color_override("font_color", L2_GREEN_DIM)
-		elif pair.is_self_inverse:
-			pair_label.text = "  %s ↔ %s  (сам себе обратный)" % [pair.key_name, pair.inverse_name]
+		if pair.is_self_inverse:
+			pair_label.text = "  %s ↔ %s  (сам себе зеркальный)" % [pair.key_name, pair.inverse_name]
 			pair_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3, 0.9))
 		else:
 			pair_label.text = "  %s ↔ %s" % [pair.key_name, pair.inverse_name]
@@ -573,11 +679,13 @@ func _setup_layer_3(level_data: Dictionary, level_scene) -> void:
 	for i in range(_room_state.group_order):
 		_room_state.discover_room(i)
 
-	# 4. Show Home key and all keys immediately, enable Layer 3 ⊕ buttons
+	# 4. Show all keys (T111: identity key excluded), enable Layer 3 ⊕ buttons
 	if level_scene._key_bar:
-		level_scene._key_bar.home_visible = true
 		level_scene._key_bar.enable_layer3_mode()
 		level_scene._key_bar.rebuild(_room_state)
+
+	# 4b. T113: Load mirror pair data from level for display in key_bar
+	_load_mirror_data_to_keybar(level_data, level_scene)
 
 	# 5. Hide target preview and action buttons
 	_hide_target_preview(level_scene)
@@ -618,8 +726,14 @@ func _setup_layer_3(level_data: Dictionary, level_scene) -> void:
 			_keyring_panel.refresh_from_state()
 		_update_layer_3_counter()
 
-	# 13. Save "in_progress" state
-	GameManager.set_layer_progress(_hall_id, 3, keyring_assembly_mgr.save_state())
+	# 13. T114: auto-complete if no non-trivial proper subgroups (e.g. Z_p)
+	if keyring_assembly_mgr.is_complete():
+		# Defer completion so the scene finishes initialization first
+		var timer: SceneTreeTimer = level_scene.get_tree().create_timer(0.1)
+		timer.timeout.connect(_on_layer_3_completed)
+	else:
+		# Save "in_progress" state
+		GameManager.set_layer_progress(_hall_id, 3, keyring_assembly_mgr.save_state())
 
 
 ## Called when a key is tapped in Layer 3 (tap-to-add from KeyBar).
@@ -1090,11 +1204,13 @@ func _setup_layer_4(level_data: Dictionary, level_scene) -> void:
 	for i in range(_room_state.group_order):
 		_room_state.discover_room(i)
 
-	# 4. Show Home key and all keys, enable ⊕ buttons for h-selection
+	# 4. Show all keys (T111: identity key excluded), enable g/h buttons
 	if level_scene._key_bar:
-		level_scene._key_bar.home_visible = true
-		level_scene._key_bar.enable_layer3_mode()  # Reuse ⊕ buttons for h-selection
+		level_scene._key_bar.enable_layer4_mode()
 		level_scene._key_bar.rebuild(_room_state)
+
+	# 4b. T113: Load mirror pair data from level for display in key_bar
+	_load_mirror_data_to_keybar(level_data, level_scene)
 
 	# 5. Hide target preview and action buttons
 	_hide_target_preview(level_scene)
@@ -1150,7 +1266,7 @@ func on_subgroup_selected_layer4(subgroup_index: int) -> void:
 		_refresh_cracking_panel()
 
 
-## Called when the player tests a conjugation: g · h · g⁻¹
+## Called when the player tests a conjugation: g · h · g⁻¹ (fallback, no animation).
 func on_conjugation_test(g_sym_id: String, h_sym_id: String) -> void:
 	if conjugation_cracking_mgr == null:
 		return
@@ -1159,10 +1275,16 @@ func on_conjugation_test(g_sym_id: String, h_sym_id: String) -> void:
 	if result.has("error"):
 		return
 
-	# Show the conjugation result on crystals via animation
-	_animate_conjugation(g_sym_id, h_sym_id, result)
+	# Simple flash feedback (fallback when panel is unavailable)
+	if _level_scene and _level_scene.feedback_fx:
+		if result.get("stayed_in", false):
+			_level_scene.feedback_fx.play_valid_feedback(
+				_level_scene.crystals.values(), _level_scene.edges)
+		else:
+			_level_scene.feedback_fx.play_invalid_feedback(
+				_level_scene.crystals.values(), _level_scene.edges)
 
-	# Show result in CrackingPanel
+	# Show result in CrackingPanel (if available)
 	if _cracking_panel != null and is_instance_valid(_cracking_panel):
 		_cracking_panel.show_result(g_sym_id, h_sym_id, result)
 
@@ -1204,6 +1326,15 @@ func on_confirm_normal_layer4() -> void:
 ## Called when a key press selects the conjugator g for Layer 4.
 func on_conjugator_selected(sym_id: String) -> void:
 	if conjugation_cracking_mgr == null:
+		return
+	# g must NOT belong to the active subgroup H (otherwise g·h·g⁻¹ always stays in H)
+	var active_idx: int = conjugation_cracking_mgr.get_active_subgroup_index()
+	if active_idx < 0:
+		_show_no_subgroup_selected_feedback()
+		return
+	var elements: Array = conjugation_cracking_mgr.get_subgroup_elements(active_idx)
+	if elements.has(sym_id):
+		_show_g_in_subgroup_feedback(sym_id)
 		return
 	# Route through CrackingPanel — fills the g slot visually
 	if _cracking_panel != null and is_instance_valid(_cracking_panel):
@@ -1278,6 +1409,17 @@ func _show_no_subgroup_selected_feedback() -> void:
 	hl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3, 0.8))
 
 
+func _show_g_in_subgroup_feedback(sym_id: String) -> void:
+	if _level_scene == null:
+		return
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+	if hl == null:
+		return
+	var name: String = conjugation_cracking_mgr.get_name(sym_id)
+	hl.text = "%s ∈ H — выберите g вне подгруппы" % name
+	hl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.3, 0.8))
+
+
 func _show_h_not_in_subgroup_feedback(sym_id: String) -> void:
 	if _level_scene == null:
 		return
@@ -1338,20 +1480,236 @@ func _save_layer_4_progress() -> void:
 	GameManager.set_layer_progress(_hall_id, 4, conjugation_cracking_mgr.save_state())
 
 
-## Animate a conjugation: briefly show g, then h, then g⁻¹ on crystals.
-func _animate_conjugation(g_sym_id: String, h_sym_id: String, result: Dictionary) -> void:
+## Run the full animated conjugation sequence: home → g → h → g⁻¹.
+## This resets crystals to home, then applies each key with full visual animation.
+func _run_animated_conjugation(g_sym_id: String, h_sym_id: String) -> void:
+	if _level_scene == null or conjugation_cracking_mgr == null or _room_state == null:
+		return
+
+	var ls = _level_scene
+
+	# Find g⁻¹ sym_id
+	var g_perm: Permutation = conjugation_cracking_mgr.get_perm(g_sym_id)
+	if g_perm == null:
+		return
+	var g_inv_perm: Permutation = g_perm.inverse()
+	var g_inv_sym_id: String = ""
+	var all_ids: Array[String] = conjugation_cracking_mgr.get_all_sym_ids()
+	for sid in all_ids:
+		var p: Permutation = conjugation_cracking_mgr.get_perm(sid)
+		if p != null and p.equals(g_inv_perm):
+			g_inv_sym_id = sid
+			break
+	if g_inv_sym_id == "":
+		return
+
+	# Map sym_ids to room indices (key indices in RoomState)
+	var g_room: int = _sym_id_to_room_idx(g_sym_id)
+	var h_room: int = _sym_id_to_room_idx(h_sym_id)
+	var ginv_room: int = _sym_id_to_room_idx(g_inv_sym_id)
+	if g_room < 0 or h_room < 0 or ginv_room < 0:
+		return
+
+	# Block user interaction during animation
+	if ls._swap_mgr:
+		ls._swap_mgr.repeat_animating = true
+		ls._swap_mgr._repeat_anim_start_ms = Time.get_ticks_msec()
+
+	# Step 0: Reset crystals to home (identity arrangement)
+	var sm: ShuffleManager = ls._shuffle_mgr
+	sm.current_arrangement = sm.identity_arrangement.duplicate()
+	ls._swap_mgr.apply_arrangement_to_crystals()
+	_room_state.current_room = 0  # back to home room
+	if ls._room_map:
+		ls._room_map.queue_redraw()
+
+	# Show hint
+	var hl = ls.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		var gn: String = conjugation_cracking_mgr.get_name(g_sym_id)
+		var hn: String = conjugation_cracking_mgr.get_name(h_sym_id)
+		hl.text = "Взлом: %s \u00B7 %s \u00B7 %s\u207B\u00B9 ..." % [gn, hn, gn]
+		hl.add_theme_color_override("font_color", L4_RED)
+
+	# Build the animation chain with tweens
+	# Each key application takes ~1.0 seconds total (0.2 prep + 0.5 arc + 0.3 bounce)
+	var step_delay: float = 1.1  # time between steps
+
+	# Wait a brief moment at home, then apply g
+	var tw: Tween = ls.create_tween()
+	tw.tween_interval(0.4)
+	tw.tween_callback(_apply_key_animated.bind(g_room, "g"))
+	tw.tween_interval(step_delay)
+	tw.tween_callback(_apply_key_animated.bind(h_room, "h"))
+	tw.tween_interval(step_delay)
+	tw.tween_callback(_apply_key_animated.bind(ginv_room, "g\u207B\u00B9"))
+	tw.tween_interval(step_delay)
+	tw.tween_callback(_on_animated_conjugation_done.bind(g_sym_id, h_sym_id))
+
+
+## Apply a single key with full visual animation (called during conjugation sequence).
+func _apply_key_animated(key_idx: int, step_name: String) -> void:
+	if _level_scene == null or _room_state == null:
+		return
+	var ls = _level_scene
+	var key_perm: Permutation = _room_state.get_room_perm(key_idx)
+	if key_perm == null:
+		return
+
+	# Record transition
+	var from_room: int = _room_state.current_room
+	var to_room: int = _room_state.apply_key(key_idx)
+
+	# Add fading edge on the map
+	if ls._room_map:
+		ls._room_map.add_fading_edge(from_room, to_room, key_idx)
+
+	# Apply permutation to crystal arrangement with animation
+	var auto_perm: Permutation = key_perm
+	var n: int = ls._shuffle_mgr.current_arrangement.size()
+	if n == 0:
+		return
+	var new_arr: Array[int] = []
+	new_arr.resize(n)
+	for i in range(n):
+		new_arr[i] = ls._shuffle_mgr.current_arrangement[auto_perm.apply(i)]
+
+	var nd = ls.level_data.get("graph", {}).get("nodes", [])
+	var pm: Dictionary = ShuffleManager.build_positions_map(nd,
+		ls._crystal_rect.size if ls._crystal_rect.size != Vector2.ZERO else ls.get_viewport_rect().size)
+
+	# Phase 1: slight scale up
+	var prep = ls.create_tween().set_parallel(true)
+	for crystal in ls.crystals.values():
+		if crystal is CrystalNode:
+			prep.tween_property(crystal, "scale", Vector2(1.08, 1.08), 0.15).set_ease(Tween.EASE_OUT)
+
+	# Phase 2: arc movement (delayed)
+	var gc: Vector2 = Vector2.ZERO
+	for pos in pm.values():
+		gc += pos
+	if pm.size() > 0:
+		gc /= float(pm.size())
+
+	var chain: Tween = ls.create_tween()
+	chain.tween_interval(0.18)
+	chain.tween_callback(_conjugation_move_phase.bind(n, auto_perm, pm, gc, new_arr, step_name))
+
+
+## Phase 2 of conjugation animation: move crystals along arcs.
+func _conjugation_move_phase(n: int, active_perm: Permutation, pm: Dictionary,
+		gc: Vector2, new_arr: Array[int], step_name: String) -> void:
 	if _level_scene == null:
 		return
-	# Visual feedback — flash crystals based on the result
+	var ls = _level_scene
+	var max_delay: float = 0.0
+	for i in range(n):
+		var si: int = active_perm.apply(i)
+		if si == i or si >= n:
+			continue
+		var cid: int = ls._shuffle_mgr.current_arrangement[si]
+		if cid not in ls.crystals or i not in pm:
+			continue
+		var crystal: CrystalNode = ls.crystals[cid]
+		var from_pos: Vector2 = crystal.position
+		var to_pos: Vector2 = pm[i]
+		var mid: Vector2 = (from_pos + to_pos) / 2.0
+		var to_c: Vector2 = gc - mid
+		if to_c.length() > 0:
+			ls._swap_mgr._animate_arc(crystal, from_pos, mid + to_c.normalized() * 40.0, to_pos, 0.45, max_delay)
+		else:
+			var tw: Tween = ls.create_tween()
+			if max_delay > 0:
+				tw.tween_interval(max_delay)
+			tw.tween_property(crystal, "position", to_pos, 0.45).set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_CUBIC)
+		max_delay += 0.025
+
+	# Wait for movement to finish, then finalize
+	var wait: Tween = ls.create_tween()
+	wait.tween_interval(0.45 + max_delay + 0.05)
+	wait.tween_callback(_conjugation_land_phase.bind(n, new_arr, pm, step_name))
+
+
+## Phase 3 of conjugation animation: bounce landing.
+func _conjugation_land_phase(n: int, new_arr: Array[int], pm: Dictionary, step_name: String) -> void:
+	if _level_scene == null:
+		return
+	var ls = _level_scene
+	ls._shuffle_mgr.current_arrangement = new_arr
+	for i in range(n):
+		var cid: int = ls._shuffle_mgr.current_arrangement[i]
+		if cid in ls.crystals and i in pm:
+			ls.crystals[cid].set_home_position(pm[i])
+	for crystal in ls.crystals.values():
+		if crystal is CrystalNode:
+			var b: Tween = ls.create_tween()
+			b.tween_property(crystal, "scale", Vector2(0.95, 0.95), 0.08).set_ease(Tween.EASE_IN)
+			b.tween_property(crystal, "scale", Vector2(1.0, 1.0), 0.08).set_ease(Tween.EASE_OUT)
+			if ls.feedback_fx:
+				ls.feedback_fx._spawn_burst(crystal.position, crystal._glow_color, 2)
+	# Update map
+	if ls._room_map:
+		ls._room_map.queue_redraw()
+
+	# Show step hint
+	var hl = ls.hud_layer.get_node_or_null("HintLabel")
+	if hl:
+		hl.text = "Применён: %s  \u2192  комната %d" % [step_name, _room_state.current_room]
+		hl.add_theme_color_override("font_color", L4_RED_DIM)
+
+
+## Called when the full animated conjugation sequence (home→g→h→g⁻¹) is complete.
+func _on_animated_conjugation_done(g_sym_id: String, h_sym_id: String) -> void:
+	if _level_scene == null or conjugation_cracking_mgr == null:
+		return
+
+	# Unblock user interaction
+	if _level_scene._swap_mgr:
+		_level_scene._swap_mgr.repeat_animating = false
+
+	# Now run the math check
+	var result: Dictionary = conjugation_cracking_mgr.test_conjugation(g_sym_id, h_sym_id)
+	if result.has("error"):
+		return
+
+	# Check if we ended up in a subgroup room
+	var stayed_in: bool = result.get("stayed_in", false)
+
+	# Visual feedback on crystals
 	if _level_scene.feedback_fx:
-		if result["stayed_in"]:
-			# Conjugate stayed in H — subtle green glow
+		if stayed_in:
 			_level_scene.feedback_fx.play_valid_feedback(
 				_level_scene.crystals.values(), _level_scene.edges)
 		else:
-			# Conjugate escaped H — red flash (the "crack")
 			_level_scene.feedback_fx.play_invalid_feedback(
 				_level_scene.crystals.values(), _level_scene.edges)
+
+	# Show result in CrackingPanel
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_cracking_panel.show_result(g_sym_id, h_sym_id, result)
+
+	# Emit signal for UI updates
+	conjugation_result.emit(g_sym_id, h_sym_id,
+		result["result_sym_id"], result["stayed_in"])
+
+	# Update counter and show feedback
+	_update_layer_4_counter()
+	_show_conjugation_feedback(g_sym_id, h_sym_id, result)
+
+	# Refresh panel after a delay (to let result display first)
+	var tw: Tween = _level_scene.create_tween()
+	tw.tween_interval(2.0)
+	tw.tween_callback(_refresh_cracking_panel)
+
+
+## Map sym_id to room index.
+func _sym_id_to_room_idx(sym_id: String) -> int:
+	if _room_state == null:
+		return -1
+	for i in range(_room_state.perm_ids.size()):
+		if _room_state.perm_ids[i] == sym_id:
+			return i
+	return -1
 
 
 ## Show feedback for a conjugation test result.
@@ -1477,13 +1835,13 @@ func _build_cracking_panel(level_scene) -> void:
 	level_scene._crystal_rect = new_crystal_rect
 
 	# Create the CrackingPanel
-	_cracking_panel = CrackingPanel.new()
+	_cracking_panel = CrackingPanelScript.new()
 	_cracking_panel.setup(hud, panel_rect, _room_state, conjugation_cracking_mgr)
 	hud.add_child(_cracking_panel)
 
 	# Connect cracking panel signals
 	_cracking_panel.subgroup_selected.connect(_on_cracking_subgroup_selected)
-	_cracking_panel.conjugation_requested.connect(_on_cracking_conjugation_requested)
+	_cracking_panel.crack_requested.connect(_on_crack_requested)
 	_cracking_panel.confirm_normal_requested.connect(on_confirm_normal_layer4)
 	_cracking_panel.g_slot_tapped.connect(_on_g_slot_tapped)
 	_cracking_panel.h_slot_tapped.connect(_on_h_slot_tapped)
@@ -1491,38 +1849,82 @@ func _build_cracking_panel(level_scene) -> void:
 
 ## Handle subgroup selection from CrackingPanel.
 func _on_cracking_subgroup_selected(subgroup_index: int) -> void:
+	if subgroup_index < 0:
+		# Deselect — clear map highlight and hide ⊕ buttons
+		if _level_scene and _level_scene._room_map:
+			_level_scene._room_map.clear_subgroup_highlight()
+		_update_keybar_layer4_mode("")
+		return
 	on_subgroup_selected_layer4(subgroup_index)
+	# When a subgroup is selected, CrackingPanel resets to "g" mode via refresh → _reset_slots
+	# Update KeyBar ⊕ visibility to match
+	if _cracking_panel != null and is_instance_valid(_cracking_panel):
+		_update_keybar_layer4_mode(_cracking_panel._active_input)
 
 
-## Handle conjugation test request from CrackingPanel.
-func _on_cracking_conjugation_requested(g_sym_id: String, h_sym_id: String) -> void:
-	on_conjugation_test(g_sym_id, h_sym_id)
+## Handle "Попытаться взломать" — run animated conjugation sequence.
+func _on_crack_requested(g_sym_id: String, h_sym_id: String) -> void:
+	_run_animated_conjugation(g_sym_id, h_sym_id)
 
 
-## Handle g-slot tapped — update hint to tell player to press a key.
+## Handle g-slot tapped — show ⊕ only for keys NOT in subgroup.
 func _on_g_slot_tapped() -> void:
+	_update_keybar_layer4_mode("g")
 	if _level_scene == null:
 		return
 	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
 	if hl:
-		hl.text = "Нажмите ключ для выбора g"
-		hl.add_theme_color_override("font_color", L4_RED_DIM)
+		hl.text = "Нажмите ⊕ для выбора g (вне подгруппы)"
+		hl.add_theme_color_override("font_color", Color(0.4, 0.65, 1.0, 0.9))
 
 
-## Handle h-slot tapped — update hint to tell player to press ⊕.
+## Handle h-slot tapped — show ⊕ only for keys IN subgroup.
 func _on_h_slot_tapped() -> void:
+	_update_keybar_layer4_mode("h")
 	if _level_scene == null:
 		return
 	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
 	if hl:
-		hl.text = "Нажмите ⊕ для выбора h из подгруппы"
-		hl.add_theme_color_override("font_color", L4_RED_DIM)
+		hl.text = "Нажмите ⊕ для выбора h (из подгруппы)"
+		hl.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4, 0.9))
+
+
+## Update KeyBar ⊕ visibility based on current g/h mode and subgroup.
+func _update_keybar_layer4_mode(mode: String) -> void:
+	if _level_scene == null or _level_scene._key_bar == null:
+		return
+	if conjugation_cracking_mgr == null or _room_state == null:
+		return
+	var active_idx: int = conjugation_cracking_mgr.get_active_subgroup_index()
+	if active_idx < 0:
+		_level_scene._key_bar.update_layer4_add_buttons("", [], _room_state)
+		return
+	var elements: Array = conjugation_cracking_mgr.get_subgroup_elements(active_idx)
+	_level_scene._key_bar.update_layer4_add_buttons(mode, elements, _room_state)
+
+
+## Handle ⊕ press in Layer 4 — route to g or h based on CrackingPanel's active mode.
+func on_layer4_add_pressed(sym_id: String) -> void:
+	if _cracking_panel == null or not is_instance_valid(_cracking_panel):
+		return
+	if _cracking_panel.is_crack_animating():
+		return  # Block during animation
+	var mode: String = _cracking_panel._active_input
+	if mode == "g":
+		on_conjugator_selected(sym_id)
+	elif mode == "h":
+		on_target_selected(sym_id)
+	else:
+		# Default to g if no mode set
+		on_conjugator_selected(sym_id)
 
 
 ## Refresh cracking panel visuals after state change.
 func _refresh_cracking_panel() -> void:
 	if _cracking_panel != null and is_instance_valid(_cracking_panel):
 		_cracking_panel.refresh()
+		# Sync KeyBar ⊕ visibility with the (possibly reset) active input mode
+		_update_keybar_layer4_mode(_cracking_panel._active_input)
 
 
 # ── Layer 4 Signal Handlers ──────────────────────────────────────────
@@ -1761,7 +2163,7 @@ func get_layer_display_name() -> String:
 		LayerMode.LAYER_1:
 			return "Слой 1: Ключи"
 		LayerMode.LAYER_2_INVERSE:
-			return "Слой 2: Обратные"
+			return "Слой 2: Зеркальные"
 		LayerMode.LAYER_3_SUBGROUPS:
 			return "Слой 3: Группы"
 		LayerMode.LAYER_4_NORMAL:

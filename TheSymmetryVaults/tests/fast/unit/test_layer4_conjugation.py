@@ -120,6 +120,11 @@ class ConjugationCrackingManager:
         if g_perm is None or h_perm is None:
             return {"error": "invalid_sym_id"}
 
+        # T116: validate h is actually in the active subgroup H (defense-in-depth)
+        sg_elements = self._target_subgroups[self._active_subgroup_index].get("elements", [])
+        if h_sym_id not in sg_elements:
+            return {"error": "h_not_in_subgroup"}
+
         # Compute conjugate: g * h * g^-1
         g_inv = g_perm.inverse()
         conjugate = g_perm.compose(h_perm).compose(g_inv)
@@ -1021,6 +1026,140 @@ class TestEdgeCases(unittest.TestCase):
                 f"{h_sid} * {h_sid} * {h_sid}^-1 should be {h_sid}")
             # Verify result is h itself
             self.assertEqual(result["result_sym_id"], h_sid)
+
+
+class TestHInSubgroupValidation(unittest.TestCase):
+    """T116: test_conjugation() rejects h not in active subgroup H."""
+
+    def test_h_not_in_subgroup_returns_error(self):
+        """Using h outside the active subgroup H returns error."""
+        data = load_level_json("level_09.json")  # S3 — has non-trivial subgroups
+        layer_config = data.get("layers", {}).get("layer_4", {})
+        mgr = ConjugationCrackingManager()
+        mgr.setup(data, layer_config)
+
+        mgr.select_subgroup(0)
+        sg_elements = mgr.get_subgroup_elements(0)
+        all_ids = mgr.get_all_sym_ids()
+
+        # Find a sym_id that is NOT in the active subgroup
+        outside_h = None
+        for sid in all_ids:
+            if sid not in sg_elements:
+                outside_h = sid
+                break
+        self.assertIsNotNone(outside_h,
+            "S3 subgroups should not contain all group elements")
+
+        # Use a valid g (any element) with invalid h (outside subgroup)
+        g_sid = all_ids[0]
+        result = mgr.test_conjugation(g_sid, outside_h)
+        self.assertIn("error", result)
+        self.assertEqual(result["error"], "h_not_in_subgroup")
+
+    def test_h_in_subgroup_succeeds(self):
+        """Using h inside the active subgroup H works normally."""
+        data = load_level_json("level_09.json")
+        layer_config = data.get("layers", {}).get("layer_4", {})
+        mgr = ConjugationCrackingManager()
+        mgr.setup(data, layer_config)
+
+        mgr.select_subgroup(0)
+        sg_elements = mgr.get_subgroup_elements(0)
+        all_ids = mgr.get_all_sym_ids()
+
+        g_sid = all_ids[0]
+        h_sid = sg_elements[0]  # h IS in the subgroup
+        result = mgr.test_conjugation(g_sid, h_sid)
+        self.assertNotIn("error", result)
+        self.assertIn("result_sym_id", result)
+        self.assertIn("stayed_in", result)
+
+    def test_h_not_in_subgroup_no_side_effects(self):
+        """Rejected h should not record a test or change state."""
+        data = load_level_json("level_09.json")
+        layer_config = data.get("layers", {}).get("layer_4", {})
+        mgr = ConjugationCrackingManager()
+        mgr.setup(data, layer_config)
+
+        mgr.select_subgroup(0)
+        sg_elements = mgr.get_subgroup_elements(0)
+        all_ids = mgr.get_all_sym_ids()
+
+        outside_h = None
+        for sid in all_ids:
+            if sid not in sg_elements:
+                outside_h = sid
+                break
+
+        history_before = list(mgr._test_history)
+        signals_before = list(mgr._signals)
+        classified_before = dict(mgr._classified)
+
+        result = mgr.test_conjugation(all_ids[0], outside_h)
+        self.assertEqual(result["error"], "h_not_in_subgroup")
+
+        # No side effects
+        self.assertEqual(mgr._test_history, history_before)
+        self.assertEqual(mgr._signals, signals_before)
+        self.assertEqual(mgr._classified, classified_before)
+
+    def test_h_validation_across_multiple_subgroups(self):
+        """h-in-subgroup check applies to whichever subgroup is active."""
+        data = load_level_json("level_09.json")  # S3 — multiple subgroups
+        layer_config = data.get("layers", {}).get("layer_4", {})
+        mgr = ConjugationCrackingManager()
+        mgr.setup(data, layer_config)
+
+        targets = mgr.get_target_subgroups()
+        if len(targets) < 2:
+            self.skipTest("Need at least 2 subgroups for this test")
+
+        all_ids = mgr.get_all_sym_ids()
+
+        # For each subgroup, find an element NOT in it and verify rejection
+        for i in range(min(len(targets), 3)):
+            mgr.select_subgroup(i)
+            sg_elements = mgr.get_subgroup_elements(i)
+            outside_h = None
+            for sid in all_ids:
+                if sid not in sg_elements:
+                    outside_h = sid
+                    break
+            if outside_h is None:
+                continue  # subgroup is the whole group (shouldn't happen after T114)
+
+            result = mgr.test_conjugation(all_ids[0], outside_h)
+            self.assertEqual(result["error"], "h_not_in_subgroup",
+                f"Subgroup {i}: h outside H should be rejected")
+
+    def test_identity_in_subgroup_accepted(self):
+        """The identity element is always in every subgroup, should be accepted as h."""
+        data = load_level_json("level_09.json")
+        layer_config = data.get("layers", {}).get("layer_4", {})
+        mgr = ConjugationCrackingManager()
+        mgr.setup(data, layer_config)
+
+        mgr.select_subgroup(0)
+        sg_elements = mgr.get_subgroup_elements(0)
+
+        # Find the identity element (should be in every subgroup)
+        identity_sid = None
+        for sid in mgr.get_all_sym_ids():
+            p = mgr._sym_id_to_perm.get(sid)
+            if p is not None and p.is_identity():
+                identity_sid = sid
+                break
+
+        if identity_sid is None:
+            self.skipTest("No identity found")
+
+        self.assertIn(identity_sid, sg_elements,
+            "Identity should be in every subgroup")
+
+        result = mgr.test_conjugation(identity_sid, identity_sid)
+        self.assertNotIn("error", result)
+        self.assertTrue(result["stayed_in"])
 
 
 if __name__ == "__main__":
