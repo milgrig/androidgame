@@ -495,7 +495,9 @@ func _create_legend() -> VBoxContainer:
 		{"text": "Доступен", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.AVAILABLE]},
 		{"text": "Слой 1", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_1]},
 		{"text": "Слой 2", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_2]},
+		{"text": "Слой 3", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_3]},
 		{"text": "Слой 4", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_4]},
+		{"text": "Слой 5", "color": HallNodeVisual.STATE_COLORS[HallNodeVisual.VisualState.LAYER_5]},
 	]
 
 	for item in items:
@@ -715,11 +717,12 @@ func _get_hall_visual_state(hall_id: String) -> HallNodeVisual.VisualState:
 		return HallNodeVisual.VisualState.AVAILABLE
 
 	# Hall is completed (Layer 1 done). Check higher layers.
-	# Walk down from Layer 4 to find highest completed layer.
-	for layer in [4, 3, 2]:
+	# Walk down from Layer 5 to find highest completed layer.
+	for layer in [5, 4, 3, 2]:
 		var layer_state: String = _progression.get_hall_layer_state(hall_id, layer)
 		if layer_state == "completed" or layer_state == "perfect":
 			match layer:
+				5: return HallNodeVisual.VisualState.LAYER_5
 				4: return HallNodeVisual.VisualState.LAYER_4
 				3: return HallNodeVisual.VisualState.LAYER_3
 				2: return HallNodeVisual.VisualState.LAYER_2

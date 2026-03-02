@@ -455,6 +455,8 @@ func _on_key_bar_add_to_keyring(key_idx: int) -> void:
 	elif _current_layer == 4:
 		# Route ⊕ press to g or h handler based on CrackingPanel's active mode
 		_layer_controller.on_layer4_add_pressed(sym_id)
+	elif _current_layer == 5:
+		_layer_controller.on_coset_action_layer5(sym_id)
 
 
 ## Handle key hover from KeyBar. key_idx == -1 means hover ended.
