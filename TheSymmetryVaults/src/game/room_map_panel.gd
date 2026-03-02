@@ -301,7 +301,13 @@ func set_coset_coloring(cosets: Array, coset_colors: Array = []) -> void:
 
 
 ## Clear coset coloring and any merge/quotient state.
+## Restores room positions to pre-merge values if a merge was in progress or completed.
 func clear_coset_coloring() -> void:
+	# Restore original positions if a merge modified them
+	if not _merge_original_pos.is_empty():
+		for ridx in range(mini(positions.size(), _merge_original_pos.size())):
+			positions[ridx] = _merge_original_pos[ridx]
+
 	_coset_coloring.clear()
 	_coset_groups.clear()
 	_coset_active = false

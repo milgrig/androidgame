@@ -9,6 +9,7 @@ extends Node2D
 ## - LAYER_2:     Gold   — Layer 2 completed
 ## - LAYER_3:     Orange — Layer 3 completed
 ## - LAYER_4:     Red    — Layer 4 completed
+## - LAYER_5:     Purple — Layer 5 completed
 ##
 ## Emits hall_selected(hall_id) when clicked.
 
@@ -22,6 +23,7 @@ enum VisualState {
 	LAYER_2,     ## Gold   — completed Layer 2
 	LAYER_3,     ## Orange — completed Layer 3
 	LAYER_4,     ## Red    — completed Layer 4
+	LAYER_5,     ## Purple — completed Layer 5
 }
 
 ## --- Data ---
@@ -54,6 +56,7 @@ const STATE_COLORS := {
 	VisualState.LAYER_2:   Color(1.0, 0.85, 0.3, 1.0),
 	VisualState.LAYER_3:   Color(1.0, 0.6, 0.2, 1.0),
 	VisualState.LAYER_4:   Color(0.9, 0.35, 0.3, 1.0),
+	VisualState.LAYER_5:   Color(0.65, 0.3, 0.9, 1.0),
 }
 
 const STATE_GLOW_COLORS := {
@@ -63,6 +66,7 @@ const STATE_GLOW_COLORS := {
 	VisualState.LAYER_2:   Color(1.0, 0.8, 0.2, 0.3),
 	VisualState.LAYER_3:   Color(1.0, 0.55, 0.15, 0.3),
 	VisualState.LAYER_4:   Color(0.9, 0.3, 0.2, 0.3),
+	VisualState.LAYER_5:   Color(0.6, 0.25, 0.85, 0.3),
 }
 
 const STATE_ICONS := {
@@ -72,6 +76,7 @@ const STATE_ICONS := {
 	VisualState.LAYER_2:   "✔",
 	VisualState.LAYER_3:   "✔",
 	VisualState.LAYER_4:   "✔",
+	VisualState.LAYER_5:   "✔",
 }
 
 const STATE_EDGE_COLORS := {
@@ -81,6 +86,7 @@ const STATE_EDGE_COLORS := {
 	VisualState.LAYER_2:   Color(1.0, 0.9, 0.4, 0.8),
 	VisualState.LAYER_3:   Color(1.0, 0.65, 0.3, 0.8),
 	VisualState.LAYER_4:   Color(0.9, 0.4, 0.3, 0.8),
+	VisualState.LAYER_5:   Color(0.65, 0.35, 0.9, 0.8),
 }
 
 

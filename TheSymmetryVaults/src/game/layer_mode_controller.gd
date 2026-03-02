@@ -13,6 +13,23 @@ extends RefCounted
 
 const CrackingPanelScript = preload("res://src/ui/cracking_panel.gd")
 
+## Coset colors for map coloring (mirrors QuotientPanel.COSET_COLORS).
+## Duplicated here to avoid class-visibility deadlocks (KB-001).
+const COSET_COLORS: Array = [
+	Color(0.85, 0.45, 0.95, 0.9),   # purple-pink
+	Color(0.40, 0.75, 1.00, 0.9),   # sky blue
+	Color(0.95, 0.65, 0.25, 0.9),   # orange
+	Color(0.40, 0.95, 0.55, 0.9),   # mint green
+	Color(0.95, 0.45, 0.55, 0.9),   # coral
+	Color(0.70, 0.85, 0.30, 0.9),   # lime
+	Color(0.50, 0.55, 1.00, 0.9),   # lavender
+	Color(0.95, 0.80, 0.30, 0.9),   # gold
+	Color(0.35, 0.85, 0.85, 0.9),   # teal
+	Color(0.90, 0.55, 0.70, 0.9),   # rose
+	Color(0.60, 0.95, 0.80, 0.9),   # seafoam
+	Color(0.80, 0.60, 0.40, 0.9),   # tan
+]
+
 # ── Layer mode enum ──────────────────────────────────────────────────
 
 enum LayerMode {
@@ -37,7 +54,7 @@ var layer_number: int = 1
 var inverse_pair_mgr: InversePairManager = null
 var keyring_assembly_mgr: KeyringAssemblyManager = null
 var conjugation_cracking_mgr: ConjugationCrackingManager = null
-var quotient_group_mgr: QuotientGroupManager = null
+var quotient_group_mgr = null  ## QuotientGroupManager instance
 var _level_scene = null  ## Weak reference to LevelScene (no type to avoid circular)
 var _room_state: RoomState = null
 var _hall_id: String = ""
@@ -2193,7 +2210,7 @@ func _setup_layer_5(level_data: Dictionary, level_scene) -> void:
 
 	# 6. Initialize QuotientGroupManager
 	var layer_config: Dictionary = level_data.get("layers", {}).get("layer_5", {})
-	quotient_group_mgr = QuotientGroupManager.new()
+	quotient_group_mgr = load("res://src/core/quotient_group_manager.gd").new()
 	quotient_group_mgr.setup(level_data, layer_config)
 
 	# 7. Connect QuotientGroupManager signals
@@ -2223,6 +2240,32 @@ func _setup_layer_5(level_data: Dictionary, level_scene) -> void:
 		quotient_group_mgr.restore_from_save(saved)
 		_update_layer_5_counter()
 		_refresh_quotient_panel()
+		# Restore assembly mode if player was mid-assembly
+		if quotient_group_mgr.get_current_assembly_sg() >= 0 and _quotient_panel:
+			var asm_sg: int = quotient_group_mgr.get_current_assembly_sg()
+			var astate: Dictionary = quotient_group_mgr.get_assembly_state(asm_sg)
+			if not astate.is_empty():
+				var info: Dictionary = {
+					"num_cosets": quotient_group_mgr.get_num_cosets(asm_sg),
+					"coset_size": quotient_group_mgr.get_coset_size(asm_sg),
+					"prefilled_elements": quotient_group_mgr.get_normal_subgroup_elements(asm_sg),
+				}
+				_quotient_panel.enter_assembly_mode(asm_sg, info)
+				_quotient_panel.refresh_assembly_from_state(asm_sg, astate)
+
+		# Restore type quiz if player completed assembly but not type ID
+		if _quotient_panel:
+			for sg_i in range(quotient_group_mgr.get_normal_subgroup_count()):
+				var cstate: int = quotient_group_mgr.get_construction_state(sg_i)
+				if cstate == 2:  # ConstructionState.COSETS_DONE
+					var cosets: Array = quotient_group_mgr.compute_cosets(sg_i)
+					var cosets_info: Dictionary = {
+						"quotient_order": cosets.size(),
+						"cosets": cosets,
+					}
+					var options: Array = quotient_group_mgr.generate_type_options(sg_i)
+					_quotient_panel.enter_type_quiz_mode(sg_i, cosets_info, options)
+					break  # Only one quiz at a time
 
 	# 13. Save "in_progress" state
 	GameManager.set_layer_progress(_hall_id, 5, quotient_group_mgr.save_state())
@@ -2341,30 +2384,136 @@ func _build_quotient_panel(level_scene) -> void:
 	level_scene._crystal_rect = new_crystal_rect
 
 	# Create the QuotientPanel (separate class, analogous to CrackingPanel)
-	_quotient_panel = QuotientPanel.new()
+	_quotient_panel = load("res://src/ui/quotient_panel.gd").new()
 	_quotient_panel.setup(hud, panel_rect, _room_state, quotient_group_mgr)
 	hud.add_child(_quotient_panel)
 
 	# Connect QuotientPanel signals
-	_quotient_panel.construct_requested.connect(_on_construct_quotient)
+	# Note: assembly_started no longer connected — assembly auto-starts
+	# from _on_quotient_subgroup_selected when player clicks a non-constructed entry.
+	_quotient_panel.assembly_completed.connect(_on_assembly_completed)
+	_quotient_panel.back_to_selection.connect(_on_assembly_back)
+	_quotient_panel.type_answer_submitted.connect(_on_type_answer_submitted)
 	_quotient_panel.merge_requested.connect(_on_merge_quotient)
 	_quotient_panel.subgroup_selected.connect(_on_quotient_subgroup_selected)
 
 
-## Handle construct button press — compute and verify the quotient group.
-func _on_construct_quotient(subgroup_index: int) -> void:
+## Start interactive coset assembly for the given subgroup.
+## Called from _on_quotient_subgroup_selected when player clicks a non-constructed entry.
+func _on_assembly_started(sg_index: int) -> void:
+	if quotient_group_mgr == null or _quotient_panel == null:
+		return
+
+	var assembly_info: Dictionary = quotient_group_mgr.begin_assembly(sg_index)
+	if assembly_info.has("error"):
+		return
+
+	_quotient_panel.enter_assembly_mode(sg_index, assembly_info)
+
+	# Show the eN coset (slot 0) highlighted on the map
+	if _level_scene and _level_scene._room_map:
+		var ns_elements: Array = quotient_group_mgr.get_normal_subgroup_elements(sg_index)
+		_level_scene._room_map.highlight_subgroup(ns_elements)
+
+	# Update hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel") if _level_scene else null
+	if hl:
+		var coset_size: int = assembly_info["coset_size"]
+		var num_cosets: int = assembly_info["num_cosets"]
+		hl.text = "Разбей %d комнат на %d классов по %d эл." % [
+			_room_state.group_order if _room_state else 0, num_cosets, coset_size]
+		hl.add_theme_color_override("font_color", L5_PURPLE)
+
+	_save_layer_5_progress()
+
+
+## Handle assembly completion — all coset slots filled.
+## Instead of auto-constructing, transition to type quiz (Step 2).
+func _on_assembly_completed(sg_index: int) -> void:
 	if quotient_group_mgr == null:
 		return
 
-	var result: Dictionary = quotient_group_mgr.construct_quotient(subgroup_index)
-	if result.has("error"):
-		_show_quotient_error_feedback(result["error"], subgroup_index)
+	# Finalize: validate and transition COSETS_BUILDING -> COSETS_DONE
+	quotient_group_mgr.finalize_assembly(sg_index)
+
+	# Prepare coset info for the quiz display
+	var cosets: Array = quotient_group_mgr.compute_cosets(sg_index)
+	var q_order: int = cosets.size()
+	var cosets_info: Dictionary = {
+		"quotient_order": q_order,
+		"cosets": cosets,
+	}
+
+	# Generate type options (correct + distractors)
+	var options: Array = quotient_group_mgr.generate_type_options(sg_index)
+
+	# Show merge animation on map (cosets collapse visually)
+	if _level_scene and _level_scene._room_map:
+		var coset_colors: Array = []
+		for ci in range(cosets.size()):
+			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+		_level_scene._room_map.highlight_subgroup([])
+		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+
+	# Transition panel to type quiz mode
+	if _quotient_panel:
+		_quotient_panel.enter_type_quiz_mode(sg_index, cosets_info, options)
+
+	# Update hint
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel") if _level_scene else null
+	if hl:
+		hl.text = "Какая группа имеет порядок %d?" % q_order
+		hl.add_theme_color_override("font_color", L5_PURPLE)
+
+	_save_layer_5_progress()
+
+
+## Handle "Назад" button during assembly — return to selection.
+func _on_assembly_back() -> void:
+	if _quotient_panel:
+		_quotient_panel.exit_assembly_mode()
+	if _level_scene and _level_scene._room_map:
+		_level_scene._room_map.clear_coset_coloring()
+		_level_scene._room_map.highlight_subgroup([])
+
+
+## Handle type quiz answer submission (Step 2).
+func _on_type_answer_submitted(sg_index: int, proposed_type: String) -> void:
+	if quotient_group_mgr == null or _quotient_panel == null:
 		return
 
-	# Success — show feedback and update UI
-	_show_quotient_success_feedback(subgroup_index, result)
+	var result: Dictionary = quotient_group_mgr.complete_type_identification(
+		sg_index, proposed_type)
+
+	if result.has("error"):
+		if result["error"] == "wrong_type":
+			# Wrong answer -- red flash, player can try again
+			_quotient_panel.show_quiz_wrong(proposed_type)
+			var hl = _level_scene.hud_layer.get_node_or_null("HintLabel") if _level_scene else null
+			if hl:
+				hl.text = "Нет, это не %s. Попробуй ещё!" % proposed_type
+				hl.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3, 0.9))
+		return
+
+	# Correct! Show green feedback on quiz
+	var correct_type: String = result.get("quotient_type", proposed_type)
+	_quotient_panel.show_quiz_correct(correct_type)
+
+	# Show success feedback (crystals glow, hint updates)
+	_show_quotient_success_feedback(sg_index, result)
 	_update_layer_5_counter()
 	_save_layer_5_progress()
+
+	# After a delay, exit quiz and return to selection
+	if _level_scene:
+		var timer: SceneTreeTimer = _level_scene.get_tree().create_timer(2.0)
+		timer.timeout.connect(_exit_type_quiz_to_selection)
+
+
+## Exit type quiz and return to selection phase (delayed callback).
+func _exit_type_quiz_to_selection() -> void:
+	if _quotient_panel and _quotient_panel.is_in_type_quiz_mode():
+		_quotient_panel.exit_type_quiz_mode()
 	_refresh_quotient_panel()
 
 
@@ -2396,7 +2545,7 @@ func _show_quotient_success_feedback(subgroup_index: int, result: Dictionary) ->
 		var cosets: Array = result["cosets"]
 		var coset_colors: Array = []
 		for ci in range(cosets.size()):
-			coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 		_level_scene._room_map.highlight_subgroup([])  # Clear old highlight
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 
@@ -2445,7 +2594,7 @@ func _on_merge_quotient(subgroup_index: int) -> void:
 	# Build coset color array matching QuotientPanel palette
 	var coset_colors: Array = []
 	for ci in range(cosets.size()):
-		coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+		coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 
 	# Clear subgroup highlight and start merge animation on room map
 	if _level_scene._room_map:
@@ -2463,46 +2612,49 @@ func _on_merge_quotient(subgroup_index: int) -> void:
 		hl.add_theme_color_override("font_color", L5_PURPLE)
 
 
-## Handle subgroup selection in the quotient panel — show coset coloring on map.
+## Handle subgroup selection in the quotient panel.
+## For non-constructed subgroups: auto-starts assembly (Step 1) immediately.
+## For constructed subgroups: shows coset coloring on map.
+## Deselection (index < 0): clears map.
 func _on_quotient_subgroup_selected(index: int) -> void:
 	if _level_scene == null:
 		return
 
+	# ALWAYS reset map first: clear merge animation, quotient graph, coset coloring,
+	# and restore room positions to their original layout.
+	if _level_scene._room_map:
+		_level_scene._room_map.clear_coset_coloring()
+		_level_scene._room_map.highlight_subgroup([])
+
 	if index < 0:
-		# Deselected — clear coset coloring and map highlight
-		if _level_scene._room_map:
-			_level_scene._room_map.clear_coset_coloring()
-			_level_scene._room_map.highlight_subgroup([])
 		return
 
 	if quotient_group_mgr == null:
 		return
 
-	# Show the normal subgroup elements highlighted on the map
-	var ns_elements: Array = quotient_group_mgr.get_normal_subgroup_elements(index)
+	# If constructed: show coset coloring on map + hint, then return
+	if quotient_group_mgr.is_constructed(index):
+		if _level_scene._room_map:
+			var cosets: Array = quotient_group_mgr.compute_cosets(index)
+			var coset_colors: Array = []
+			for ci in range(cosets.size()):
+				coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+			_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 
-	# If this quotient has been constructed, show full coset coloring on map
-	if quotient_group_mgr.is_constructed(index) and _level_scene._room_map:
-		var cosets: Array = quotient_group_mgr.compute_cosets(index)
-		var coset_colors: Array = []
-		for ci in range(cosets.size()):
-			coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
-		_level_scene._room_map.highlight_subgroup([])  # Clear old highlight
-		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
-	elif not ns_elements.is_empty() and _level_scene._room_map:
-		# Not yet constructed — just highlight the normal subgroup elements
-		_level_scene._room_map.clear_coset_coloring()
-		_level_scene._room_map.highlight_subgroup(ns_elements)
+		var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
+		if hl:
+			var ns_elements: Array = quotient_group_mgr.get_normal_subgroup_elements(index)
+			var ns_data: Array = quotient_group_mgr.get_normal_subgroups()
+			if index < ns_data.size():
+				var q_order: int = ns_data[index].get("quotient_order", 0)
+				var q_type: String = ns_data[index].get("quotient_type", "?")
+				hl.text = "N (пор. %d) → G/N ≅ %s (пор. %d)" % [ns_elements.size(), q_type, q_order]
+				hl.add_theme_color_override("font_color", L5_PURPLE)
+		return
 
-	# Show hint
-	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
-	if hl:
-		var ns_data: Array = quotient_group_mgr.get_normal_subgroups()
-		if index < ns_data.size():
-			var q_type: String = ns_data[index].get("quotient_type", "?")
-			var q_order: int = ns_data[index].get("quotient_order", 0)
-			hl.text = "N (пор. %d) \u2192 G/N \u2245 %s (пор. %d)" % [ns_elements.size(), q_type, q_order]
-			hl.add_theme_color_override("font_color", L5_PURPLE)
+	# Not constructed — auto-start assembly (Step 1) immediately.
+	# Clicking the subgroup entry directly begins interactive coset building.
+	_on_assembly_started(index)
 
 
 ## Refresh the quotient panel to reflect current state.
@@ -2514,17 +2666,23 @@ func _refresh_quotient_panel() -> void:
 	_quotient_panel.refresh()
 
 
-## Called when the player taps ⊕ on a key in Layer 5.
-## Highlights which coset the element belongs to (using selected subgroup, or first).
+## Called when the player taps \u2295 on a key in Layer 5.
+## During assembly: adds element to the active coset slot with validation.
+## Outside assembly: highlights coset membership.
 func on_coset_action_layer5(sym_id: String) -> void:
 	if quotient_group_mgr == null or _level_scene == null:
 		return
 
+	# Check if panel is in assembly mode
+	if _quotient_panel and _quotient_panel.is_in_assembly_mode():
+		_handle_assembly_tap(sym_id)
+		return
+
+	# --- Non-assembly mode: existing coset highlight behavior ---
 	var normal_subgroups: Array = quotient_group_mgr.get_normal_subgroups()
 	if normal_subgroups.is_empty():
 		return
 
-	# Use the selected subgroup from the panel, or default to 0
 	var sg_idx: int = 0
 	if _quotient_panel and _quotient_panel.has_method("get_selected_index"):
 		var sel: int = _quotient_panel.get_selected_index()
@@ -2537,22 +2695,19 @@ func on_coset_action_layer5(sym_id: String) -> void:
 
 	var cosets: Array = quotient_group_mgr.compute_cosets(sg_idx)
 
-	# If quotient is constructed, show full coset coloring on map
 	if quotient_group_mgr.is_constructed(sg_idx) and _level_scene._room_map:
 		var coset_colors: Array = []
 		for ci in range(cosets.size()):
-			coset_colors.append(QuotientPanel.COSET_COLORS[ci % QuotientPanel.COSET_COLORS.size()])
+			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 		_level_scene._room_map.highlight_subgroup([])
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 	else:
-		# Not yet constructed — just highlight the coset elements
 		for coset in cosets:
 			if coset["representative"] == coset_rep:
 				if _level_scene._room_map:
 					_level_scene._room_map.highlight_subgroup(coset["elements"])
 				break
 
-	# Show hint about the coset
 	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
 	if hl:
 		var elem_name: String = quotient_group_mgr.get_name(sym_id)
@@ -2562,6 +2717,89 @@ func on_coset_action_layer5(sym_id: String) -> void:
 				hl.text = "%s \u2208 %sN = {%s}" % [elem_name, rep_name, ", ".join(coset["elements"])]
 				hl.add_theme_color_override("font_color", L5_PURPLE)
 				break
+
+
+## Handle \u2295 tap during coset assembly: validate and add to active slot.
+func _handle_assembly_tap(sym_id: String) -> void:
+	if _quotient_panel == null or quotient_group_mgr == null:
+		return
+	var sg_idx: int = _quotient_panel.get_assembly_sg_index()
+	if sg_idx < 0:
+		return
+
+	var result: Dictionary = quotient_group_mgr.try_add_to_assembly(sg_idx, sym_id)
+
+	if not result["accepted"]:
+		match result["reason"]:
+			"wrong_coset":
+				if _quotient_panel:
+					_quotient_panel.show_rejection_flash(result["slot_idx"])
+				_show_coset_rejection_hint(sym_id)
+			"already_assigned":
+				if _quotient_panel:
+					_quotient_panel.show_duplicate_flash(result["slot_idx"])
+				var hl = _level_scene.hud_layer.get_node_or_null("HintLabel") if _level_scene else null
+				if hl:
+					hl.text = "%s уже размещён в классе" % quotient_group_mgr.get_name(sym_id)
+					hl.add_theme_color_override("font_color", Color(1.0, 0.6, 0.2, 0.9))
+		return
+
+	# Accepted -- add visual dot to slot
+	var slot_idx: int = result["slot_idx"]
+	if _quotient_panel:
+		_quotient_panel.add_element_to_slot(slot_idx, sym_id)
+
+	# Update coset coloring on map progressively
+	_update_assembly_map_coloring(sg_idx)
+
+	# Show hint about what was added
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel") if _level_scene else null
+	if hl:
+		var elem_name: String = quotient_group_mgr.get_name(sym_id)
+		hl.text = "%s \u2192 класс #%d" % [elem_name, slot_idx + 1]
+		hl.add_theme_color_override("font_color", L5_PURPLE)
+
+	# If slot is now full, lock it
+	if result["slot_full"]:
+		if _quotient_panel:
+			_quotient_panel.lock_coset_slot(slot_idx)
+		if _level_scene and _level_scene.feedback_fx:
+			_level_scene.feedback_fx.play_valid_feedback(
+				_level_scene.crystals.values(), _level_scene.edges)
+
+	# If all cosets are done, complete step 1
+	if result["all_done"]:
+		_on_assembly_completed(sg_idx)
+
+	_save_layer_5_progress()
+
+
+## Show a hint that the element doesn't belong to this coset.
+func _show_coset_rejection_hint(sym_id: String) -> void:
+	var hl = _level_scene.hud_layer.get_node_or_null("HintLabel") if _level_scene else null
+	if hl == null:
+		return
+	var elem_name: String = quotient_group_mgr.get_name(sym_id)
+	hl.text = "%s не принадлежит этому классу" % elem_name
+	hl.add_theme_color_override("font_color", Color(1.0, 0.4, 0.3, 0.9))
+
+
+## Update room map coloring during assembly to show filled cosets.
+func _update_assembly_map_coloring(sg_idx: int) -> void:
+	if _level_scene == null or _level_scene._room_map == null:
+		return
+	var astate: Dictionary = quotient_group_mgr.get_assembly_state(sg_idx)
+	var slots: Array = astate.get("coset_slots", [])
+
+	var cosets_for_map: Array = []
+	var colors_for_map: Array = []
+	for ci in range(slots.size()):
+		if slots[ci].size() > 0:
+			cosets_for_map.append({"elements": slots[ci], "representative": slots[ci][0]})
+			colors_for_map.append(COSET_COLORS[ci % COSET_COLORS.size()])
+
+	if not cosets_for_map.is_empty():
+		_level_scene._room_map.set_coset_coloring(cosets_for_map, colors_for_map)
 
 
 # ── Layer 5 Signal Handlers ──────────────────────────────────────────

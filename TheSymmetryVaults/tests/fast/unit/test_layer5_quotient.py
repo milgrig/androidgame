@@ -1,9 +1,11 @@
 """
 Unit tests for Layer 5: Quotient Group Construction.
 Tests the QuotientGroupManager logic (Python mirror) and validates
-coset decomposition and quotient table correctness across all 24 level JSON files.
+coset decomposition, quotient table correctness, two-phase interactive
+construction, and type identification across all 24 level JSON files.
 
 T119: Layer 5 Engine -- Quotient Group Manager
+T128: Interactive validation API (two-phase construction)
 """
 import json
 import os
@@ -26,6 +28,24 @@ def is_normal(subgroup_perms: list[Permutation], group_perms: list[Permutation])
     return True
 
 
+# === Construction State Enum (mirrors GDScript enum) ===
+
+class ConstructionState:
+    PENDING = 0
+    COSETS_BUILDING = 1
+    COSETS_DONE = 2
+    TYPE_IDENTIFIED = 3
+
+
+# === All known quotient types for distractor generation ===
+
+ALL_QUOTIENT_TYPES = [
+    "Z2", "Z3", "Z4", "Z2xZ2", "Z5", "Z6", "S3",
+    "Z4_or_Z2xZ2", "Z6_or_S3", "Z8", "Z4xZ2", "Z2xZ2xZ2",
+    "D4", "Q8", "order8",
+]
+
+
 # === Python mirror of QuotientGroupManager ===
 
 class QuotientGroupManager:
@@ -42,6 +62,7 @@ class QuotientGroupManager:
         self._cosets: dict[int, list[dict]] = {}
         self._quotient_tables: dict[int, dict] = {}
 
+        self._construction_states: dict[int, int] = {}
         self._constructed: dict[int, dict] = {}
         self._constructed_count: int = 0
 
@@ -61,6 +82,7 @@ class QuotientGroupManager:
         self._normal_subgroups.clear()
         self._cosets.clear()
         self._quotient_tables.clear()
+        self._construction_states.clear()
         self._constructed.clear()
         self._constructed_count = 0
         self._cayley_table.clear()
@@ -88,6 +110,10 @@ class QuotientGroupManager:
             self._normal_subgroups.append(qg)
 
         self._total_count = len(self._normal_subgroups)
+
+        # Initialize all construction states to PENDING
+        for i in range(self._total_count):
+            self._construction_states[i] = ConstructionState.PENDING
 
     # --- Normal Subgroup Access ---
 
@@ -240,7 +266,157 @@ class QuotientGroupManager:
             },
         }
 
-    # --- Construction ---
+    # --- Construction State ---
+
+    def get_construction_state(self, sg_index: int) -> int:
+        return self._construction_states.get(sg_index, ConstructionState.PENDING)
+
+    def begin_coset_building(self, sg_index: int) -> bool:
+        if sg_index < 0 or sg_index >= len(self._normal_subgroups):
+            return False
+        state = self._construction_states.get(sg_index, ConstructionState.PENDING)
+        if state != ConstructionState.PENDING:
+            return False
+        self._construction_states[sg_index] = ConstructionState.COSETS_BUILDING
+        return True
+
+    # --- Step 1 API: Coset Assignment Validation ---
+
+    def validate_element_in_coset(self, sg_index: int, element_sym_id: str, coset_index: int) -> bool:
+        cosets = self.compute_cosets(sg_index)
+        if coset_index < 0 or coset_index >= len(cosets):
+            return False
+        return element_sym_id in cosets[coset_index]["elements"]
+
+    def get_coset_size(self, sg_index: int) -> int:
+        if sg_index < 0 or sg_index >= len(self._normal_subgroups):
+            return 0
+        ns_elements = self._normal_subgroups[sg_index].get("normal_subgroup_elements", [])
+        return len(ns_elements)
+
+    def get_num_cosets(self, sg_index: int) -> int:
+        cosets = self.compute_cosets(sg_index)
+        return len(cosets)
+
+    def is_coset_assignment_complete(self, sg_index: int, assignments: dict) -> bool:
+        cosets = self.compute_cosets(sg_index)
+        if not cosets:
+            return False
+
+        if len(assignments) != len(self._all_sym_ids):
+            return False
+
+        for sym_id in self._all_sym_ids:
+            if sym_id not in assignments:
+                return False
+            assigned_coset = assignments[sym_id]
+            if assigned_coset < 0 or assigned_coset >= len(cosets):
+                return False
+            if sym_id not in cosets[assigned_coset]["elements"]:
+                return False
+
+        return True
+
+    def complete_coset_assignment(self, sg_index: int, assignments: dict) -> bool:
+        if sg_index < 0 or sg_index >= len(self._normal_subgroups):
+            return False
+
+        state = self._construction_states.get(sg_index, ConstructionState.PENDING)
+        if state != ConstructionState.COSETS_BUILDING:
+            return False
+
+        correct = self.is_coset_assignment_complete(sg_index, assignments)
+        self._signals.append(("coset_assignment_validated", sg_index, correct))
+
+        if correct:
+            self._construction_states[sg_index] = ConstructionState.COSETS_DONE
+        return correct
+
+    # --- Step 2 API: Type Identification ---
+
+    def check_quotient_type(self, sg_index: int, proposed_type: str) -> bool:
+        correct_type = self.get_quotient_type(sg_index)
+        if correct_type == "":
+            return False
+        return proposed_type == correct_type
+
+    def get_quotient_type(self, sg_index: int) -> str:
+        if sg_index < 0 or sg_index >= len(self._normal_subgroups):
+            return ""
+        return self._normal_subgroups[sg_index].get("quotient_type", "")
+
+    def generate_type_options(self, sg_index: int) -> list[str]:
+        correct = self.get_quotient_type(sg_index)
+        if correct == "":
+            return []
+
+        quotient_order = self._normal_subgroups[sg_index].get("quotient_order", 0)
+
+        distractors_by_order = {
+            2: ["Z2", "Z3", "Z4"],
+            3: ["Z3", "Z2", "S3"],
+            4: ["Z4", "Z2xZ2", "Z4_or_Z2xZ2", "Z2", "D4"],
+            6: ["Z6", "S3", "Z6_or_S3", "Z3", "D3"],
+            8: ["Z8", "Z4xZ2", "Z2xZ2xZ2", "D4", "Q8", "order8"],
+        }
+
+        candidates = list(distractors_by_order.get(quotient_order, []))
+
+        # Add some wrong-order distractors for variety
+        for t in ALL_QUOTIENT_TYPES:
+            if t != correct and t not in candidates:
+                candidates.append(t)
+
+        # Pick 2-3 distractors (not equal to correct)
+        target_count = 3 if len(candidates) >= 3 else len(candidates)
+        distractors = []
+        for c in candidates:
+            if c != correct and len(distractors) < target_count:
+                distractors.append(c)
+
+        # Build options: correct + distractors (no shuffle in test mirror for determinism)
+        options = [correct] + distractors
+        return options
+
+    def complete_type_identification(self, sg_index: int, proposed_type: str) -> dict:
+        if sg_index < 0 or sg_index >= len(self._normal_subgroups):
+            return {"error": "invalid_index"}
+
+        state = self._construction_states.get(sg_index, ConstructionState.PENDING)
+        if state != ConstructionState.COSETS_DONE:
+            return {"error": "wrong_state"}
+
+        correct = self.check_quotient_type(sg_index, proposed_type)
+        self._signals.append(("quotient_type_guessed", sg_index, correct))
+
+        if not correct:
+            return {"error": "wrong_type"}
+
+        # Finalize
+        self._construction_states[sg_index] = ConstructionState.TYPE_IDENTIFIED
+
+        cosets = self.compute_cosets(sg_index)
+        table = self.get_quotient_table(sg_index)
+        ns_data = self._normal_subgroups[sg_index]
+
+        result = {
+            "quotient_order": len(cosets),
+            "quotient_type": ns_data.get("quotient_type", ""),
+            "cosets": cosets,
+            "table": table,
+            "verified": True,
+        }
+
+        self._constructed[sg_index] = result
+        self._constructed_count += 1
+        self._signals.append(("quotient_constructed", sg_index))
+
+        if self._constructed_count >= self._total_count:
+            self._signals.append(("all_quotients_done",))
+
+        return result
+
+    # --- Legacy one-shot construction ---
 
     def construct_quotient(self, subgroup_index: int) -> dict:
         if subgroup_index < 0 or subgroup_index >= len(self._normal_subgroups):
@@ -268,6 +444,7 @@ class QuotientGroupManager:
 
         self._constructed[subgroup_index] = result
         self._constructed_count += 1
+        self._construction_states[subgroup_index] = ConstructionState.TYPE_IDENTIFIED
         self._signals.append(("quotient_constructed", subgroup_index))
 
         if self._constructed_count >= self._total_count:
@@ -299,11 +476,16 @@ class QuotientGroupManager:
         for idx, val in self._constructed.items():
             constructed_data[str(idx)] = dict(val)
 
+        states_data = {}
+        for idx, val in self._construction_states.items():
+            states_data[str(idx)] = val
+
         return {
             "status": "completed" if self.is_complete() else "in_progress",
             "constructed": constructed_data,
             "constructed_count": self._constructed_count,
             "total_count": self._total_count,
+            "construction_states": states_data,
         }
 
     def restore_from_save(self, save_data: dict) -> None:
@@ -313,6 +495,20 @@ class QuotientGroupManager:
             self._constructed[int(idx_str)] = val
 
         self._constructed_count = save_data.get("constructed_count", len(self._constructed))
+
+        # Restore construction states
+        self._construction_states.clear()
+        states_data = save_data.get("construction_states", {})
+        for idx_str, val in states_data.items():
+            self._construction_states[int(idx_str)] = val
+
+        # Ensure all subgroups have a state entry
+        for i in range(self._total_count):
+            if i not in self._construction_states:
+                if i in self._constructed:
+                    self._construction_states[i] = ConstructionState.TYPE_IDENTIFIED
+                else:
+                    self._construction_states[i] = ConstructionState.PENDING
 
     # --- Query helpers ---
 
@@ -381,6 +577,16 @@ def _setup_mgr(filename: str) -> QuotientGroupManager:
     return mgr
 
 
+def _build_correct_assignments(mgr: QuotientGroupManager, sg_index: int) -> dict:
+    """Build a correct element->coset_index assignment dict."""
+    cosets = mgr.compute_cosets(sg_index)
+    assignments = {}
+    for ci, coset in enumerate(cosets):
+        for elem in coset["elements"]:
+            assignments[elem] = ci
+    return assignments
+
+
 # =============================================================================
 # Test Classes
 # =============================================================================
@@ -435,6 +641,12 @@ class TestQuotientSetup(unittest.TestCase):
         self.assertEqual(len(all_ids), 6, "S3 has 6 elements")
         self.assertIn("e", all_ids)
         self.assertIn("r1", all_ids)
+
+    def test_construction_states_initialized(self):
+        """All subgroups should start in PENDING state."""
+        mgr = _setup_mgr("level_06.json")
+        for i in range(3):
+            self.assertEqual(mgr.get_construction_state(i), ConstructionState.PENDING)
 
 
 class TestNormalSubgroupAccess(unittest.TestCase):
@@ -765,6 +977,12 @@ class TestConstruction(unittest.TestCase):
         mgr = _setup_mgr("level_09.json")
         self.assertEqual(mgr.get_construction(0), {})
 
+    def test_construct_sets_state_to_type_identified(self):
+        """One-shot construct_quotient should set state to TYPE_IDENTIFIED."""
+        mgr = _setup_mgr("level_09.json")
+        mgr.construct_quotient(0)
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.TYPE_IDENTIFIED)
+
 
 class TestProgress(unittest.TestCase):
     """Test progress tracking."""
@@ -833,6 +1051,34 @@ class TestPersistence(unittest.TestCase):
         # Cannot re-construct
         result = mgr2.construct_quotient(0)
         self.assertEqual(result["error"], "already_constructed")
+
+    def test_save_restore_construction_states(self):
+        """Construction states survive save/restore cycle."""
+        mgr = _setup_mgr("level_06.json")  # V4: 3 quotients
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+        # sg 0 is COSETS_DONE, sg 1 is PENDING, sg 2 is PENDING
+
+        state = mgr.save_state()
+
+        mgr2 = _setup_mgr("level_06.json")
+        mgr2.restore_from_save(state)
+        self.assertEqual(mgr2.get_construction_state(0), ConstructionState.COSETS_DONE)
+        self.assertEqual(mgr2.get_construction_state(1), ConstructionState.PENDING)
+
+    def test_restore_without_states_infers_from_constructed(self):
+        """Old save format without construction_states still works."""
+        mgr = _setup_mgr("level_09.json")
+        mgr.construct_quotient(0)
+        state = mgr.save_state()
+
+        # Remove construction_states from saved data (simulate old format)
+        del state["construction_states"]
+
+        mgr2 = _setup_mgr("level_09.json")
+        mgr2.restore_from_save(state)
+        self.assertEqual(mgr2.get_construction_state(0), ConstructionState.TYPE_IDENTIFIED)
 
 
 class TestCosetRepresentativeLookup(unittest.TestCase):
@@ -1004,6 +1250,347 @@ class TestEdgeCases(unittest.TestCase):
             result = mgr.construct_quotient(j)
             self.assertNotIn("error", result,
                 f"D4 quotient {j} construction failed")
+
+
+# =============================================================================
+# T128: Two-Phase Construction Tests
+# =============================================================================
+
+
+class TestConstructionStateTransitions(unittest.TestCase):
+    """Test the state machine: PENDING -> COSETS_BUILDING -> COSETS_DONE -> TYPE_IDENTIFIED."""
+
+    def test_initial_state_is_pending(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.PENDING)
+
+    def test_begin_coset_building(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertTrue(mgr.begin_coset_building(0))
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.COSETS_BUILDING)
+
+    def test_begin_coset_building_only_from_pending(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        # Cannot begin again from COSETS_BUILDING
+        self.assertFalse(mgr.begin_coset_building(0))
+
+    def test_begin_coset_building_invalid_index(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertFalse(mgr.begin_coset_building(99))
+        self.assertFalse(mgr.begin_coset_building(-1))
+
+    def test_complete_coset_assignment_transitions_to_cosets_done(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        self.assertTrue(mgr.complete_coset_assignment(0, assignments))
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.COSETS_DONE)
+
+    def test_complete_coset_assignment_wrong_stays_in_building(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        # All elements assigned to coset 0 — wrong
+        bad_assignments = {sid: 0 for sid in mgr.get_all_sym_ids()}
+        self.assertFalse(mgr.complete_coset_assignment(0, bad_assignments))
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.COSETS_BUILDING)
+
+    def test_complete_coset_assignment_requires_building_state(self):
+        mgr = _setup_mgr("level_09.json")
+        # Still PENDING — should fail
+        assignments = _build_correct_assignments(mgr, 0)
+        self.assertFalse(mgr.complete_coset_assignment(0, assignments))
+
+    def test_complete_type_identification_transitions_to_type_identified(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+
+        correct_type = mgr.get_quotient_type(0)
+        result = mgr.complete_type_identification(0, correct_type)
+        self.assertNotIn("error", result)
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.TYPE_IDENTIFIED)
+        self.assertTrue(mgr.is_constructed(0))
+
+    def test_complete_type_wrong_stays_in_cosets_done(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+
+        result = mgr.complete_type_identification(0, "WRONG_TYPE")
+        self.assertEqual(result["error"], "wrong_type")
+        self.assertEqual(mgr.get_construction_state(0), ConstructionState.COSETS_DONE)
+        self.assertFalse(mgr.is_constructed(0))
+
+    def test_complete_type_requires_cosets_done_state(self):
+        mgr = _setup_mgr("level_09.json")
+        # Still PENDING
+        result = mgr.complete_type_identification(0, "Z2")
+        self.assertEqual(result["error"], "wrong_state")
+
+    def test_full_two_phase_flow(self):
+        """Full happy path: begin -> assign cosets -> identify type -> done."""
+        mgr = _setup_mgr("level_06.json")  # V4: 3 quotients
+
+        for i in range(3):
+            self.assertTrue(mgr.begin_coset_building(i))
+            assignments = _build_correct_assignments(mgr, i)
+            self.assertTrue(mgr.complete_coset_assignment(i, assignments))
+            correct_type = mgr.get_quotient_type(i)
+            result = mgr.complete_type_identification(i, correct_type)
+            self.assertNotIn("error", result)
+
+        self.assertTrue(mgr.is_complete())
+        self.assertIn(("all_quotients_done",), mgr._signals)
+
+    def test_full_two_phase_all_levels(self):
+        """Two-phase construction works for every level with quotient groups."""
+        for i in range(1, 25):
+            filename = f"level_{i:02d}.json"
+            if filename in NO_QUOTIENT_LEVELS:
+                continue
+            mgr = _setup_mgr(filename)
+            for j in range(mgr.get_normal_subgroup_count()):
+                self.assertTrue(mgr.begin_coset_building(j),
+                    f"{filename} sg {j}: begin_coset_building failed")
+                assignments = _build_correct_assignments(mgr, j)
+                self.assertTrue(mgr.complete_coset_assignment(j, assignments),
+                    f"{filename} sg {j}: complete_coset_assignment failed")
+                correct_type = mgr.get_quotient_type(j)
+                result = mgr.complete_type_identification(j, correct_type)
+                self.assertNotIn("error", result,
+                    f"{filename} sg {j}: complete_type_identification failed: {result}")
+            self.assertTrue(mgr.is_complete(),
+                f"{filename}: not complete after two-phase construction")
+
+
+class TestStep1CosetValidation(unittest.TestCase):
+    """Test Step 1 API: validate_element_in_coset, get_coset_size, etc."""
+
+    def test_validate_element_correct_coset(self):
+        mgr = _setup_mgr("level_09.json")
+        cosets = mgr.compute_cosets(0)
+        for ci, coset in enumerate(cosets):
+            for elem in coset["elements"]:
+                self.assertTrue(mgr.validate_element_in_coset(0, elem, ci),
+                    f"{elem} should be in coset {ci}")
+
+    def test_validate_element_wrong_coset(self):
+        mgr = _setup_mgr("level_09.json")
+        cosets = mgr.compute_cosets(0)
+        # Take element from coset 0, validate against coset 1
+        if len(cosets) >= 2:
+            elem = cosets[0]["elements"][0]
+            self.assertFalse(mgr.validate_element_in_coset(0, elem, 1))
+
+    def test_validate_element_invalid_coset_index(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertFalse(mgr.validate_element_in_coset(0, "e", 99))
+        self.assertFalse(mgr.validate_element_in_coset(0, "e", -1))
+
+    def test_validate_element_nonexistent_element(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertFalse(mgr.validate_element_in_coset(0, "nonexistent", 0))
+
+    def test_get_coset_size(self):
+        mgr = _setup_mgr("level_09.json")
+        # S3 / {e,r1,r2}: |N| = 3
+        self.assertEqual(mgr.get_coset_size(0), 3)
+
+    def test_get_coset_size_z4(self):
+        mgr = _setup_mgr("level_04.json")
+        # Z4 / {e,r2}: |N| = 2
+        self.assertEqual(mgr.get_coset_size(0), 2)
+
+    def test_get_coset_size_invalid_index(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertEqual(mgr.get_coset_size(99), 0)
+
+    def test_get_num_cosets(self):
+        mgr = _setup_mgr("level_09.json")
+        # S3 / {e,r1,r2}: |G/N| = 2
+        self.assertEqual(mgr.get_num_cosets(0), 2)
+
+    def test_get_num_cosets_v4(self):
+        mgr = _setup_mgr("level_06.json")
+        for i in range(3):
+            self.assertEqual(mgr.get_num_cosets(i), 2)
+
+    def test_coset_assignment_complete_correct(self):
+        mgr = _setup_mgr("level_09.json")
+        assignments = _build_correct_assignments(mgr, 0)
+        self.assertTrue(mgr.is_coset_assignment_complete(0, assignments))
+
+    def test_coset_assignment_complete_wrong(self):
+        mgr = _setup_mgr("level_09.json")
+        # Swap one element to wrong coset
+        assignments = _build_correct_assignments(mgr, 0)
+        cosets = mgr.compute_cosets(0)
+        if len(cosets) >= 2:
+            # Move first element of coset 0 to coset 1
+            elem = cosets[0]["elements"][0]
+            assignments[elem] = 1
+            self.assertFalse(mgr.is_coset_assignment_complete(0, assignments))
+
+    def test_coset_assignment_incomplete_missing_elements(self):
+        mgr = _setup_mgr("level_09.json")
+        # Only assign some elements
+        assignments = {"e": 0}
+        self.assertFalse(mgr.is_coset_assignment_complete(0, assignments))
+
+    def test_coset_assignment_invalid_coset_index(self):
+        mgr = _setup_mgr("level_09.json")
+        assignments = _build_correct_assignments(mgr, 0)
+        # Set one element to invalid coset index
+        first_key = list(assignments.keys())[0]
+        assignments[first_key] = 99
+        self.assertFalse(mgr.is_coset_assignment_complete(0, assignments))
+
+    def test_validate_element_all_levels(self):
+        """validate_element_in_coset works for all levels."""
+        for i in range(1, 25):
+            filename = f"level_{i:02d}.json"
+            if filename in NO_QUOTIENT_LEVELS:
+                continue
+            mgr = _setup_mgr(filename)
+            for j in range(mgr.get_normal_subgroup_count()):
+                cosets = mgr.compute_cosets(j)
+                for ci, coset in enumerate(cosets):
+                    for elem in coset["elements"]:
+                        self.assertTrue(mgr.validate_element_in_coset(j, elem, ci),
+                            f"{filename} sg {j}: {elem} should be in coset {ci}")
+
+
+class TestStep2TypeIdentification(unittest.TestCase):
+    """Test Step 2 API: type checking and distractor generation."""
+
+    def test_check_quotient_type_correct(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertTrue(mgr.check_quotient_type(0, "Z2"))
+
+    def test_check_quotient_type_wrong(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertFalse(mgr.check_quotient_type(0, "Z3"))
+
+    def test_check_quotient_type_invalid_index(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertFalse(mgr.check_quotient_type(99, "Z2"))
+
+    def test_get_quotient_type(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertEqual(mgr.get_quotient_type(0), "Z2")
+
+    def test_get_quotient_type_z3(self):
+        mgr = _setup_mgr("level_11.json")
+        # Z6 has quotient Z3 (first one)
+        self.assertEqual(mgr.get_quotient_type(0), "Z3")
+
+    def test_get_quotient_type_invalid_index(self):
+        mgr = _setup_mgr("level_09.json")
+        self.assertEqual(mgr.get_quotient_type(99), "")
+
+    def test_generate_type_options_contains_correct(self):
+        mgr = _setup_mgr("level_09.json")
+        options = mgr.generate_type_options(0)
+        self.assertIn("Z2", options)
+
+    def test_generate_type_options_has_distractors(self):
+        mgr = _setup_mgr("level_09.json")
+        options = mgr.generate_type_options(0)
+        self.assertGreaterEqual(len(options), 3, "Should have correct + 2+ distractors")
+
+    def test_generate_type_options_no_duplicates(self):
+        mgr = _setup_mgr("level_09.json")
+        options = mgr.generate_type_options(0)
+        self.assertEqual(len(options), len(set(options)), "No duplicate options")
+
+    def test_generate_type_options_invalid_index(self):
+        mgr = _setup_mgr("level_09.json")
+        options = mgr.generate_type_options(99)
+        self.assertEqual(options, [])
+
+    def test_generate_type_options_all_levels(self):
+        """All levels with quotients generate valid type options."""
+        for i in range(1, 25):
+            filename = f"level_{i:02d}.json"
+            if filename in NO_QUOTIENT_LEVELS:
+                continue
+            mgr = _setup_mgr(filename)
+            for j in range(mgr.get_normal_subgroup_count()):
+                options = mgr.generate_type_options(j)
+                correct = mgr.get_quotient_type(j)
+                self.assertIn(correct, options,
+                    f"{filename} sg {j}: correct type {correct} not in options {options}")
+                self.assertGreaterEqual(len(options), 3,
+                    f"{filename} sg {j}: too few options: {options}")
+
+    def test_distractors_are_plausible_same_order(self):
+        """At least some distractors should be for the same quotient order."""
+        mgr = _setup_mgr("level_05.json")  # D4: has Z4_or_Z2xZ2 quotient
+        # Find the Z4_or_Z2xZ2 quotient
+        for j in range(mgr.get_normal_subgroup_count()):
+            if mgr.get_quotient_type(j) == "Z4_or_Z2xZ2":
+                options = mgr.generate_type_options(j)
+                # Order 4 distractors like Z4, Z2xZ2 should be present
+                order4_types = {"Z4", "Z2xZ2", "Z4_or_Z2xZ2"}
+                order4_in_options = [o for o in options if o in order4_types]
+                self.assertGreaterEqual(len(order4_in_options), 2,
+                    f"Should have multiple order-4 distractors in {options}")
+                break
+
+
+class TestTwoPhaseSignals(unittest.TestCase):
+    """Test signal emission during two-phase construction."""
+
+    def test_coset_assignment_validated_signal_correct(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+        self.assertIn(("coset_assignment_validated", 0, True), mgr._signals)
+
+    def test_coset_assignment_validated_signal_incorrect(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        bad = {sid: 0 for sid in mgr.get_all_sym_ids()}
+        mgr.complete_coset_assignment(0, bad)
+        self.assertIn(("coset_assignment_validated", 0, False), mgr._signals)
+
+    def test_quotient_type_guessed_signal_correct(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+        mgr.complete_type_identification(0, "Z2")
+        self.assertIn(("quotient_type_guessed", 0, True), mgr._signals)
+
+    def test_quotient_type_guessed_signal_incorrect(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+        mgr.complete_type_identification(0, "WRONG")
+        self.assertIn(("quotient_type_guessed", 0, False), mgr._signals)
+
+    def test_quotient_constructed_signal_after_type_identification(self):
+        mgr = _setup_mgr("level_09.json")
+        mgr.begin_coset_building(0)
+        assignments = _build_correct_assignments(mgr, 0)
+        mgr.complete_coset_assignment(0, assignments)
+        mgr.complete_type_identification(0, "Z2")
+        self.assertIn(("quotient_constructed", 0), mgr._signals)
+
+    def test_all_quotients_done_after_all_two_phase(self):
+        mgr = _setup_mgr("level_06.json")  # V4: 3 quotients
+        for i in range(3):
+            mgr.begin_coset_building(i)
+            assignments = _build_correct_assignments(mgr, i)
+            mgr.complete_coset_assignment(i, assignments)
+            correct_type = mgr.get_quotient_type(i)
+            mgr.complete_type_identification(i, correct_type)
+        self.assertIn(("all_quotients_done",), mgr._signals)
 
 
 if __name__ == "__main__":

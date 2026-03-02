@@ -49,7 +49,7 @@ const LAYER_THRESHOLDS := {
 	2: {"required": 8, "from_layer": 1},
 	3: {"required": 8, "from_layer": 2},
 	4: {"required": 1, "from_layer": 3},
-	5: {"required": 6, "from_layer": 4},
+	5: {"required": 1, "from_layer": 4},
 }
 
 
