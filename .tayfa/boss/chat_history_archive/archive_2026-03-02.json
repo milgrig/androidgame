@@ -70,5 +70,17 @@
     "cost_usd": 0,
     "duration_sec": 56.82,
     "num_turns": 2
+  },
+  {
+    "id": "msg_029",
+    "timestamp": "2026-02-21T09:58:39",
+    "direction": "to_agent",
+    "prompt": "ознакомься с QA_REPORT_T017_RUNTIME_TEST.md",
+    "result": "Ознакомился с QA-отчётом **T017**. Вот краткая сводка:\n\n---\n\n## 📋 QA Report T017 — Резюме\n\n**Статус:** ❌ **КРИТИЧЕСКИЙ СБОЙ — ИГРА НЕ ЗАПУСКАЕТСЯ**  \n**Среда:** Windows, Godot v4.6.1, RTX 4070 SUPER  \n**Тесты выполнены:** 0 из 11\n\n---\n\n### 🔴 3 критических блокера\n\n| # | Проблема | Файл | Суть |\n|---|----------|------|------|\n| 1 | **AgentProtocol не найден** | `agent_bridge.gd` | Класс `AgentProtocol` используется 60+ раз, но не импортирован. Нужен `preload()` или autoload. |\n| 2 | **Ошибки вывода типов** | `level_scene.gd:432-433` | Оператор `:=` не может вывести тип из `Dictionary.get()`. Нужна явная аннотация: `var act: int = ...` |\n| 3 | **Корутина без await** | `agent_bridge.gd:293` | Функция `_cmd_quit()` — корутина, вызывается без `await`. |\n\n### 📁 Файлы-виновники (изменены за последние 5 часов)\n- `agent_bridge.gd` ⚠️ — основной\n- `agent_protocol.gd` ⚠️ — основной\n- `level_scene.gd` ⚠️ — вторичный\n\n### 🎯 Необходимые действия\n\n1. Добавить в `agent_bridge.gd`: `const AgentProtocol = preload(\"res://src/agent/agent_protocol.gd\")`\n2. В `level_scene.gd` заменить `:=` на явную типизацию (`var act: int = ...`)\n3. Добавить `await` перед вызовом `_cmd_quit()`\n4. Перезапустить тестирование после исправлений\n\n---\n\nХотите, чтобы я приступил к исправлению этих трёх блокеров?",
+    "runtime": "opus",
+    "success": true,
+    "cost_usd": 0,
+    "duration_sec": 19.31,
+    "num_turns": 3
   }
 ]

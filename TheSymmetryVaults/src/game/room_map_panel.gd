@@ -66,6 +66,12 @@ var _quotient_graph_active: bool = false ## Whether to show the merged quotient 
 var _quotient_nodes: Array = []          ## Array[{pos: Vector2, color: Color, label: String, rooms: Array}]
 var _quotient_edges: Array = []          ## Array[{from: int, to: int}] — indices into _quotient_nodes
 
+## Room cluster overlay state (universal visual grouping)
+## Each cluster is rendered as: convex hull (3+), capsule (2), or glow halo (1).
+## Hybrid: close rooms share a bubble; far rooms get outlines + dashed arcs.
+var _cluster_data: Array = []            ## Array[{ rooms: Array[int], color: Color, subclusters: Array[Array[int]] }]
+var _clusters_active: bool = false       ## Whether cluster overlay is active
+
 
 # --- Public API ---
 
@@ -445,6 +451,423 @@ func _sym_id_to_room_idx(sym_id: String) -> int:
 	return -1
 
 
+# --- Room Cluster Overlay API ---
+
+## Set room clusters for visual grouping overlay.
+## clusters: Array[Array[int]] — each inner array is a set of room indices.
+## cluster_colors: Array[Color] — one per cluster (cycled if fewer).
+## cluster_labels: Array[String] — optional label per cluster (drawn at centroid).
+## Computes subclusters automatically based on spatial proximity.
+func set_room_clusters(clusters: Array, cluster_colors: Array = [],
+		cluster_labels: Array = []) -> void:
+	_cluster_data.clear()
+	_clusters_active = false
+
+	if clusters.is_empty() or positions.is_empty():
+		queue_redraw()
+		return
+
+	if cluster_colors.is_empty():
+		cluster_colors = _default_coset_colors()
+
+	for ci in range(clusters.size()):
+		var rooms: Array = clusters[ci]
+		var color: Color = cluster_colors[ci % cluster_colors.size()]
+		var label: String = cluster_labels[ci] if ci < cluster_labels.size() else ""
+
+		# Filter to valid room indices with known positions
+		var valid_rooms: Array = []
+		for ridx in rooms:
+			if ridx >= 0 and ridx < positions.size():
+				valid_rooms.append(ridx)
+
+		if valid_rooms.is_empty():
+			continue
+
+		# Compute subclusters: group spatially close rooms together
+		var subclusters: Array = _compute_subclusters(valid_rooms)
+
+		_cluster_data.append({
+			"rooms": valid_rooms,
+			"color": color,
+			"subclusters": subclusters,
+			"label": label,
+		})
+
+	_clusters_active = not _cluster_data.is_empty()
+	queue_redraw()
+
+
+## Clear all room cluster overlays.
+func clear_room_clusters() -> void:
+	_cluster_data.clear()
+	_clusters_active = false
+	queue_redraw()
+
+
+# --- Cluster: Subclustering (spatial proximity grouping) ---
+
+## Split rooms into subclusters based on spatial proximity.
+## Uses a simple single-linkage approach: rooms within threshold distance
+## are merged into the same subcluster.
+func _compute_subclusters(rooms: Array) -> Array:
+	if rooms.size() <= 1:
+		return [rooms.duplicate()]
+
+	# Threshold: rooms within this distance share a bubble.
+	# Adaptive: based on average node spacing.
+	var n_total: int = positions.size()
+	var node_sz: float = _get_node_size(n_total)
+	var threshold: float = node_sz * 4.5  # ~4.5 node-widths apart
+
+	# Union-find for clustering
+	var parent: Dictionary = {}  # room_idx -> root room_idx
+	for ridx in rooms:
+		parent[ridx] = ridx
+
+	# Find root with path compression
+	var _find_root: Callable = func(x: int) -> int:
+		var chain: Array = []
+		var cur: int = x
+		while parent[cur] != cur:
+			chain.append(cur)
+			cur = parent[cur]
+		for c in chain:
+			parent[c] = cur
+		return cur
+
+	# Merge rooms that are close enough
+	for i in range(rooms.size()):
+		for j in range(i + 1, rooms.size()):
+			var pi: Vector2 = positions[rooms[i]]
+			var pj: Vector2 = positions[rooms[j]]
+			if pi.distance_to(pj) <= threshold:
+				var ri: int = _find_root.call(rooms[i])
+				var rj: int = _find_root.call(rooms[j])
+				if ri != rj:
+					parent[ri] = rj
+
+	# Group by root
+	var groups: Dictionary = {}  # root -> Array[int]
+	for ridx in rooms:
+		var root: int = _find_root.call(ridx)
+		if not groups.has(root):
+			groups[root] = []
+		groups[root].append(ridx)
+
+	var result: Array = []
+	for root in groups:
+		result.append(groups[root])
+	return result
+
+
+# --- Cluster: Convex Hull Algorithm ---
+
+## Compute the convex hull of a set of 2D points using Graham scan.
+## Returns Array[Vector2] in counter-clockwise order.
+func _convex_hull(points: Array) -> Array:
+	if points.size() <= 1:
+		return points.duplicate()
+	if points.size() == 2:
+		return points.duplicate()
+
+	# Find the bottom-most (then left-most) point as pivot
+	var pivot: Vector2 = points[0]
+	for pt in points:
+		if pt.y > pivot.y or (pt.y == pivot.y and pt.x < pivot.x):
+			pivot = pt
+
+	# Sort by polar angle relative to pivot
+	var sorted_pts: Array = points.duplicate()
+	sorted_pts.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		var da: Vector2 = a - pivot
+		var db: Vector2 = b - pivot
+		var cross: float = da.x * db.y - da.y * db.x
+		if absf(cross) < 0.001:
+			# Collinear: closer point first
+			return da.length_squared() < db.length_squared()
+		return cross > 0.0  # counter-clockwise = positive cross product
+	)
+
+	# Graham scan
+	var hull: Array = []
+	for pt in sorted_pts:
+		while hull.size() >= 2:
+			var a: Vector2 = hull[hull.size() - 2]
+			var b: Vector2 = hull[hull.size() - 1]
+			var ab: Vector2 = b - a
+			var ac: Vector2 = pt - a
+			var cross: float = ab.x * ac.y - ab.y * ac.x
+			if cross <= 0.0:
+				hull.pop_back()
+			else:
+				break
+		hull.append(pt)
+
+	return hull
+
+
+## Expand a convex hull outward by a given radius (rounded hull).
+## Returns Array[Vector2] — a polygon approximation with rounded corners.
+func _expand_hull(hull: Array, radius: float) -> Array:
+	if hull.is_empty():
+		return []
+	if hull.size() == 1:
+		# Circle approximation around a single point
+		return _circle_points(hull[0], radius, 12)
+	if hull.size() == 2:
+		# Capsule around two points
+		return _capsule_points(hull[0], hull[1], radius, 8)
+
+	var expanded: Array = []
+	var count: int = hull.size()
+	var arc_segments: int = 4  # segments per corner arc
+
+	for i in range(count):
+		var curr: Vector2 = hull[i]
+		var prev: Vector2 = hull[(i - 1 + count) % count]
+		var next: Vector2 = hull[(i + 1) % count]
+
+		# Outward normals of adjacent edges
+		var edge_prev: Vector2 = curr - prev
+		var edge_next: Vector2 = next - curr
+		var len_prev: float = edge_prev.length()
+		var len_next: float = edge_next.length()
+		if len_prev < 0.001 or len_next < 0.001:
+			continue
+
+		var n_prev: Vector2 = Vector2(edge_prev.y, -edge_prev.x) / len_prev
+		var n_next: Vector2 = Vector2(edge_next.y, -edge_next.x) / len_next
+
+		# Corner arc from n_prev to n_next around curr
+		var angle_start: float = atan2(n_prev.y, n_prev.x)
+		var angle_end: float = atan2(n_next.y, n_next.x)
+
+		# Ensure we go counter-clockwise (shortest positive arc)
+		var angle_diff: float = angle_end - angle_start
+		if angle_diff < -PI:
+			angle_diff += TAU
+		elif angle_diff > PI:
+			angle_diff -= TAU
+
+		# If angle_diff is negative, the corner is concave — just offset
+		if angle_diff < 0.0:
+			var bisector: Vector2 = (n_prev + n_next).normalized()
+			expanded.append(curr + bisector * radius)
+		else:
+			for s in range(arc_segments + 1):
+				var t: float = float(s) / float(arc_segments)
+				var angle: float = angle_start + angle_diff * t
+				expanded.append(curr + Vector2(cos(angle), sin(angle)) * radius)
+
+	return expanded
+
+
+## Generate circle polygon points.
+func _circle_points(center: Vector2, radius: float, segments: int) -> Array:
+	var pts: Array = []
+	for i in range(segments):
+		var angle: float = TAU * float(i) / float(segments)
+		pts.append(center + Vector2(cos(angle), sin(angle)) * radius)
+	return pts
+
+
+## Generate capsule polygon points (pill shape around two endpoints).
+func _capsule_points(a: Vector2, b: Vector2, radius: float, half_segments: int) -> Array:
+	var pts: Array = []
+	var delta: Vector2 = b - a
+	var length: float = delta.length()
+	if length < 0.001:
+		return _circle_points(a, radius, half_segments * 2)
+
+	var dir: Vector2 = delta / length
+	var normal: Vector2 = Vector2(-dir.y, dir.x)
+
+	# Semi-circle around point a (from normal to -normal, going away from b)
+	var base_angle_a: float = atan2(normal.y, normal.x)
+	for i in range(half_segments + 1):
+		var t: float = float(i) / float(half_segments)
+		var angle: float = base_angle_a + PI * t
+		pts.append(a + Vector2(cos(angle), sin(angle)) * radius)
+
+	# Semi-circle around point b (from -normal to normal, going away from a)
+	var base_angle_b: float = atan2(-normal.y, -normal.x)
+	for i in range(half_segments + 1):
+		var t: float = float(i) / float(half_segments)
+		var angle: float = base_angle_b + PI * t
+		pts.append(b + Vector2(cos(angle), sin(angle)) * radius)
+
+	return pts
+
+
+# --- Cluster: Drawing ---
+
+## Draw all active room cluster overlays.
+## Drawn BELOW room nodes but ABOVE edges.
+func _draw_room_clusters() -> void:
+	if not _clusters_active or _cluster_data.is_empty():
+		return
+
+	for cluster in _cluster_data:
+		var color: Color = cluster["color"]
+		var subclusters: Array = cluster["subclusters"]
+		var label: String = cluster.get("label", "")
+
+		# Draw each subcluster as its own shape
+		for sc in subclusters:
+			_draw_single_subcluster(sc, color)
+
+		# Draw dashed arcs between subclusters if there are multiple
+		if subclusters.size() > 1:
+			_draw_subcluster_arcs(subclusters, color)
+
+		# Draw cluster label at centroid (if provided)
+		if label != "":
+			_draw_cluster_label(cluster["rooms"], color, label)
+
+
+## Draw a label at the centroid of a cluster's rooms.
+func _draw_cluster_label(room_indices: Array, color: Color, label: String) -> void:
+	if room_indices.is_empty():
+		return
+	# Compute centroid
+	var centroid: Vector2 = Vector2.ZERO
+	var count: int = 0
+	for ridx in room_indices:
+		if ridx >= 0 and ridx < positions.size():
+			centroid += positions[ridx]
+			count += 1
+	if count == 0:
+		return
+	centroid /= float(count)
+
+	# Offset label above the cluster centroid
+	var n_total: int = positions.size()
+	var node_sz: float = _get_node_size(n_total)
+	var offset_y: float = -(node_sz * 1.2 + 6.0)
+
+	var font: Font = ThemeDB.fallback_font
+	var font_size: int = 14 if n_total <= 12 else 11
+	var text_size: Vector2 = font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
+	var text_pos: Vector2 = centroid + Vector2(-text_size.x * 0.5, offset_y)
+	var label_color: Color = Color(color.r, color.g, color.b, 0.85)
+	draw_string(font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_color)
+
+
+## Draw a single subcluster (1 room = halo, 2 = capsule, 3+ = hull).
+func _draw_single_subcluster(room_indices: Array, color: Color) -> void:
+	if room_indices.is_empty():
+		return
+
+	var n_total: int = positions.size()
+	var node_sz: float = _get_node_size(n_total)
+	var padding: float = node_sz * 0.7  # expansion beyond room edges
+
+	var pts: Array = []
+	for ridx in room_indices:
+		if ridx >= 0 and ridx < positions.size():
+			pts.append(positions[ridx])
+
+	if pts.is_empty():
+		return
+
+	var fill_color: Color = Color(color.r, color.g, color.b, 0.10)
+	var border_color: Color = Color(color.r, color.g, color.b, 0.45)
+	var glow_color: Color = Color(color.r, color.g, color.b, 0.06)
+
+	if pts.size() == 1:
+		# Single room: glow halo
+		var center: Vector2 = pts[0]
+		var outer_r: float = padding + node_sz * 0.5
+		# Outer glow ring
+		var glow_pts: Array = _circle_points(center, outer_r + 6.0, 16)
+		if glow_pts.size() >= 3:
+			draw_colored_polygon(PackedVector2Array(glow_pts), glow_color)
+		# Fill circle
+		var circle_pts: Array = _circle_points(center, outer_r, 16)
+		if circle_pts.size() >= 3:
+			draw_colored_polygon(PackedVector2Array(circle_pts), fill_color)
+		# Border circle
+		for i in range(circle_pts.size()):
+			var a: Vector2 = circle_pts[i]
+			var b: Vector2 = circle_pts[(i + 1) % circle_pts.size()]
+			draw_line(a, b, border_color, 1.5, true)
+
+	elif pts.size() == 2:
+		# Two rooms: capsule
+		var capsule: Array = _capsule_points(pts[0], pts[1], padding, 8)
+		if capsule.size() >= 3:
+			# Outer glow
+			var glow_capsule: Array = _capsule_points(pts[0], pts[1], padding + 5.0, 8)
+			if glow_capsule.size() >= 3:
+				draw_colored_polygon(PackedVector2Array(glow_capsule), glow_color)
+			# Fill
+			draw_colored_polygon(PackedVector2Array(capsule), fill_color)
+			# Border
+			for i in range(capsule.size()):
+				var a: Vector2 = capsule[i]
+				var b: Vector2 = capsule[(i + 1) % capsule.size()]
+				draw_line(a, b, border_color, 1.5, true)
+
+	else:
+		# 3+ rooms: convex hull with rounded expansion
+		var hull: Array = _convex_hull(pts)
+		var expanded: Array = _expand_hull(hull, padding)
+		if expanded.size() >= 3:
+			# Outer glow
+			var glow_hull: Array = _expand_hull(hull, padding + 5.0)
+			if glow_hull.size() >= 3:
+				draw_colored_polygon(PackedVector2Array(glow_hull), glow_color)
+			# Fill
+			draw_colored_polygon(PackedVector2Array(expanded), fill_color)
+			# Border
+			for i in range(expanded.size()):
+				var a: Vector2 = expanded[i]
+				var b: Vector2 = expanded[(i + 1) % expanded.size()]
+				draw_line(a, b, border_color, 1.5, true)
+
+
+## Draw dashed arcs connecting centroids of different subclusters.
+func _draw_subcluster_arcs(subclusters: Array, color: Color) -> void:
+	var arc_color: Color = Color(color.r, color.g, color.b, 0.25)
+
+	# Compute centroid for each subcluster
+	var centroids: Array = []
+	for sc in subclusters:
+		var centroid: Vector2 = Vector2.ZERO
+		var count: int = 0
+		for ridx in sc:
+			if ridx >= 0 and ridx < positions.size():
+				centroid += positions[ridx]
+				count += 1
+		if count > 0:
+			centroids.append(centroid / float(count))
+
+	# Draw dashed arcs between consecutive centroids
+	for i in range(centroids.size()):
+		for j in range(i + 1, centroids.size()):
+			var p1: Vector2 = centroids[i]
+			var p2: Vector2 = centroids[j]
+			var delta: Vector2 = p2 - p1
+			var length: float = delta.length()
+			if length < 1.0:
+				continue
+			# Slight curve
+			var normal: Vector2 = Vector2(-delta.y, delta.x) / length * 8.0
+			var mid: Vector2 = (p1 + p2) / 2.0 + normal
+			# Draw as dashed bezier
+			var prev: Vector2 = p1
+			var seg_count: int = 16
+			var dash_on: bool = true
+			for s in range(1, seg_count + 1):
+				var t: float = float(s) / float(seg_count)
+				var pt: Vector2 = (1.0 - t) * (1.0 - t) * p1 + 2.0 * (1.0 - t) * t * mid + t * t * p2
+				if dash_on:
+					draw_line(prev, pt, arc_color, 1.0, true)
+				prev = pt
+				dash_on = not dash_on
+
+
 ## Default coset color palette (matches QuotientPanel.COSET_COLORS).
 func _default_coset_colors() -> Array:
 	return [
@@ -517,6 +940,10 @@ func _draw() -> void:
 	# --- Layer 3 subgroup highlight (below everything) ---
 	if not _coset_active:
 		_draw_subgroup_highlight(n)
+
+	# --- Room cluster overlays (bubbles / capsules / hulls) ---
+	if _clusters_active:
+		_draw_room_clusters()
 
 	# --- Fading transition edges ---
 	_draw_fading_edges(n)
