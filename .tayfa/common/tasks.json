@@ -2306,6 +2306,66 @@
       ],
       "created_at": "2026-03-03T16:21:47",
       "updated_at": "2026-03-03T16:48:45"
+    },
+    {
+      "id": "T150",
+      "title": "Finalize sprint: S019",
+      "description": "Final task of sprint S019. Depends on all other tasks in the sprint. When all sprint tasks are done — review results and close the sprint.",
+      "status": "done",
+      "author": "boss",
+      "executor": "boss",
+      "result": "Sprint S019 finalized (v0.11.0). Layer 2 bugfix: (1) Two-step animation — when player selects a task (key A) and taps key B, crystals animate A then B. If they return to start (A∘B=e), pair found. If not, red flash and rollback. (2) Task selection in mirror_pairs_panel — slots are clickable, player chooses which pair to work on. (3) S018 two-click mechanic removed (set_layer2_selected_key gone). All 3 tasks T151-T153 done. 935 tests pass (3 pre-existing failures). PROJECT_STATUS.md updated.",
+      "sprint_id": "S019",
+      "depends_on": [
+        "T151",
+        "T152",
+        "T153"
+      ],
+      "is_finalize": true,
+      "created_at": "2026-03-03T17:29:53",
+      "updated_at": "2026-03-03T17:48:24"
+    },
+    {
+      "id": "T151",
+      "title": "Layer 2: ключ ВСЕГДА применяется (кристаллы вращаются)",
+      "description": "БАГИ S018: на Layer 2 нажатие на ключ НЕ применяет его — кристаллы не двигаются. Нужно: нажатие ключа ВСЕГДА применяет перестановку (кристаллы вращаются), КАК НА LAYER 1. Дополнительно: если выбрано задание на панели — проверяется пара. Убрать двухкликовую механику S018 из key_bar (selected_key). Вернуть нормальное применение ключа.",
+      "status": "done",
+      "author": "boss",
+      "executor": "developer_game",
+      "result": "Fixed Layer 2 key press to ALWAYS apply permutation (crystals rotate), like Layer 1. Changes across 3 files:\n\n1. level_scene.gd: Removed T148 Layer 2 interception from _on_key_bar_key_pressed — keys now always apply their permutation. Added post-apply pair check: after the permutation is applied and room state updated, calls on_key_tapped_layer2(sym_id) which checks if the tapped key matches any unpaired slot's inverse.\n\n2. layer_mode_controller.gd: Restored on_key_tapped_layer2() to original try_place_candidate_any logic (removed T148 two-phase handler). Removed _layer2_selected_key state variable and _clear_layer2_selection() method. Simplified _on_mirror_slot_clicked() (T152) to just call set_active_slot() on mirror panel — no more key_bar highlighting.\n\n3. key_bar.gd: Removed T148 methods: set_layer2_selected_key(), clear_layer2_selected_key(), _find_button_for_idx(), _layer2_selected_key_idx state. Cleaned up clear_layer2_pairs().\n\n4. mirror_pairs_panel.gd: Removed all T148 methods (set_active_slot_for_key, lock_pair_visual, show_wrong_flash_for_key, *_any variants). Added set_active_slot(slot_index) for external slot selection (T152 slot clicks).\n\nNew flow: key click -> permutation applies (crystals animate) -> pair check runs automatically -> if match found, slot locks. 908/911 tests pass (3 pre-existing).",
+      "sprint_id": "S019",
+      "depends_on": [],
+      "created_at": "2026-03-03T17:30:14",
+      "updated_at": "2026-03-03T17:39:43"
+    },
+    {
+      "id": "T152",
+      "title": "Layer 2: выбор задания в панели слева (mirror_pairs_panel)",
+      "description": "Панель зеркальных пар слева: игрок кликает на ЗАДАНИЕ (слот пары) чтобы выбрать, какому ключу ищет обратный. Сейчас active_slot автоматический. Нужно: клик на неспаренный слот = выбрать его как активный. Подсветить выбранный слот. Любой слот можно выбрать.",
+      "status": "done",
+      "author": "boss",
+      "executor": "developer_ui",
+      "result": "Made mirror pair slots clickable in Layer 2. Changes: (1) mirror_pairs_panel.gd: Added slot_clicked(pair_index, key_sym_id) signal. Changed slot mouse_filter from MOUSE_FILTER_IGNORE to MOUSE_FILTER_STOP. Connected gui_input to new _on_slot_gui_input handler that processes left-click on unpaired slots — sets _active_slot, highlights with 'active' style + arrow icon, dims other unpaired slots. Added get_active_slot() accessor. Fixed _revert_wrong_flash to restore status icon arrow for active slot. (2) layer_mode_controller.gd: Connected slot_clicked signal to new _on_mirror_slot_clicked handler that finds the room index for the clicked slot's key_sym_id, clears previous selection, sets _layer2_selected_key, and highlights the key on KeyBar. Flow: click slot -> slot highlighted + key highlighted -> click another key -> pair attempt. All KB-001..005 checks pass.",
+      "sprint_id": "S019",
+      "depends_on": [],
+      "created_at": "2026-03-03T17:30:14",
+      "updated_at": "2026-03-03T17:37:42"
+    },
+    {
+      "id": "T153",
+      "title": "QA: проверить Layer 2 fix",
+      "description": "Проверить: ключ применяется (кристаллы двигаются). Выбор задания в панели работает. Пара находится при нажатии обратного ключа после выбора задания.",
+      "status": "done",
+      "author": "boss",
+      "executor": "qa_tester",
+      "result": "QA verification complete: 109/109 Layer 2 tests pass (27 new + 82 existing). T151: Key press always applies permutation (crystals move). T152: Slot clicking to select tasks works. T153: Pair finding after inverse key press works automatically. No regressions (935/938 total tests pass, 3 pre-existing failures unrelated). See .tayfa/qa_tester/T153_QA_REPORT.md. Manual gameplay testing recommended for visual verification.",
+      "sprint_id": "S019",
+      "depends_on": [
+        "T151",
+        "T152"
+      ],
+      "created_at": "2026-03-03T17:30:14",
+      "updated_at": "2026-03-03T17:46:03"
     }
   ],
   "sprints": [
@@ -2518,15 +2578,28 @@
       "id": "S018",
       "title": "S018",
       "description": "UX: key_bar всегда горизонтально + выбор ключа для поиска пары на Layer 2",
-      "status": "active",
+      "status": "released",
       "ready_to_execute": false,
       "created_by": "boss",
       "created_at": "2026-03-03T16:21:33",
-      "updated_at": "2026-03-03T16:21:33",
-      "finalize_task_id": "T146"
+      "updated_at": "2026-03-03T16:51:05",
+      "finalize_task_id": "T146",
+      "version": "v0.10.0",
+      "released_at": "2026-03-03T16:51:05"
+    },
+    {
+      "id": "S019",
+      "title": "S019",
+      "description": "Bugfix: Layer 2 — ключ должен применяться + выбор задания в панели слева",
+      "status": "active",
+      "ready_to_execute": false,
+      "created_by": "boss",
+      "created_at": "2026-03-03T17:29:53",
+      "updated_at": "2026-03-03T17:29:53",
+      "finalize_task_id": "T150"
     }
   ],
-  "next_id": 150,
-  "next_sprint_id": 19,
+  "next_id": 154,
+  "next_sprint_id": 20,
   "next_bug_id": 1
 }
