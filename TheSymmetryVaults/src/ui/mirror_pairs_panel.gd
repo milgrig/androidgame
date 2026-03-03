@@ -13,12 +13,16 @@ extends Control
 ##
 ## Signals:
 ##   candidate_placed(pair_index, candidate_sym_id) — player placed a candidate
+##   slot_clicked(pair_index, key_sym_id)            — player clicked an unpaired slot
 
 
 # --- Signals ---
 
 ## Emitted when player taps ⊕ to place a candidate into a mirror slot.
 signal candidate_placed(pair_index: int, candidate_sym_id: String)
+
+## T152: Emitted when the player clicks an unpaired slot to select it.
+signal slot_clicked(pair_index: int, key_sym_id: String)
 
 
 # --- Constants (Layer 2 green theme) ---
@@ -189,7 +193,9 @@ func _build_one_slot(index: int, pair, width: float, height: int) -> Panel:
 	slot.name = "MirrorSlot_%d" % index
 	slot.custom_minimum_size = Vector2(width - 4, height)
 	slot.size = Vector2(width - 4, height)
-	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# T152: Slots are clickable — player selects which pair to work on
+	slot.mouse_filter = Control.MOUSE_FILTER_STOP
+	slot.gui_input.connect(_on_slot_gui_input.bind(index))
 
 	# Default empty style
 	slot.add_theme_stylebox_override("panel", _make_slot_style("empty"))
@@ -407,21 +413,21 @@ func refresh_from_state() -> void:
 	update_progress()
 
 
-## T148: Set the active slot to the one matching the given key sym_id.
-## Called when the player clicks a key to start searching for its pair.
-func set_active_slot_for_key(key_sym_id: String) -> void:
+## T152: Get the currently active slot index.
+func get_active_slot() -> int:
+	return _active_slot
+
+
+## T151: Set the active slot by index (for external selection, e.g. slot click).
+func set_active_slot(slot_index: int) -> void:
 	if _pair_mgr == null:
 		return
 	var pairs: Array = _pair_mgr.get_pairs()
-	var target_slot: int = -1
-	for i in range(pairs.size()):
-		if pairs[i].key_sym_id == key_sym_id and not pairs[i].paired:
-			target_slot = i
-			break
-	if target_slot < 0:
+	if slot_index < 0 or slot_index >= pairs.size():
 		return
-	# Update _active_slot and visuals
-	_active_slot = target_slot
+	if pairs[slot_index].paired:
+		return
+	_active_slot = slot_index
 	for i in range(_slots.size()):
 		if i >= pairs.size():
 			continue
@@ -438,88 +444,6 @@ func set_active_slot_for_key(key_sym_id: String) -> void:
 			var status = _slots[i].get_node_or_null("StatusIcon")
 			if status:
 				status.text = ""
-
-
-## T148: Lock the visual for a successfully matched pair by pair index.
-## Also handles bidirectional auto-pairing visual and advances active slot.
-func lock_pair_visual(pair_idx: int) -> void:
-	if _pair_mgr == null:
-		return
-	var pairs: Array = _pair_mgr.get_pairs()
-	if pair_idx < 0 or pair_idx >= pairs.size():
-		return
-	var pair = pairs[pair_idx]
-	_apply_locked_visual(pair_idx, pair)
-	_play_slot_glow(pair_idx)
-	# Bidirectional: if the reverse pair was also auto-paired, lock its slot too
-	if not pair.is_self_inverse:
-		var refreshed_pairs: Array = _pair_mgr.get_pairs()
-		for j in range(refreshed_pairs.size()):
-			if j != pair_idx and refreshed_pairs[j].paired and j < _slots.size():
-				var ph = _slots[j].get_node_or_null("MirrorPlaceholder")
-				if ph and ph.visible:
-					_apply_locked_visual(j, refreshed_pairs[j])
-					_play_slot_glow(j)
-	_find_next_active()
-	update_progress()
-
-
-## T148: Show wrong flash on the slot matching key_sym_id.
-func show_wrong_flash_for_key(key_sym_id: String, candidate_sym_id: String) -> void:
-	if _pair_mgr == null:
-		return
-	var pairs: Array = _pair_mgr.get_pairs()
-	for i in range(pairs.size()):
-		if pairs[i].key_sym_id == key_sym_id and not pairs[i].paired:
-			_show_wrong_flash(i, candidate_sym_id)
-			return
-	# Fallback: flash on active slot
-	if _active_slot >= 0 and _active_slot < _slots.size():
-		_show_wrong_flash(_active_slot, candidate_sym_id)
-
-
-## T148: Set active slot matching sym_id as either key or inverse.
-func set_active_slot_for_key_any(sym_id: String) -> void:
-	if _pair_mgr == null:
-		return
-	var pairs: Array = _pair_mgr.get_pairs()
-	var target_slot: int = -1
-	for i in range(pairs.size()):
-		if not pairs[i].paired and (pairs[i].key_sym_id == sym_id or pairs[i].inverse_sym_id == sym_id):
-			target_slot = i
-			break
-	if target_slot < 0:
-		return
-	_active_slot = target_slot
-	for i in range(_slots.size()):
-		if i >= pairs.size():
-			continue
-		if pairs[i].paired:
-			continue
-		if i == _active_slot:
-			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("active"))
-			var status = _slots[i].get_node_or_null("StatusIcon")
-			if status:
-				status.text = "<-"
-				status.add_theme_color_override("font_color", L2_GREEN)
-		else:
-			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("empty"))
-			var status = _slots[i].get_node_or_null("StatusIcon")
-			if status:
-				status.text = ""
-
-
-## T148: Show wrong flash on slot matching sym_id as either key or inverse.
-func show_wrong_flash_for_key_any(key_sym_id: String, candidate_sym_id: String) -> void:
-	if _pair_mgr == null:
-		return
-	var pairs: Array = _pair_mgr.get_pairs()
-	for i in range(pairs.size()):
-		if not pairs[i].paired and (pairs[i].key_sym_id == key_sym_id or pairs[i].inverse_sym_id == key_sym_id):
-			_show_wrong_flash(i, candidate_sym_id)
-			return
-	if _active_slot >= 0 and _active_slot < _slots.size():
-		_show_wrong_flash(_active_slot, candidate_sym_id)
 
 
 ## Cleanup.
@@ -527,6 +451,50 @@ func cleanup() -> void:
 	_slots.clear()
 	_pair_mgr = null
 	_room_state = null
+
+
+# --- Slot click handler (T152) ---
+
+## T152: Handle click/tap on a slot panel.
+## If the slot is unpaired, select it as the active task.
+func _on_slot_gui_input(event: InputEvent, slot_index: int) -> void:
+	if not (event is InputEventMouseButton):
+		return
+	var mb: InputEventMouseButton = event as InputEventMouseButton
+	if not mb.pressed or mb.button_index != MOUSE_BUTTON_LEFT:
+		return
+
+	if _pair_mgr == null:
+		return
+	var pairs: Array = _pair_mgr.get_pairs()
+	if slot_index < 0 or slot_index >= pairs.size():
+		return
+	# Ignore clicks on already-paired slots
+	if pairs[slot_index].paired:
+		return
+
+	# Set this slot as active
+	_active_slot = slot_index
+	# Update visual: highlight the newly active slot, dim others
+	for i in range(_slots.size()):
+		if i >= pairs.size():
+			continue
+		if pairs[i].paired:
+			continue
+		if i == _active_slot:
+			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("active"))
+			var status = _slots[i].get_node_or_null("StatusIcon")
+			if status:
+				status.text = "\u2190"
+				status.add_theme_color_override("font_color", L2_GREEN)
+		else:
+			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("empty"))
+			var status = _slots[i].get_node_or_null("StatusIcon")
+			if status:
+				status.text = ""
+
+	# Emit signal so LayerModeController can highlight corresponding key
+	slot_clicked.emit(slot_index, pairs[slot_index].key_sym_id)
 
 
 # --- Internal ---
@@ -637,6 +605,15 @@ func _revert_wrong_flash(slot_index: int) -> void:
 	var is_active: bool = (slot_index == _active_slot)
 	slot.add_theme_stylebox_override("panel",
 		_make_slot_style("active" if is_active else "empty"))
+
+	# T152: Restore status icon arrow for active slot
+	var status = slot.get_node_or_null("StatusIcon")
+	if status:
+		if is_active:
+			status.text = "\u2190"
+			status.add_theme_color_override("font_color", L2_GREEN)
+		else:
+			status.text = ""
 
 
 ## Find the next unpaired slot and mark it active.

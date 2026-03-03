@@ -343,11 +343,6 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	if _room_state.group_order == 0: return
 	if key_idx < 0 or key_idx >= _room_state.group_order: return
 
-	# T148: Layer 2 uses key clicks for pair selection, not crystal permutation
-	if _current_layer == 2:
-		_layer_controller.on_key_pressed_layer2(key_idx)
-		return
-
 	# Get the permutation for this key (already rebased in RoomState)
 	var key_perm: Permutation = _room_state.get_room_perm(key_idx)
 	if key_perm == null: return
@@ -397,7 +392,11 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	if _room_map: _room_map.queue_redraw()
 	if _key_bar: _key_bar.update_state(_room_state)
 	_update_counter()
-	# Layer 2 T112: key-press detection removed — inverse pairing now uses ⊕ taps
+	# T151: On Layer 2, key press also checks for pair if a slot is active on panel
+	if _current_layer == 2:
+		var sym_id: String = _room_state.get_room_sym_id(key_idx)
+		if sym_id != "":
+			_layer_controller.on_key_tapped_layer2(sym_id)
 
 ## Phase 2 of key application animation: move crystals along arcs.
 func _key_apply_phase2(n: int, active_perm: Permutation, pm: Dictionary,

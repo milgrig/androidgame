@@ -81,8 +81,6 @@ var _pair_data: Dictionary = {}
 var _pair_overlay: Control = null
 ## Whether Layer 2 pairing mode is active
 var _layer2_active: bool = false
-## T148: currently selected key for pair search (-1 = none)
-var _layer2_selected_key_idx: int = -1
 
 ## Whether Layer 3 keyring mode is active (shows ⊕ buttons)
 var _layer3_active: bool = false
@@ -240,86 +238,9 @@ func clear_mirror_pairs() -> void:
 func clear_layer2_pairs() -> void:
 	_pair_data.clear()
 	_layer2_active = false
-	_layer2_selected_key_idx = -1
 	if _pair_overlay != null and is_instance_valid(_pair_overlay):
 		_pair_overlay.queue_free()
 		_pair_overlay = null
-
-
-## T148: Highlight a key as the selected pair-search target.
-func set_layer2_selected_key(key_idx: int) -> void:
-	# Clear previous selection
-	if _layer2_selected_key_idx >= 0:
-		clear_layer2_selected_key()
-	_layer2_selected_key_idx = key_idx
-	# Find the button for this key_idx and apply highlight border
-	var btn: Button = _find_button_for_idx(key_idx)
-	if btn == null:
-		return
-	var color: Color = L2_PAIR_COLOR
-	var highlight_style: StyleBoxFlat = StyleBoxFlat.new()
-	highlight_style.bg_color = Color(color.r, color.g, color.b, 0.15)
-	highlight_style.border_color = Color(color.r, color.g, color.b, 0.9)
-	for prop in ["border_width_left", "border_width_right",
-				"border_width_top", "border_width_bottom"]:
-		highlight_style.set(prop, 2)
-	for prop in ["corner_radius_top_left", "corner_radius_top_right",
-				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
-		highlight_style.set(prop, 3)
-	btn.add_theme_stylebox_override("normal", highlight_style)
-	var hover_style: StyleBoxFlat = highlight_style.duplicate()
-	hover_style.bg_color = Color(color.r, color.g, color.b, 0.25)
-	btn.add_theme_stylebox_override("hover", hover_style)
-
-
-## T148: Clear the key highlight and restore default button style.
-func clear_layer2_selected_key() -> void:
-	var prev_idx: int = _layer2_selected_key_idx
-	_layer2_selected_key_idx = -1
-	if prev_idx < 0:
-		return
-	# Restore the button to its normal state
-	var btn: Button = _find_button_for_idx(prev_idx)
-	if btn == null:
-		return
-	var is_current: bool = (prev_idx == _current_room)
-	# Get the actual room color from the Dot child
-	var color: Color = Color.WHITE
-	var hbox = btn.get_node_or_null("Content")
-	if hbox:
-		var dot = hbox.get_node_or_null("Dot")
-		if dot and dot is ColorRect:
-			color = dot.color
-	# Restore normal button style
-	var border_col: Color
-	if is_current:
-		border_col = GOLD
-	else:
-		border_col = Color(color.r, color.g, color.b, 0.2)
-	var normal_style: StyleBoxFlat = StyleBoxFlat.new()
-	normal_style.bg_color = Color(0, 0, 0, 0)
-	normal_style.border_color = border_col
-	for prop in ["border_width_left", "border_width_right",
-				"border_width_top", "border_width_bottom"]:
-		normal_style.set(prop, 1)
-	for prop in ["corner_radius_top_left", "corner_radius_top_right",
-				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
-		normal_style.set(prop, 3)
-	btn.add_theme_stylebox_override("normal", normal_style)
-	var hover_style: StyleBoxFlat = normal_style.duplicate()
-	hover_style.border_color = Color(color.r, color.g, color.b, 0.5)
-	hover_style.bg_color = Color(color.r, color.g, color.b, 0.06)
-	btn.add_theme_stylebox_override("hover", hover_style)
-
-
-## T148: Find the Button node for a given key index.
-func _find_button_for_idx(key_idx: int) -> Button:
-	for btn in _buttons:
-		if btn == null or not is_instance_valid(btn):
-			continue
-		if btn.name == "Key_%d" % key_idx:
-			return btn
-	return null
 
 
 # ── Internal: shell construction ─────────────────────────────────────
