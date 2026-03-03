@@ -407,6 +407,121 @@ func refresh_from_state() -> void:
 	update_progress()
 
 
+## T148: Set the active slot to the one matching the given key sym_id.
+## Called when the player clicks a key to start searching for its pair.
+func set_active_slot_for_key(key_sym_id: String) -> void:
+	if _pair_mgr == null:
+		return
+	var pairs: Array = _pair_mgr.get_pairs()
+	var target_slot: int = -1
+	for i in range(pairs.size()):
+		if pairs[i].key_sym_id == key_sym_id and not pairs[i].paired:
+			target_slot = i
+			break
+	if target_slot < 0:
+		return
+	# Update _active_slot and visuals
+	_active_slot = target_slot
+	for i in range(_slots.size()):
+		if i >= pairs.size():
+			continue
+		if pairs[i].paired:
+			continue
+		if i == _active_slot:
+			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("active"))
+			var status = _slots[i].get_node_or_null("StatusIcon")
+			if status:
+				status.text = "<-"
+				status.add_theme_color_override("font_color", L2_GREEN)
+		else:
+			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("empty"))
+			var status = _slots[i].get_node_or_null("StatusIcon")
+			if status:
+				status.text = ""
+
+
+## T148: Lock the visual for a successfully matched pair by pair index.
+## Also handles bidirectional auto-pairing visual and advances active slot.
+func lock_pair_visual(pair_idx: int) -> void:
+	if _pair_mgr == null:
+		return
+	var pairs: Array = _pair_mgr.get_pairs()
+	if pair_idx < 0 or pair_idx >= pairs.size():
+		return
+	var pair = pairs[pair_idx]
+	_apply_locked_visual(pair_idx, pair)
+	_play_slot_glow(pair_idx)
+	# Bidirectional: if the reverse pair was also auto-paired, lock its slot too
+	if not pair.is_self_inverse:
+		var refreshed_pairs: Array = _pair_mgr.get_pairs()
+		for j in range(refreshed_pairs.size()):
+			if j != pair_idx and refreshed_pairs[j].paired and j < _slots.size():
+				var ph = _slots[j].get_node_or_null("MirrorPlaceholder")
+				if ph and ph.visible:
+					_apply_locked_visual(j, refreshed_pairs[j])
+					_play_slot_glow(j)
+	_find_next_active()
+	update_progress()
+
+
+## T148: Show wrong flash on the slot matching key_sym_id.
+func show_wrong_flash_for_key(key_sym_id: String, candidate_sym_id: String) -> void:
+	if _pair_mgr == null:
+		return
+	var pairs: Array = _pair_mgr.get_pairs()
+	for i in range(pairs.size()):
+		if pairs[i].key_sym_id == key_sym_id and not pairs[i].paired:
+			_show_wrong_flash(i, candidate_sym_id)
+			return
+	# Fallback: flash on active slot
+	if _active_slot >= 0 and _active_slot < _slots.size():
+		_show_wrong_flash(_active_slot, candidate_sym_id)
+
+
+## T148: Set active slot matching sym_id as either key or inverse.
+func set_active_slot_for_key_any(sym_id: String) -> void:
+	if _pair_mgr == null:
+		return
+	var pairs: Array = _pair_mgr.get_pairs()
+	var target_slot: int = -1
+	for i in range(pairs.size()):
+		if not pairs[i].paired and (pairs[i].key_sym_id == sym_id or pairs[i].inverse_sym_id == sym_id):
+			target_slot = i
+			break
+	if target_slot < 0:
+		return
+	_active_slot = target_slot
+	for i in range(_slots.size()):
+		if i >= pairs.size():
+			continue
+		if pairs[i].paired:
+			continue
+		if i == _active_slot:
+			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("active"))
+			var status = _slots[i].get_node_or_null("StatusIcon")
+			if status:
+				status.text = "<-"
+				status.add_theme_color_override("font_color", L2_GREEN)
+		else:
+			_slots[i].add_theme_stylebox_override("panel", _make_slot_style("empty"))
+			var status = _slots[i].get_node_or_null("StatusIcon")
+			if status:
+				status.text = ""
+
+
+## T148: Show wrong flash on slot matching sym_id as either key or inverse.
+func show_wrong_flash_for_key_any(key_sym_id: String, candidate_sym_id: String) -> void:
+	if _pair_mgr == null:
+		return
+	var pairs: Array = _pair_mgr.get_pairs()
+	for i in range(pairs.size()):
+		if not pairs[i].paired and (pairs[i].key_sym_id == key_sym_id or pairs[i].inverse_sym_id == key_sym_id):
+			_show_wrong_flash(i, candidate_sym_id)
+			return
+	if _active_slot >= 0 and _active_slot < _slots.size():
+		_show_wrong_flash(_active_slot, candidate_sym_id)
+
+
 ## Cleanup.
 func cleanup() -> void:
 	_slots.clear()

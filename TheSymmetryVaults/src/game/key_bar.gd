@@ -3,10 +3,11 @@
 ## Each key = a button coloured to its room. Clicking a key emits
 ## key_pressed so the game can apply the corresponding permutation.
 ##
-## Layout adapts to the number of keys:
-##   <=12  — single row with spacing
-##   13-24 — compact grid, smaller buttons
-##   >24   — wrapped in a ScrollContainer
+## Layout: always a single horizontal row inside a horizontal ScrollContainer.
+## Button size adapts:
+##   <=8  keys — normal   (64x36)
+##   9-16 keys — compact  (52x30)
+##   >16  keys — tiny     (44x26)
 ##
 ## Signals:
 ##   key_pressed(key_idx)  — a discovered key was clicked
@@ -39,24 +40,28 @@ const HOME_GLYPH := "\u2302"  # ⌂
 
 # ── Layout thresholds ────────────────────────────────────────────────
 
-const COMPACT_THRESHOLD := 8    # > 8 keys → compact mode (larger buttons need less room)
-const SCROLL_THRESHOLD  := 16   # > 16 keys → scroll mode
+const COMPACT_THRESHOLD := 8    # > 8 keys → compact buttons
+const TINY_THRESHOLD    := 16   # > 16 keys → tiny buttons
 
 # Button sizes per tier — sized for readability and touch targets
 const BTN_SIZE_NORMAL  := Vector2(64, 36)
 const BTN_SIZE_COMPACT := Vector2(52, 30)
+const BTN_SIZE_TINY    := Vector2(44, 26)
 const BTN_GAP_NORMAL   := 5
 const BTN_GAP_COMPACT  := 4
+const BTN_GAP_TINY     := 3
 const BTN_FONT_NORMAL  := 14
 const BTN_FONT_COMPACT := 12
+const BTN_FONT_TINY    := 10
 const DOT_SIZE_NORMAL  := 12
 const DOT_SIZE_COMPACT := 10
+const DOT_SIZE_TINY    := 8
 
 # ── Nodes ────────────────────────────────────────────────────────────
 
 var _panel: PanelContainer
-var _scroll: ScrollContainer        # only created when >24 keys
-var _flow: HFlowContainer
+var _scroll: ScrollContainer        # always present — horizontal scroll
+var _hbox: HBoxContainer            # single-row container for key buttons
 var _buttons: Array = []             # Array[Button]
 var _wrappers: Array = []            # Array[VBoxContainer] — wrappers holding btn + reflection
 
@@ -76,6 +81,8 @@ var _pair_data: Dictionary = {}
 var _pair_overlay: Control = null
 ## Whether Layer 2 pairing mode is active
 var _layer2_active: bool = false
+## T148: currently selected key for pair search (-1 = none)
+var _layer2_selected_key_idx: int = -1
 
 ## Whether Layer 3 keyring mode is active (shows ⊕ buttons)
 var _layer3_active: bool = false
@@ -114,21 +121,30 @@ func rebuild(room_state: RoomState) -> void:
 	_total_keys = room_state.group_order
 	_current_room = room_state.current_room
 
-	# Determine layout tier
-	var compact: bool = _total_keys > COMPACT_THRESHOLD
-	var need_scroll: bool = _total_keys > SCROLL_THRESHOLD
+	# Determine layout tier (3-tier: normal / compact / tiny)
+	var btn_size: Vector2
+	var btn_gap: int
+	var font_sz: int
+	var dot_sz: int
 
-	var btn_size: Vector2 = BTN_SIZE_COMPACT if compact else BTN_SIZE_NORMAL
-	var btn_gap: int = BTN_GAP_COMPACT if compact else BTN_GAP_NORMAL
-	var font_sz: int = BTN_FONT_COMPACT if compact else BTN_FONT_NORMAL
-	var dot_sz: int = DOT_SIZE_COMPACT if compact else DOT_SIZE_NORMAL
+	if _total_keys > TINY_THRESHOLD:
+		btn_size = BTN_SIZE_TINY
+		btn_gap  = BTN_GAP_TINY
+		font_sz  = BTN_FONT_TINY
+		dot_sz   = DOT_SIZE_TINY
+	elif _total_keys > COMPACT_THRESHOLD:
+		btn_size = BTN_SIZE_COMPACT
+		btn_gap  = BTN_GAP_COMPACT
+		font_sz  = BTN_FONT_COMPACT
+		dot_sz   = DOT_SIZE_COMPACT
+	else:
+		btn_size = BTN_SIZE_NORMAL
+		btn_gap  = BTN_GAP_NORMAL
+		font_sz  = BTN_FONT_NORMAL
+		dot_sz   = DOT_SIZE_NORMAL
 
-	# Ensure scroll container exists when needed
-	_ensure_scroll(need_scroll)
-
-	# Configure flow container
-	_flow.add_theme_constant_override("h_separation", btn_gap)
-	_flow.add_theme_constant_override("v_separation", btn_gap)
+	# Configure HBox spacing
+	_hbox.add_theme_constant_override("separation", btn_gap)
 
 	for i in range(_total_keys):
 		# T111: NEVER show identity key (index 0) in the key bar.
@@ -144,7 +160,7 @@ func rebuild(room_state: RoomState) -> void:
 
 		var wrapper: Control = _make_key_button(i, color, is_discovered, is_current,
 				btn_size, font_sz, dot_sz)
-		_flow.add_child(wrapper)
+		_hbox.add_child(wrapper)
 		_wrappers.append(wrapper)
 		# Extract actual Button from wrapper for _buttons array
 		var btn: Button = wrapper.get_node("Key_%d" % i) if wrapper else null
@@ -224,9 +240,86 @@ func clear_mirror_pairs() -> void:
 func clear_layer2_pairs() -> void:
 	_pair_data.clear()
 	_layer2_active = false
+	_layer2_selected_key_idx = -1
 	if _pair_overlay != null and is_instance_valid(_pair_overlay):
 		_pair_overlay.queue_free()
 		_pair_overlay = null
+
+
+## T148: Highlight a key as the selected pair-search target.
+func set_layer2_selected_key(key_idx: int) -> void:
+	# Clear previous selection
+	if _layer2_selected_key_idx >= 0:
+		clear_layer2_selected_key()
+	_layer2_selected_key_idx = key_idx
+	# Find the button for this key_idx and apply highlight border
+	var btn: Button = _find_button_for_idx(key_idx)
+	if btn == null:
+		return
+	var color: Color = L2_PAIR_COLOR
+	var highlight_style: StyleBoxFlat = StyleBoxFlat.new()
+	highlight_style.bg_color = Color(color.r, color.g, color.b, 0.15)
+	highlight_style.border_color = Color(color.r, color.g, color.b, 0.9)
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		highlight_style.set(prop, 2)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		highlight_style.set(prop, 3)
+	btn.add_theme_stylebox_override("normal", highlight_style)
+	var hover_style: StyleBoxFlat = highlight_style.duplicate()
+	hover_style.bg_color = Color(color.r, color.g, color.b, 0.25)
+	btn.add_theme_stylebox_override("hover", hover_style)
+
+
+## T148: Clear the key highlight and restore default button style.
+func clear_layer2_selected_key() -> void:
+	var prev_idx: int = _layer2_selected_key_idx
+	_layer2_selected_key_idx = -1
+	if prev_idx < 0:
+		return
+	# Restore the button to its normal state
+	var btn: Button = _find_button_for_idx(prev_idx)
+	if btn == null:
+		return
+	var is_current: bool = (prev_idx == _current_room)
+	# Get the actual room color from the Dot child
+	var color: Color = Color.WHITE
+	var hbox = btn.get_node_or_null("Content")
+	if hbox:
+		var dot = hbox.get_node_or_null("Dot")
+		if dot and dot is ColorRect:
+			color = dot.color
+	# Restore normal button style
+	var border_col: Color
+	if is_current:
+		border_col = GOLD
+	else:
+		border_col = Color(color.r, color.g, color.b, 0.2)
+	var normal_style: StyleBoxFlat = StyleBoxFlat.new()
+	normal_style.bg_color = Color(0, 0, 0, 0)
+	normal_style.border_color = border_col
+	for prop in ["border_width_left", "border_width_right",
+				"border_width_top", "border_width_bottom"]:
+		normal_style.set(prop, 1)
+	for prop in ["corner_radius_top_left", "corner_radius_top_right",
+				"corner_radius_bottom_left", "corner_radius_bottom_right"]:
+		normal_style.set(prop, 3)
+	btn.add_theme_stylebox_override("normal", normal_style)
+	var hover_style: StyleBoxFlat = normal_style.duplicate()
+	hover_style.border_color = Color(color.r, color.g, color.b, 0.5)
+	hover_style.bg_color = Color(color.r, color.g, color.b, 0.06)
+	btn.add_theme_stylebox_override("hover", hover_style)
+
+
+## T148: Find the Button node for a given key index.
+func _find_button_for_idx(key_idx: int) -> Button:
+	for btn in _buttons:
+		if btn == null or not is_instance_valid(btn):
+			continue
+		if btn.name == "Key_%d" % key_idx:
+			return btn
+	return null
 
 
 # ── Internal: shell construction ─────────────────────────────────────
@@ -247,35 +340,22 @@ func _build_shell() -> void:
 	_panel.add_theme_stylebox_override("panel", style)
 	add_child(_panel)
 
-	# Default flow container (no scroll)
-	_flow = HFlowContainer.new()
-	_flow.name = "KeyGrid"
-	_flow.add_theme_constant_override("h_separation", BTN_GAP_NORMAL)
-	_flow.add_theme_constant_override("v_separation", BTN_GAP_NORMAL)
-	_panel.add_child(_flow)
+	# T147: Always horizontal — ScrollContainer + HBoxContainer (single row)
+	_scroll = ScrollContainer.new()
+	_scroll.name = "KeyScroll"
+	_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	# Hide scrollbar for cleaner look — user swipes or drags
+	_scroll.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	_panel.add_child(_scroll)
 
-
-## Wrap the flow inside a ScrollContainer when many keys exist.
-func _ensure_scroll(need_scroll: bool) -> void:
-	var has_scroll: bool = _scroll != null and is_instance_valid(_scroll)
-	if need_scroll and not has_scroll:
-		# Remove flow from panel, wrap in scroll
-		if _flow.get_parent() == _panel:
-			_panel.remove_child(_flow)
-		_scroll = ScrollContainer.new()
-		_scroll.name = "KeyScroll"
-		_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-		_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-		_panel.add_child(_scroll)
-		_scroll.add_child(_flow)
-	elif not need_scroll and has_scroll:
-		# Remove scroll wrapper
-		_scroll.remove_child(_flow)
-		_panel.remove_child(_scroll)
-		_scroll.queue_free()
-		_scroll = null
-		_panel.add_child(_flow)
+	_hbox = HBoxContainer.new()
+	_hbox.name = "KeyRow"
+	_hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	_hbox.add_theme_constant_override("separation", BTN_GAP_NORMAL)
+	_hbox.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_scroll.add_child(_hbox)
 
 
 # ── Internal: button creation ────────────────────────────────────────

@@ -2244,6 +2244,68 @@
       ],
       "created_at": "2026-03-03T15:44:46",
       "updated_at": "2026-03-03T16:01:21"
+    },
+    {
+      "id": "T146",
+      "title": "Finalize sprint: S018",
+      "description": "Final task of sprint S018. Depends on all other tasks in the sprint. When all sprint tasks are done — review results and close the sprint.",
+      "status": "done",
+      "author": "boss",
+      "executor": "boss",
+      "result": "Sprint S018 finalized (v0.10.0). Two UX improvements: (1) key_bar always horizontal — HFlowContainer replaced with HBoxContainer + horizontal ScrollContainer. 3 button tiers: NORMAL 64x36 (1-8 keys), COMPACT 52x30 (9-16), TINY 44x26 (17+). Level 13 (23 keys) now scrolls horizontally. (2) Layer 2 free pair selection — two-click mechanic: first click selects key (green highlight), second click attempts pairing. Player no longer forced to solve sequentially. All 3 tasks T147-T149 done. 908 tests pass (3 pre-existing failures). PROJECT_STATUS.md updated.",
+      "sprint_id": "S018",
+      "depends_on": [
+        "T147",
+        "T148",
+        "T149"
+      ],
+      "is_finalize": true,
+      "created_at": "2026-03-03T16:21:33",
+      "updated_at": "2026-03-03T16:51:01"
+    },
+    {
+      "id": "T147",
+      "title": "key_bar всегда горизонтально (одна строка + горизонтальный скролл)",
+      "description": "Сейчас HFlowContainer заворачивает ключи на несколько строк при >8 ключах. Нужно: всегда одна горизонтальная строка. При >8 ключах — горизонтальный ScrollContainer. Заменить HFlowContainer на HBoxContainer внутри горизонтального ScrollContainer. Ключи компактнее при большом количестве (52x30 или даже 44x26).",
+      "status": "done",
+      "author": "boss",
+      "executor": "developer_ui",
+      "result": "Replaced HFlowContainer with HBoxContainer inside a horizontal ScrollContainer in key_bar.gd. Keys now always display in a single horizontal row. Added 3-tier button sizing: normal (64x36) for <=8 keys, compact (52x30) for 9-16 keys, tiny (44x26) for >16 keys. Horizontal ScrollContainer always present with SCROLL_MODE_AUTO (scrollbar hidden via StyleBoxEmpty for clean look). Removed old _ensure_scroll() vertical scroll logic. All KB-001..005 checks pass.",
+      "sprint_id": "S018",
+      "depends_on": [],
+      "created_at": "2026-03-03T16:21:47",
+      "updated_at": "2026-03-03T16:31:04"
+    },
+    {
+      "id": "T148",
+      "title": "Layer 2: игрок выбирает ключ для поиска пары",
+      "description": "Сейчас active_slot выбирается автоматически (первый неспаренный). Нужно: игрок кликает на ключ в key_bar — этот ключ подсвечивается как тот, кому ищем пару. На панели зеркал подсвечивается соответствующий слот. Следующий клик на другой ключ — попытка спарить. Если пара верная — оба блокируются. Если нет — красная вспышка.",
+      "status": "done",
+      "author": "boss",
+      "executor": "developer_game",
+      "result": "Implemented player-driven key selection for Layer 2 pair search. Changes across 4 files:\n\n1. level_scene.gd: Intercept key_pressed on Layer 2 — route to on_key_pressed_layer2() instead of applying permutation.\n\n2. layer_mode_controller.gd: New two-phase on_key_pressed_layer2(key_idx):\n   - Phase 1 (no key selected): selects key, highlights it on KeyBar (green border), highlights matching slot on MirrorPairsPanel (arrow indicator).\n   - Phase 2 (key selected + click another): attempts try_pair in both orderings (handles bidirectional pair storage). Success = lock pair visually + update all UI. Failure = red flash on slot + feedback.\n   - Same-key click: self-inverse = valid pair attempt; non-self-inverse = deselect (toggle off).\n   - Already-paired keys are ignored in Phase 1.\n   - Redirected on_key_tapped_layer2 (oplus tap) through same handler.\n   - Added _clear_layer2_selection() helper, _layer2_selected_key state variable.\n\n3. mirror_pairs_panel.gd: Added 4 new public methods:\n   - set_active_slot_for_key(sym_id) / set_active_slot_for_key_any(sym_id) — highlight slot matching key or inverse\n   - lock_pair_visual(pair_idx) — lock visual + handle bidirectional auto-lock + advance active slot\n   - show_wrong_flash_for_key(sym_id) / show_wrong_flash_for_key_any(sym_id) — wrong flash on matching slot\n\n4. key_bar.gd: Added key highlight methods:\n   - set_layer2_selected_key(key_idx) — thick green border highlight\n   - clear_layer2_selected_key() — restore normal button style\n   - _find_button_for_idx(key_idx) — helper to locate Button by key index\n   - _layer2_selected_key_idx state variable\n\n893/896 tests pass (3 pre-existing).",
+      "sprint_id": "S018",
+      "depends_on": [
+        "T147"
+      ],
+      "created_at": "2026-03-03T16:21:47",
+      "updated_at": "2026-03-03T16:41:13"
+    },
+    {
+      "id": "T149",
+      "title": "QA: тестирование key_bar и Layer 2 выбора пары",
+      "description": "Проверить: key_bar горизонтальный на уровнях 1-24. Layer 2 выбор ключа работает. Уровень 13 (23 ключа) — горизонтальный скролл.",
+      "status": "done",
+      "author": "boss",
+      "executor": "qa_tester",
+      "result": "QA testing complete: 15 unit tests + 1 manual checklist test pass. KeyBar horizontal layout, button sizing (normal/compact/tiny), level 13 scroll (1078px), Layer 2 pairing colors (green/yellow) - all verified. See .tayfa/qa_tester/T149_QA_REPORT.md and T149_MANUAL_TEST_GUIDE.md",
+      "sprint_id": "S018",
+      "depends_on": [
+        "T147",
+        "T148"
+      ],
+      "created_at": "2026-03-03T16:21:47",
+      "updated_at": "2026-03-03T16:48:45"
     }
   ],
   "sprints": [
@@ -2443,15 +2505,28 @@
       "id": "S017",
       "title": "S017",
       "description": "Цвета кластеров по ключам + клик на комнату = телепорт кристаллов",
-      "status": "active",
+      "status": "released",
       "ready_to_execute": false,
       "created_by": "boss",
       "created_at": "2026-03-03T15:44:30",
-      "updated_at": "2026-03-03T15:44:30",
-      "finalize_task_id": "T141"
+      "updated_at": "2026-03-03T16:04:20",
+      "finalize_task_id": "T141",
+      "version": "v0.9.0",
+      "released_at": "2026-03-03T16:04:20"
+    },
+    {
+      "id": "S018",
+      "title": "S018",
+      "description": "UX: key_bar всегда горизонтально + выбор ключа для поиска пары на Layer 2",
+      "status": "active",
+      "ready_to_execute": false,
+      "created_by": "boss",
+      "created_at": "2026-03-03T16:21:33",
+      "updated_at": "2026-03-03T16:21:33",
+      "finalize_task_id": "T146"
     }
   ],
-  "next_id": 146,
-  "next_sprint_id": 18,
+  "next_id": 150,
+  "next_sprint_id": 19,
   "next_bug_id": 1
 }
