@@ -155,8 +155,9 @@ func cleanup() -> void:
 		_cracking_panel.cleanup()
 		_cracking_panel.queue_free()
 	_cracking_panel = null
-	# Clean up Layer 5 quotient panel + coset coloring on room map
+	# Clean up room map overlays (Layer 3 clusters + Layer 5 coset coloring)
 	if _level_scene and _level_scene._room_map:
+		_level_scene._room_map.clear_room_clusters()
 		_level_scene._room_map.clear_coset_coloring()
 	if _quotient_panel != null and is_instance_valid(_quotient_panel):
 		if _quotient_panel.has_method("cleanup"):
@@ -223,6 +224,9 @@ func _setup_layer_2(level_data: Dictionary, level_scene) -> void:
 
 	# 12. Build MirrorPairsPanel UI — split the crystal zone (like Layer 3)
 	_build_mirror_panel(level_scene)
+
+	# 12b. Show already-matched pairs as clusters on room map (for restore)
+	_update_layer_2_map_pairs()
 
 	# 13. Save "in_progress" state
 	GameManager.set_layer_progress(_hall_id, 2, {"status": "in_progress"})
@@ -496,10 +500,52 @@ func _on_pair_matched(_pair_index: int, _key_sym_id: String, _inverse_sym_id: St
 	if _mirror_panel:
 		_mirror_panel.update_progress()
 
+	# Update room map: show matched pairs as clusters
+	_update_layer_2_map_pairs()
+
 	# Play valid feedback on crystals
 	if _level_scene.feedback_fx:
 		_level_scene.feedback_fx.play_valid_feedback(
 			_level_scene.crystals.values(), _level_scene.edges)
+
+
+## Build room clusters from all matched inverse pairs for the room map.
+## Regular pair = green capsule (2 rooms), self-inverse = yellow halo (1 room).
+func _update_layer_2_map_pairs() -> void:
+	if inverse_pair_mgr == null or _level_scene == null:
+		return
+	if _level_scene._room_map == null:
+		return
+
+	var clusters: Array = []
+	var colors: Array = []
+	var labels: Array = []
+	var self_inv_color: Color = Color(0.95, 0.85, 0.20, 0.9)  # yellow
+
+	for pair in inverse_pair_mgr.get_pairs():
+		if not pair.paired:
+			continue
+
+		if pair.is_self_inverse:
+			# Self-inverse: single room, yellow halo
+			var ridx: int = _sym_id_to_room_idx(pair.key_sym_id)
+			if ridx >= 0:
+				clusters.append([ridx])
+				colors.append(self_inv_color)
+				labels.append("")
+		else:
+			# Regular pair: two rooms, green capsule
+			var ridx_a: int = _sym_id_to_room_idx(pair.key_sym_id)
+			var ridx_b: int = _sym_id_to_room_idx(pair.inverse_sym_id)
+			if ridx_a >= 0 and ridx_b >= 0:
+				clusters.append([ridx_a, ridx_b])
+				colors.append(L2_GREEN)
+				labels.append("")
+
+	if not clusters.is_empty():
+		_level_scene._room_map.set_room_clusters(clusters, colors, labels)
+	else:
+		_level_scene._room_map.clear_room_clusters()
 
 
 func _on_all_pairs_matched() -> void:
@@ -836,14 +882,22 @@ func _on_keyring_key_removed(sym_id: String) -> void:
 	_update_keybar_keyring_state()
 
 
-## Handle locked slot selection — highlight subgroup rooms on the map.
+## Handle locked slot selection — show subgroup as a gold cluster on the map.
 func _on_keyring_slot_selected(elements: Array) -> void:
 	if _level_scene == null or _level_scene._room_map == null:
 		return
 	if elements.is_empty():
-		_level_scene._room_map.clear_subgroup_highlight()
+		_level_scene._room_map.clear_room_clusters()
 	else:
-		_level_scene._room_map.highlight_subgroup(elements)
+		# Convert sym_ids to room indices for set_room_clusters
+		var room_indices: Array = []
+		for sid in elements:
+			var ridx: int = _sym_id_to_room_idx(sid)
+			if ridx >= 0:
+				room_indices.append(ridx)
+		if not room_indices.is_empty():
+			_level_scene._room_map.set_room_clusters(
+				[room_indices], [L3_GOLD], ["H"])
 
 
 ## Sync ⊕/− indicators on KeyBar with the current active keyring slot contents.
@@ -1295,10 +1349,17 @@ func on_subgroup_selected_layer4(subgroup_index: int) -> void:
 	if conjugation_cracking_mgr == null:
 		return
 	if conjugation_cracking_mgr.select_subgroup(subgroup_index):
-		# Highlight subgroup rooms on the map
+		# Show subgroup as a red cluster on the map with label "N"
 		var elements: Array = conjugation_cracking_mgr.get_subgroup_elements(subgroup_index)
 		if _level_scene and _level_scene._room_map:
-			_level_scene._room_map.highlight_subgroup(elements)
+			var room_indices: Array = []
+			for sid in elements:
+				var ridx: int = _sym_id_to_room_idx(sid)
+				if ridx >= 0:
+					room_indices.append(ridx)
+			if not room_indices.is_empty():
+				_level_scene._room_map.set_room_clusters(
+					[room_indices], [L4_RED], ["N"])
 		_refresh_cracking_panel()
 
 
@@ -1886,9 +1947,9 @@ func _build_cracking_panel(level_scene) -> void:
 ## Handle subgroup selection from CrackingPanel.
 func _on_cracking_subgroup_selected(subgroup_index: int) -> void:
 	if subgroup_index < 0:
-		# Deselect — clear map highlight and hide ⊕ buttons
+		# Deselect — clear map cluster and hide ⊕ buttons
 		if _level_scene and _level_scene._room_map:
-			_level_scene._room_map.clear_subgroup_highlight()
+			_level_scene._room_map.clear_room_clusters()
 		_update_keybar_layer4_mode("")
 		return
 	on_subgroup_selected_layer4(subgroup_index)
@@ -2454,6 +2515,7 @@ func _on_assembly_completed(sg_index: int) -> void:
 			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 		_level_scene._room_map.highlight_subgroup([])
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+		_apply_coset_clusters(cosets, coset_colors)
 
 	# Transition panel to type quiz mode
 	if _quotient_panel:
@@ -2474,6 +2536,7 @@ func _on_assembly_back() -> void:
 		_quotient_panel.exit_assembly_mode()
 	if _level_scene and _level_scene._room_map:
 		_level_scene._room_map.clear_coset_coloring()
+		_level_scene._room_map.clear_room_clusters()
 		_level_scene._room_map.highlight_subgroup([])
 
 
@@ -2548,6 +2611,7 @@ func _show_quotient_success_feedback(subgroup_index: int, result: Dictionary) ->
 			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 		_level_scene._room_map.highlight_subgroup([])  # Clear old highlight
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+		_apply_coset_clusters(cosets, coset_colors)
 
 	# Show success glow on the panel entry
 	if _quotient_panel and _quotient_panel.has_method("show_construction_success"):
@@ -2624,6 +2688,7 @@ func _on_quotient_subgroup_selected(index: int) -> void:
 	# and restore room positions to their original layout.
 	if _level_scene._room_map:
 		_level_scene._room_map.clear_coset_coloring()
+		_level_scene._room_map.clear_room_clusters()
 		_level_scene._room_map.highlight_subgroup([])
 
 	if index < 0:
@@ -2640,6 +2705,7 @@ func _on_quotient_subgroup_selected(index: int) -> void:
 			for ci in range(cosets.size()):
 				coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 			_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+			_apply_coset_clusters(cosets, coset_colors)
 
 		var hl = _level_scene.hud_layer.get_node_or_null("HintLabel")
 		if hl:
@@ -2701,6 +2767,7 @@ func on_coset_action_layer5(sym_id: String) -> void:
 			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
 		_level_scene._room_map.highlight_subgroup([])
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
+		_apply_coset_clusters(cosets, coset_colors)
 	else:
 		for coset in cosets:
 			if coset["representative"] == coset_rep:
@@ -2800,6 +2867,36 @@ func _update_assembly_map_coloring(sg_idx: int) -> void:
 
 	if not cosets_for_map.is_empty():
 		_level_scene._room_map.set_coset_coloring(cosets_for_map, colors_for_map)
+		_apply_coset_clusters(cosets_for_map, colors_for_map)
+	else:
+		_level_scene._room_map.clear_room_clusters()
+
+
+## Apply room cluster contour overlays that match the coset coloring.
+## cosets: Array[{elements: Array[String], representative: String}]
+## coset_colors: Array[Color], one per coset.
+## Converts sym_ids → room indices and calls set_room_clusters().
+func _apply_coset_clusters(cosets: Array, coset_colors: Array) -> void:
+	if _level_scene == null or _level_scene._room_map == null:
+		return
+	var clusters: Array = []
+	var colors: Array = []
+	var labels: Array = []
+	for ci in range(cosets.size()):
+		var elems: Array = cosets[ci].get("elements", [])
+		var room_indices: Array = []
+		for sid in elems:
+			var ridx: int = _sym_id_to_room_idx(sid)
+			if ridx >= 0:
+				room_indices.append(ridx)
+		if not room_indices.is_empty():
+			clusters.append(room_indices)
+			colors.append(coset_colors[ci % coset_colors.size()])
+			labels.append("")
+	if not clusters.is_empty():
+		_level_scene._room_map.set_room_clusters(clusters, colors, labels)
+	else:
+		_level_scene._room_map.clear_room_clusters()
 
 
 # ── Layer 5 Signal Handlers ──────────────────────────────────────────

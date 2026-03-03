@@ -1,0 +1,54 @@
+[
+  {
+    "id": "msg_007",
+    "timestamp": "2026-02-21T09:27:13",
+    "direction": "to_agent",
+    "prompt": "Task T011: CRITICAL: Fix swap mechanics - swaps must accumulate\nDescription: Current bug: after an invalid swap, the game resets ALL crystals to their starting positions (_reset_arrangement). This makes it IMPOSSIBLE to achieve rotations like [1,2,0] because a rotation requires TWO transpositions, but the first transposition [1,0,2] is invalid and triggers a reset. FIX: Remove auto-reset on invalid permutation. Swaps should accumulate. After each swap, check the CUMULATIVE permutation against target automorphisms. If valid - celebrate and record. If invalid - do NOT reset, let the player keep experimenting. Add a manual RESET button instead. Also add a CHECK CURRENT button that validates without requiring a swap. This is the #1 blocker - the game is literally unplayable without this fix. MUST READ Game.txt and test by actually running the game with run_game.bat.\nYour role: executor\nCurrent status: new\n\nYou are the executor. Complete the task according to the description.\nWhen done successfully, call:\n  python common/task_manager.py result T011 \"<description of what was done>\"\n  python common/task_manager.py status T011 done\n\nIf you CANNOT complete the task (missing permissions, unclear requirements, blocked), call:\n  python common/task_manager.py result T011 \"<detailed explanation of what is needed>\"\n  python common/task_manager.py status T011 questions",
+    "result": "Task T011 is complete. Here's a summary of what was done:\n\n## Summary of Changes\n\n### The Bug\nThe game was **literally unplayable** for levels requiring multi-swap permutations (like Z₃ rotations). After each swap, the game checked the permutation against valid automorphisms, and if it didn't match, it **reset ALL crystals back to identity**. Since a rotation like `[1,2,0]` requires two transpositions (`swap(0,1)` → `[1,0,2]`, then `swap(1,2)` → `[1,2,0]`), and the first intermediate state `[1,0,2]` isn't a valid automorphism, the reset would fire, making it impossible to ever reach the rotation.\n\n### The Fix (2 files changed)\n\n**1. `level_scene.gd`** — Core game logic:\n- **Removed auto-reset** on invalid permutation — swaps now accumulate\n- Added `show_invalid_feedback` parameter to `_validate_permutation()` (false for swaps = silent, true for CHECK button = shows feedback)\n- Added **RESET button** — manually returns all crystals to identity\n- Added **CHECK button** — validates current cumulative permutation with visual feedback\n- Added **StatusLabel** — shows current arrangement state with color coding (green = valid, amber = experimenting)\n- Added agent API: `agent_reset()` and `agent_check_current()`\n- Fixed a pre-existing indentation bug in `_reset_arrangement()`\n\n**2. `test_integration.py`** — Python integration tests:\n- Updated `LevelSimulator` to match new behavior (no auto-reset, `reset()`, `check_current()`)\n- Added 5 new tests proving the fix:\n  - `test_swaps_accumulate_no_reset` — arrangement persists after invalid swap\n  - `test_discover_rotation_120_via_two_swaps` — **THE KEY TEST**: two swaps accumulate to reach `[1,2,0]`\n  - `test_manual_reset` — RESET returns to identity\n  - `test_check_current` — CHECK validates without resetting\n  - `test_full_level1_completion_via_swaps` — Level 1 (Z₃) is fully completable!\n\n### Test Results\nAll **60 tests pass** (23 integration + 37 core engine), including the critical test proving Level 1 can now be completed through drag-and-drop swaps.",
+    "runtime": "opus",
+    "success": true,
+    "cost_usd": 0,
+    "duration_sec": 2455.02,
+    "task_id": "T011",
+    "role": "executor",
+    "num_turns": 41
+  },
+  {
+    "id": "msg_008",
+    "timestamp": "2026-02-21T09:34:11",
+    "direction": "to_agent",
+    "prompt": "Ознакомься с проектом. Сделай ещё одного Developer_game На opus.  Хочу, чтоб задачи в спринте делали разные сотрудники",
+    "result": "Готово! Вот что было сделано:\n\n## Создан новый сотрудник: `developer_game2`\n\n### Роль: Gameplay & Level Mechanics Developer (Opus)\n\n**Разделение ответственности** между двумя разработчиками:\n\n| | `developer_game` | `developer_game2` |\n|---|---|---|\n| **Фокус** | Core math engine (Permutation, CrystalGraph, KeyRing) | Gameplay, уровни, HUD, взаимодействие игрока |\n| **Что делает** | Алгоритмы группы, юнит-тесты движка, базовый game loop | Фиксы уровней JSON, кнопки HUD, identity discovery, интеграционные тесты |\n\n### Распределение задач в Sprint S002:\n\n| Задача | Было | Стало |\n|---|---|---|\n| **T011** — Fix swap mechanics | `developer_game` ✅ done | без изменений |\n| **T012** — Make identity discoverable | `developer_game` | **`developer_game2`** |\n| **T013** — Fix Level 2 Z3/Z2 | `developer_game` | **`developer_game2`** |\n| T014 — Onboarding tutorial | `developer_ui` | без изменений |\n| T015 — Friendly names | `developer_ui` | без изменений |\n| T016 — WHY-failure feedback | `developer_ui` | без изменений |\n\n### Созданные/изменённые файлы:\n- `.tayfa/developer_game2/prompt.md` — полный промпт с ролью и правилами\n- `.tayfa/developer_game2/profile.md` — профиль с навыками и обязанностями\n- `.tayfa/developer_game2/notes.md`, `source.md` — стандартные файлы\n- `.tayfa/common/employees.json` — зарегистрирован с моделью opus\n- `.tayfa/common/Rules/employees.md` — добавлен блок developer_game2\n- `.tayfa/common/tasks.json` — T012 и T013 переназначены на developer_game2\n\nТеперь нужно нажать **\"Ensure agents\"** в оркестраторе, чтобы агент developer_game2 стал доступен для выполнения задач.",
+    "runtime": "opus",
+    "success": true,
+    "cost_usd": 0,
+    "duration_sec": 294.79,
+    "num_turns": 39
+  },
+  {
+    "id": "msg_009",
+    "timestamp": "2026-02-21T09:35:19",
+    "direction": "to_agent",
+    "prompt": "Task T013: Fix Level 2 metadata: Z3 declared but actually Z2\nDescription: QA tester found: level_02.json declares group_name Z3 and group_order 3, but the thick edge constraint breaks rotational symmetry. Unit tests confirm only 2 automorphisms exist, not 3. FIX: Either (A) change the JSON metadata to Z2/group_order 2 and remove the third automorphism, OR (B) redesign Level 2 edges so all three rotations are actually valid. Option B is preferred since Act 1 levels 1-3 should all demonstrate Z3 per Game.txt. Consult math_consultant's level definitions in discussions/T003.md. MUST verify with unit tests.\nYour role: executor\nCurrent status: new\n\nYou are the executor. Complete the task according to the description.\nWhen done successfully, call:\n  python common/task_manager.py result T013 \"<description of what was done>\"\n  python common/task_manager.py status T013 done\n\nIf you CANNOT complete the task (missing permissions, unclear requirements, blocked), call:\n  python common/task_manager.py result T013 \"<detailed explanation of what is needed>\"\n  python common/task_manager.py status T013 questions",
+    "result": "Task T013 is complete. Here's a summary of what was done:\n\n## Task T013: Fix Level 2 metadata — Z3 declared but actually Z2\n\n### Root Cause\nLevel 2's triangle had edges `(0,1)=STANDARD, (1,2)=THICK, (2,0)=STANDARD`. With one thick undirected edge, rotation `(0→1→2→0)` maps a STANDARD edge to the THICK slot — breaking the automorphism. The actual group was Z₂ `{e, swap(1,2)}`, not Z₃.\n\n### Solution (Option B — Redesign edges)\nReplaced the thick undirected edge with **directed edges forming a cycle** `(0→1, 1→2, 2→0)`. A directed 3-cycle has exactly Z₃ as its automorphism group:\n- **Rotations** preserve edge direction → valid automorphisms (3 of them)\n- **Reflections** reverse edge direction → rejected\n\n### Files Changed (6 files)\n\n| File | Change |\n|------|--------|\n| `graph_engine.gd` | Added `directed` edge property support in `get_edge()` and `is_automorphism()` |\n| `level_02.json` | Edges changed to directed standard cycle; title→\"The Directed Flow\"; hints updated |\n| `edge_renderer.gd` | Added `directed` property and arrowhead rendering via `_draw_arrowhead()` |\n| `level_scene.gd` | Passes `directed` flag from JSON to EdgeRenderer |\n| `test_core_engine.py` | Updated Python mirror with directed support; Level 2 tests now verify Z₃ (3 automorphisms) |\n| `test_integration.py` | Replaced discrepancy test with full Z₃ verification (engine agrees with JSON, reflections rejected, level completable, group properties verified) |\n\n### Test Results\n**63/63 tests pass** (37 unit + 26 integration), including:\n- `test_level2_rotation_is_automorphism` ✅\n- `test_level2_swap_not_automorphism` ✅  \n- `test_level2_has_exactly_3_automorphisms` ✅\n- `test_engine_agrees_with_json_targets` ✅\n- `test_level2_keyring_forms_group` ✅",
+    "runtime": "opus",
+    "success": true,
+    "cost_usd": 0,
+    "duration_sec": 356.36,
+    "task_id": "T013",
+    "role": "executor",
+    "num_turns": 44
+  },
+  {
+    "id": "msg_010",
+    "timestamp": "2026-02-26T17:20:57",
+    "direction": "to_agent",
+    "prompt": "Что с задачей T030",
+    "result": "## Задача T030: Реализовать hall_tree_data.gd и hall_tree.json\n\n### Статус: ✅ **DONE** (завершена)\n\n**Исполнитель:** developer_game\n**Спринт:** S004\n**Создана:** 2026-02-26 15:01 | **Обновлена:** 2026-02-26 16:20\n\n### Суть задачи\nРеализация **MVP Древа залов — ЧАСТЬ 1: Данные и парсер**:\n\n1. **`data/hall_tree.json`** — граф залов для Wing 1 (12 уровней Act 1): wings, edges, resonances\n2. **`src/core/hall_tree_data.gd`** — класс `HallTreeData` с методами:\n   - `load_from_file()`, `get_wing()`, `get_hall_edges()`, `get_hall_prereqs()`\n   - Кеши: `_hall_to_wing`, `_hall_edges`, `_hall_prereqs`\n3. **Тесты** в `tests/test_hall_tree_data.gd`\n\n### Зависимости\n- **Ни от кого не зависит** (нет предусловий)\n- **Блокирует** следующие задачи:\n  - **T031** — Реализовать HallProgressionEngine (зависит от T030)\n  - **T032** — Реализовать MapScene (зависит от T030 + T031)\n  - **T036** — Архитектор: ревью реализации Древа залов (зависит от T030 + T031 + T032)\n  - **T028** — Финализация спринта S004\n\n---\n\n**Итого:** Задача T030 полностью завершена. Следующей по цепочке идёт **T031 (HallProgressionEngine)** — она пока в статусе `new`.",
+    "runtime": "opus",
+    "success": true,
+    "cost_usd": 0,
+    "duration_sec": 25.62,
+    "num_turns": 4
+  }
+]
