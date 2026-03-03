@@ -343,6 +343,11 @@ func _on_key_bar_key_pressed(key_idx: int) -> void:
 	if _room_state.group_order == 0: return
 	if key_idx < 0 or key_idx >= _room_state.group_order: return
 
+	# T148: Layer 2 uses key clicks for pair selection, not crystal permutation
+	if _current_layer == 2:
+		_layer_controller.on_key_pressed_layer2(key_idx)
+		return
+
 	# Get the permutation for this key (already rebased in RoomState)
 	var key_perm: Permutation = _room_state.get_room_perm(key_idx)
 	if key_perm == null: return

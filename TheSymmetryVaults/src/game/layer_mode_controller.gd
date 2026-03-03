@@ -67,6 +67,9 @@ var _quotient_panel = null  ## QuotientPanel for Layer 5 UI
 var _selected_g: String = ""       ## Selected conjugator (g ∈ G)
 var _selected_h: String = ""       ## Selected target (h ∈ H)
 
+## T148: Layer 2 — player-selected key for pair search (-1 = none selected)
+var _layer2_selected_key: int = -1
+
 # ── Layer 2 color scheme constants ───────────────────────────────────
 
 const L2_GREEN := Color(0.2, 0.85, 0.4, 1.0)
@@ -168,6 +171,7 @@ func cleanup() -> void:
 	_room_state = null
 	_selected_g = ""
 	_selected_h = ""
+	_layer2_selected_key = -1
 
 
 # ── Layer 2: Inverse Key Pairing via ⊕ Tap (T112 Mirror Panel) ──────
@@ -232,33 +236,110 @@ func _setup_layer_2(level_data: Dictionary, level_scene) -> void:
 	GameManager.set_layer_progress(_hall_id, 2, {"status": "in_progress"})
 
 
-## T112: Called by LevelScene when a ⊕ key is tapped during Layer 2.
-## sym_id: the sym_id of the tapped key
+## T112/T148: Called by LevelScene when a ⊕ key is tapped during Layer 2.
+## Routes through the same two-phase key press handler.
 func on_key_tapped_layer2(sym_id: String) -> void:
+	if inverse_pair_mgr == null or _room_state == null:
+		return
+	# Find the room index for this sym_id and route to key press handler
+	for i in range(_room_state.perm_ids.size()):
+		if _room_state.perm_ids[i] == sym_id:
+			on_key_pressed_layer2(i)
+			return
+
+
+## T148: Called by LevelScene when a key is clicked (not ⊕) during Layer 2.
+## Two-phase flow:
+##   Phase 1 (no key selected): select this key as the one we seek a pair for.
+##   Phase 2 (key already selected): attempt to pair selected key with this one.
+func on_key_pressed_layer2(key_idx: int) -> void:
 	if inverse_pair_mgr == null or _mirror_panel == null:
 		return
+	if _room_state == null:
+		return
+	var sym_id: String = _room_state.get_room_sym_id(key_idx)
+	if sym_id == "":
+		return
 
-	# Delegate to the MirrorPairsPanel — it tries ALL unpaired slots
-	var result: Dictionary = _mirror_panel.try_place_candidate_any(sym_id)
-
-	if result["success"]:
-		var pair_idx: int = result["pair_index"]
-		var is_self_inv: bool = result["is_self_inverse"]
-
-		# Emit pair_found signal (use pair_idx for both since we work with sym_ids now)
-		pair_found.emit(pair_idx, pair_idx, is_self_inv)
-
-		# Update KeyBar pairing visualization
-		_update_key_bar_pairing()
-
-		# Show feedback in HintLabel
-		_show_pair_found_feedback(sym_id, is_self_inv)
-
-		# Update counter
-		_update_layer_2_counter()
+	if _layer2_selected_key < 0:
+		# Phase 1: select this key as the search target
+		# Check if this key participates in an unsolved pair — skip if fully paired
+		var pairs: Array = inverse_pair_mgr.get_pairs()
+		var has_unpaired: bool = false
+		for pair in pairs:
+			if (pair.key_sym_id == sym_id or pair.inverse_sym_id == sym_id) and not pair.paired:
+				has_unpaired = true
+				break
+		if not has_unpaired:
+			return  # This key is already paired, ignore
+		_layer2_selected_key = key_idx
+		# Highlight this key on the KeyBar
+		if _level_scene and _level_scene._key_bar:
+			_level_scene._key_bar.set_layer2_selected_key(key_idx)
+		# Highlight the corresponding slot on MirrorPairsPanel
+		# Try both key_sym_id and inverse_sym_id to find the slot
+		_mirror_panel.set_active_slot_for_key_any(sym_id)
 	else:
-		# Wrong guess — mirror panel already showed red flash
-		_show_wrong_guess_feedback(sym_id)
+		# Clicking the same key again: for self-inverse it's a valid pair attempt,
+		# for non-self-inverse it deselects
+		if key_idx == _layer2_selected_key:
+			# Check if self-inverse
+			var is_self_inv: bool = inverse_pair_mgr.is_self_inverse_sym(sym_id)
+			if not is_self_inv:
+				_clear_layer2_selection()
+				return
+			# For self-inverse, fall through to pairing logic below
+
+		# Phase 2: attempt to pair _layer2_selected_key with key_idx
+		var selected_sym_id: String = _room_state.get_room_sym_id(_layer2_selected_key)
+		if selected_sym_id == "":
+			_clear_layer2_selection()
+			return
+
+		# Try both orderings: (selected, candidate) and (candidate, selected)
+		# because the pair might be stored with either sym_id as key_sym_id
+		var result: Dictionary = inverse_pair_mgr.try_pair(selected_sym_id, sym_id)
+		if not result["success"]:
+			# Try reverse ordering
+			var result2: Dictionary = inverse_pair_mgr.try_pair(sym_id, selected_sym_id)
+			if result2["success"]:
+				result = result2
+
+		if result["success"]:
+			var pair_idx: int = result["pair_index"]
+			var is_self_inv: bool = result.get("is_self_inverse", false)
+
+			# Lock the slot(s) visually on the mirror panel
+			_mirror_panel.lock_pair_visual(pair_idx)
+
+			# Emit pair_found signal
+			pair_found.emit(pair_idx, pair_idx, is_self_inv)
+
+			# Update KeyBar pairing visualization
+			_update_key_bar_pairing()
+
+			# Show feedback in HintLabel
+			_show_pair_found_feedback(sym_id, is_self_inv)
+
+			# Update counter
+			_update_layer_2_counter()
+
+			# Update room map clusters
+			_update_layer_2_map_pairs()
+		else:
+			# Wrong guess — show red flash on the slot for the selected key
+			_mirror_panel.show_wrong_flash_for_key_any(selected_sym_id, sym_id)
+			_show_wrong_guess_feedback(sym_id)
+
+		# Clear selection after any attempt
+		_clear_layer2_selection()
+
+
+## T148: Clear the Layer 2 key selection state.
+func _clear_layer2_selection() -> void:
+	_layer2_selected_key = -1
+	if _level_scene and _level_scene._key_bar:
+		_level_scene._key_bar.clear_layer2_selected_key()
 
 
 # ── UI Helpers ───────────────────────────────────────────────────────
