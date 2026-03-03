@@ -467,9 +467,39 @@ func _on_key_bar_key_hovered(key_idx: int) -> void:
 		else:
 			_room_map.set_hover_key(key_idx)
 
-## Handle room click from RoomMapPanel.
-func _on_room_map_clicked(_room_idx: int) -> void:
-	pass  # Room badge removed — current room shown via KeyBar highlight
+## Handle room click from RoomMapPanel — teleport crystals to that room.
+func _on_room_map_clicked(room_idx: int) -> void:
+	if room_idx == _room_state.current_room:
+		return
+	if room_idx < 0 or room_idx >= _room_state.group_order:
+		return
+	var target_perm: Permutation = _room_state.get_room_perm(room_idx)
+	if target_perm == null:
+		return
+	var n: int = _shuffle_mgr.identity_arrangement.size()
+	if n == 0:
+		return
+	# Compute absolute arrangement for the target room
+	var new_arr: Array[int] = []
+	new_arr.resize(n)
+	for i in range(n):
+		new_arr[i] = _shuffle_mgr.identity_arrangement[target_perm.apply(i)]
+	_shuffle_mgr.current_arrangement = new_arr
+	# Animate crystals to their new positions (0.5s for human, instant for agent)
+	var nd = level_data.get("graph", {}).get("nodes", [])
+	var pm: Dictionary = ShuffleManager.build_positions_map(nd, _crystal_rect.size if _crystal_rect.size != Vector2.ZERO else get_viewport_rect().size)
+	var dur: float = 0.0 if agent_mode else 0.5
+	for i in range(n):
+		var cid: int = new_arr[i]
+		if cid in crystals and i in pm:
+			crystals[cid].animate_to_position(pm[i], dur)
+			crystals[cid].set_home_position(pm[i])
+	# Update room state and UI
+	_room_state.set_current_room(room_idx)
+	if _room_map:
+		_room_map.queue_redraw()
+	if _key_bar:
+		_key_bar.update_state(_room_state)
 
 ## Handle room hover from RoomMapPanel.
 func _on_room_map_hovered(_room_idx: int) -> void:

@@ -510,7 +510,7 @@ func _on_pair_matched(_pair_index: int, _key_sym_id: String, _inverse_sym_id: St
 
 
 ## Build room clusters from all matched inverse pairs for the room map.
-## Regular pair = green capsule (2 rooms), self-inverse = yellow halo (1 room).
+## Color = key color of the pair's first element (room_state.colors[key_idx]).
 func _update_layer_2_map_pairs() -> void:
 	if inverse_pair_mgr == null or _level_scene == null:
 		return
@@ -520,26 +520,26 @@ func _update_layer_2_map_pairs() -> void:
 	var clusters: Array = []
 	var colors: Array = []
 	var labels: Array = []
-	var self_inv_color: Color = Color(0.95, 0.85, 0.20, 0.9)  # yellow
 
 	for pair in inverse_pair_mgr.get_pairs():
 		if not pair.paired:
 			continue
 
 		if pair.is_self_inverse:
-			# Self-inverse: single room, yellow halo
+			# Self-inverse: single room, color = key color
 			var ridx: int = _sym_id_to_room_idx(pair.key_sym_id)
 			if ridx >= 0:
 				clusters.append([ridx])
-				colors.append(self_inv_color)
+				colors.append(_get_room_color(ridx))
 				labels.append("")
 		else:
-			# Regular pair: two rooms, green capsule
+			# Regular pair: two rooms, color = key color of first element
 			var ridx_a: int = _sym_id_to_room_idx(pair.key_sym_id)
 			var ridx_b: int = _sym_id_to_room_idx(pair.inverse_sym_id)
 			if ridx_a >= 0 and ridx_b >= 0:
+				var min_ridx: int = mini(ridx_a, ridx_b)
 				clusters.append([ridx_a, ridx_b])
-				colors.append(L2_GREEN)
+				colors.append(_get_room_color(min_ridx))
 				labels.append("")
 
 	if not clusters.is_empty():
@@ -882,7 +882,8 @@ func _on_keyring_key_removed(sym_id: String) -> void:
 	_update_keybar_keyring_state()
 
 
-## Handle locked slot selection — show subgroup as a gold cluster on the map.
+## Handle locked slot selection — show subgroup as a cluster on the map.
+## Color = room_state.colors of the smallest non-identity element.
 func _on_keyring_slot_selected(elements: Array) -> void:
 	if _level_scene == null or _level_scene._room_map == null:
 		return
@@ -896,8 +897,9 @@ func _on_keyring_slot_selected(elements: Array) -> void:
 			if ridx >= 0:
 				room_indices.append(ridx)
 		if not room_indices.is_empty():
+			var cluster_color: Color = _get_generator_color(room_indices)
 			_level_scene._room_map.set_room_clusters(
-				[room_indices], [L3_GOLD], ["H"])
+				[room_indices], [cluster_color], ["H"])
 
 
 ## Sync ⊕/− indicators on KeyBar with the current active keyring slot contents.
@@ -1345,11 +1347,11 @@ func _setup_layer_4(level_data: Dictionary, level_scene) -> void:
 
 
 ## Called when the player selects a subgroup in the conjugation panel.
+## Color = room_state.colors of the smallest non-identity element.
 func on_subgroup_selected_layer4(subgroup_index: int) -> void:
 	if conjugation_cracking_mgr == null:
 		return
 	if conjugation_cracking_mgr.select_subgroup(subgroup_index):
-		# Show subgroup as a red cluster on the map with label "N"
 		var elements: Array = conjugation_cracking_mgr.get_subgroup_elements(subgroup_index)
 		if _level_scene and _level_scene._room_map:
 			var room_indices: Array = []
@@ -1358,8 +1360,9 @@ func on_subgroup_selected_layer4(subgroup_index: int) -> void:
 				if ridx >= 0:
 					room_indices.append(ridx)
 			if not room_indices.is_empty():
+				var cluster_color: Color = _get_generator_color(room_indices)
 				_level_scene._room_map.set_room_clusters(
-					[room_indices], [L4_RED], ["N"])
+					[room_indices], [cluster_color], ["N"])
 		_refresh_cracking_panel()
 
 
@@ -1807,6 +1810,45 @@ func _sym_id_to_room_idx(sym_id: String) -> int:
 		if _room_state.perm_ids[i] == sym_id:
 			return i
 	return -1
+
+
+## Get the color of a room/key by index.
+## Returns room_state.colors[ridx] with full alpha, or white fallback.
+func _get_room_color(ridx: int) -> Color:
+	if _room_state == null or ridx < 0 or ridx >= _room_state.colors.size():
+		return Color.WHITE
+	var c: Color = _room_state.colors[ridx]
+	c.a = 0.9
+	return c
+
+
+## Get the "generator color" for a set of room indices:
+## the color of the smallest non-identity (non-zero) element.
+## Falls back to the smallest element's color if all are identity.
+func _get_generator_color(room_indices: Array) -> Color:
+	var min_nonzero: int = -1
+	var min_any: int = -1
+	for ridx in room_indices:
+		if ridx > 0 and (min_nonzero < 0 or ridx < min_nonzero):
+			min_nonzero = ridx
+		if min_any < 0 or ridx < min_any:
+			min_any = ridx
+	var chosen: int = min_nonzero if min_nonzero >= 0 else min_any
+	if chosen < 0:
+		return Color.WHITE
+	return _get_room_color(chosen)
+
+
+## Build coset colors from the representatives' room colors.
+## cosets: Array[{representative: String, elements: Array[String]}]
+## Returns Array[Color] — one color per coset, based on representative's room color.
+func _build_coset_colors(cosets: Array) -> Array:
+	var result: Array = []
+	for coset in cosets:
+		var rep: String = coset.get("representative", "")
+		var ridx: int = _sym_id_to_room_idx(rep)
+		result.append(_get_room_color(ridx))
+	return result
 
 
 ## Show feedback for a conjugation test result.
@@ -2510,9 +2552,7 @@ func _on_assembly_completed(sg_index: int) -> void:
 
 	# Show merge animation on map (cosets collapse visually)
 	if _level_scene and _level_scene._room_map:
-		var coset_colors: Array = []
-		for ci in range(cosets.size()):
-			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+		var coset_colors: Array = _build_coset_colors(cosets)
 		_level_scene._room_map.highlight_subgroup([])
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 		_apply_coset_clusters(cosets, coset_colors)
@@ -2606,9 +2646,7 @@ func _show_quotient_success_feedback(subgroup_index: int, result: Dictionary) ->
 	# Show coset coloring on the room map
 	if _level_scene._room_map and result.has("cosets"):
 		var cosets: Array = result["cosets"]
-		var coset_colors: Array = []
-		for ci in range(cosets.size()):
-			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+		var coset_colors: Array = _build_coset_colors(cosets)
 		_level_scene._room_map.highlight_subgroup([])  # Clear old highlight
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 		_apply_coset_clusters(cosets, coset_colors)
@@ -2655,10 +2693,8 @@ func _on_merge_quotient(subgroup_index: int) -> void:
 	var cosets: Array = quotient_group_mgr.compute_cosets(subgroup_index)
 	var quotient_table: Dictionary = quotient_group_mgr.get_quotient_table(subgroup_index)
 
-	# Build coset color array matching QuotientPanel palette
-	var coset_colors: Array = []
-	for ci in range(cosets.size()):
-		coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+	# Build coset colors from representative room colors
+	var coset_colors: Array = _build_coset_colors(cosets)
 
 	# Clear subgroup highlight and start merge animation on room map
 	if _level_scene._room_map:
@@ -2701,9 +2737,7 @@ func _on_quotient_subgroup_selected(index: int) -> void:
 	if quotient_group_mgr.is_constructed(index):
 		if _level_scene._room_map:
 			var cosets: Array = quotient_group_mgr.compute_cosets(index)
-			var coset_colors: Array = []
-			for ci in range(cosets.size()):
-				coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+			var coset_colors: Array = _build_coset_colors(cosets)
 			_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 			_apply_coset_clusters(cosets, coset_colors)
 
@@ -2762,9 +2796,7 @@ func on_coset_action_layer5(sym_id: String) -> void:
 	var cosets: Array = quotient_group_mgr.compute_cosets(sg_idx)
 
 	if quotient_group_mgr.is_constructed(sg_idx) and _level_scene._room_map:
-		var coset_colors: Array = []
-		for ci in range(cosets.size()):
-			coset_colors.append(COSET_COLORS[ci % COSET_COLORS.size()])
+		var coset_colors: Array = _build_coset_colors(cosets)
 		_level_scene._room_map.highlight_subgroup([])
 		_level_scene._room_map.set_coset_coloring(cosets, coset_colors)
 		_apply_coset_clusters(cosets, coset_colors)
@@ -2859,13 +2891,12 @@ func _update_assembly_map_coloring(sg_idx: int) -> void:
 	var slots: Array = astate.get("coset_slots", [])
 
 	var cosets_for_map: Array = []
-	var colors_for_map: Array = []
 	for ci in range(slots.size()):
 		if slots[ci].size() > 0:
 			cosets_for_map.append({"elements": slots[ci], "representative": slots[ci][0]})
-			colors_for_map.append(COSET_COLORS[ci % COSET_COLORS.size()])
 
 	if not cosets_for_map.is_empty():
+		var colors_for_map: Array = _build_coset_colors(cosets_for_map)
 		_level_scene._room_map.set_coset_coloring(cosets_for_map, colors_for_map)
 		_apply_coset_clusters(cosets_for_map, colors_for_map)
 	else:
